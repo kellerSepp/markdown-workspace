@@ -1,0 +1,14 @@
+# local build / tooling
+node_modules/
+dist/
+build/
+.coverage/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
+# no personal vaults or accidental import datasets
+personal-vault/
+imports/
