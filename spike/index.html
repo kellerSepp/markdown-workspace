@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="de"><meta charset="utf-8"><title>Storage-Spike – Wegwerfexperiment</title>
+<style>body{font:16px system-ui;max-width:960px;margin:2em auto}button,select{margin:5px;padding:8px}pre{white-space:pre-wrap;overflow-wrap:anywhere;border:1px solid #aaa;padding:12px}strong{color:#923600}</style>
+<h1>Phase 1: Storage-Spike</h1>
+<p><strong>Nur synthetische Ordner unter test-vault auswählen.</strong> Keine Produktoberfläche, kein Editor. Kein Autosave. Sicherungen bleiben im gewählten Ordner unter .storage-spike-backups.</p>
+<button id="choose">Test-Vault wählen / wechseln</button><button id="grant">Rechte erneut anfordern</button>
+<button id="scan">Dateiliste aktualisieren</button><select id="files"></select><button id="open">Datei laden</button>
+<p><button id="change">Festen Testmarker anhängen</button><button id="save">Explizit speichern</button><button id="check">Datei/Rechte prüfen</button></p>
+<label>Fehler beim nächsten Speichern: <select id="fault"><option value="">keiner</option><option value="write">Schreibfehler vor close</option><option value="abort">Stream abbrechen</option><option value="race">Pause nach letzter Prüfung</option></select></label>
+<button id="continue" disabled>Nach externer Änderung fortsetzen</button>
+<p><button id="recover">Gesicherte Browser-Entwürfe auflisten</button><select id="drafts"></select><button id="loadDraft">Gewählten Entwurf laden</button></p>
+<p><select id="backups"></select><button id="listBackups">Dateisicherungen auflisten</button><button id="restore">Gewählte Sicherung als Entwurf laden</button></p>
+<p id="status" role="status">Bereit.</p><h2>Ladefassung / Entwurf / aktuelle Datei</h2><pre id="preview"></pre><h2>Protokoll</h2><pre id="log"></pre>
+<script type="module" src="./app.mjs"></script></html>

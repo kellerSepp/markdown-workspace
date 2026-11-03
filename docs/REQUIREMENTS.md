@@ -1,4 +1,4 @@
-# Anforderungen (Stand 2026-11-02)
+# Anforderungen (Stand 2026-11-03)
 
 ## Ziel
 Ein schneller, schlichter, ressourcenschonender Markdown-Workspace, der ohne klassische Installation und ohne eigenen permanenten Server funktioniert.
@@ -18,7 +18,21 @@ Ein schneller, schlichter, ressourcenschonender Markdown-Workspace, der ohne kla
 - Copy/Export, später PDF und optional Logseq-Import.
 - Optionale spätere portable Desktopvariante.
 
-## Noch offen
+## Ergänzung: Tastaturbedienung und Command Palette (freigegebene Anforderung)
+
+- Tastaturzentrierte Hauptbedienung nach Org-mode und Emacs; sämtliche wesentlichen Funktionen auch per Maus erreichbar.
+- Mehrstufige Tastensequenzen, etwa `G → J` für Journal und `G → A` für Agenda; Beispiele sind noch keine verbindlichen Belegungen.
+- Kleine kontextabhängige Hilfe zeigt nach einem Sequenzpräfix mögliche Folgebefehle.
+- Durchsuchbare Command Palette, beispielsweise über `Strg+K`, vollständig per Tastatur und Maus bedienbar. Konkretes Kürzel erst nach Konfliktprüfung festlegen.
+- Deutsches Layout QWERTZ/DE-DE unterstützen; langfristig vollständig konfigurierbare Tastenkürzel.
+- Konflikte mit Windows- und Browser-Shortcuts berücksichtigen. Normale Texteingabe darf niemals versehentlich Tastenkürzel auslösen.
+- Schlichte, schnelle Oberfläche ohne unnötige Animationen und ohne dauerhaftes Hintergrund-Polling.
+
+Abnahme in einer später freigegebenen Entwicklungsphase: wesentliche Aktionen lassen sich mit beiden Eingabemethoden erreichen; Sequenzhilfe und Palette sind prüfbar; normale Texteingabe einschließlich `gj`/`ga` löst in Eingabefeldern keinen Befehl aus; DE-DE und reservierte OS-/Browserkombinationen werden explizit getestet. Kürzelkonfiguration bleibt langfristiges Ziel, kein automatisch erweiterter Phase-2-Umfang.
+
+Grenze: hier nur Produktanforderungen; keine Implementierung, keine Editor- oder Bibliothekswahl und keine Phase-2-Freigabe. Journal-/Agenda-Funktionen bleiben an ihre eigenen Phasen gebunden.
+
+## Noch offene Entscheidungen
 - Markdown-Syntax für Aufgabenstatus, Zeitstempel und Metadaten.
 - Wahl des Editors/Frameworks (geringe Komplexität und RAM sind Entscheidungskriterien).
 - Offline/PWA-Hosting-Strategie ohne dauerhaft laufenden eigenen Server.
@@ -37,3 +51,4 @@ Ein schneller, schlichter, ressourcenschonender Markdown-Workspace, der ohne kla
 - Nach Tab-Rückkehr zügig bedienbar; nur nötige Daten aktualisieren.
 - Keine Datenverluste durch stillschweigende Überschreibung.
 - Messbare Performancekriterien vor Implementierung vorschlagen.
+- Langzeitstabilität bei stundenlang geöffneter Anwendung prüfen: Memory Leaks und schleichende Performanceverschlechterung anhand dokumentierter Last, Laufzeit, Speicherentwicklung und Latenzen untersuchen. Konkrete Messbudgets vor entsprechender Umsetzung festlegen; hier noch kein Langzeittest ausgeführt.

@@ -4,7 +4,7 @@ Minimalistischer, lokaler Markdown-Workspace, inspiriert von Org-mode, Obsidian,
 
 ## Status
 
-**Phase 0: Planung.** Es existiert noch keine Anwendung.
+**Phase 1: Storage-Spike.** Technisches Wegwerfexperiment, keine Produktanwendung. Start: `python spike/serve.py`, dann in Edge `http://127.0.0.1:8765`. Ausschließlich synthetische Ordner unter `test-vault` auswählen. [Testanleitung und Risiken](docs/STORAGE_SPIKE.md). Edge-Abnahme offen; Phase 2 nicht begonnen.
 
 ## Prinzipien
 

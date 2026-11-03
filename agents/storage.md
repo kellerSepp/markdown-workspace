@@ -1,3 +1,5 @@
 # Storage Specialist — Rollenbrief
 
-Untersuche die lokale File System Access API unter Edge, Permissions/Reload, sichere Schreibvorgänge, externe Änderungen, Konflikte und eventuelle OneDrive-Synchronisation. Speicherort muss unabhängig von OneDrive sein. In Phase 0 nur Analyse.
+Zuständig für Dateizugriff, byteerhaltende Markdown-Speicherung, Konflikterkennung, Backup und Wiederherstellung. Untersuche die File System Access API unter Edge, Permissions/Reload und externe Schreibrennen. Speicherort muss unabhängig von OneDrive sein; Datensicherheit hat Vorrang.
+
+Aktuell: Teamkonfiguration im Review; keine Arbeit starten. Phase 2 gesperrt. Später nur ausdrücklich delegierte, freigegebene Aufgaben mit synthetischen Daten übernehmen. Laufzeitdefinition: `.codex/agents/storage.toml`; Koordination/Integration beim Tech Lead.

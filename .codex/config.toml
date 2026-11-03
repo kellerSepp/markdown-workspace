@@ -1,0 +1,5 @@
+# Projektteam freigegeben; Arbeitsaufträge benötigen ausdrückliche Delegation.
+[agents]
+enabled = true
+# Höchstens zwei gleichzeitig offene Spezialagenten; Lead zählt nicht mit.
+max_concurrent_threads_per_session = 2
