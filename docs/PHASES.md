@@ -1,5 +1,9 @@
 # Entwicklungsphasen – zur Freigabe
 
+## Aktuelle Freigabe: Phase 2 M1, 2026-11-03
+
+Nur Datei aus synthetischem Test-Vault öffnen, CodeMirror-Rohtext bearbeiten und explizit mit Konfliktprüfung/Sicherung speichern. Keine vollständige Produktoberfläche. Faltung, weitere Codeblocksprachen, Sequenzhilfe/Palette und spätere Funktionen sind keine verpflichtenden M1-Erweiterungen. Performancebudgets unten bleiben vorläufig; keine Abnahme durch bloße Bibliothekswahl. Weitere Entwicklung nach M1 erst nach Rückmeldung des PO. Historische Sperren unten sind für diesen Abschnitt überholt.
+
 Aktualisierung 2026-11-03: Phase 0 bestätigt, Phase 1 ausdrücklich freigegeben und als Wegwerfexperiment umgesetzt. Edge-Abnahme steht aus; Anleitung/Ergebnisse in [STORAGE_SPIKE.md](STORAGE_SPIKE.md). Phase 2 bleibt gesperrt. Ein aktiver Vault zur Zeit, Wechsel zwischen synthetischen Test-Vaults möglich; OneDrive nicht erforderlich. Externe Schreibrennen bleiben ein Produktblocker bis zur PO-Entscheidung.
 
 Stand: 2026-11-02. Jede Phase braucht vor Umsetzung eigene Freigabe.
@@ -14,6 +18,12 @@ Stand: 2026-11-02. Jede Phase braucht vor Umsetzung eigene Freigabe.
 | 5 Offline/Export | Offline-Neustart, sichere Updates, Copy/Export, PDF; Logseq nach Formatentscheidung | kein ungeprüftes Importüberschreiben |
 | 6 Board | offenes Layout, konsistente YAML-Beziehungen | keine permanente Graphberechnung |
 | 7 Distribution | portable Machbarkeit und Releaseprüfung | kein automatisches Publishing |
+
+## Geplante UI-Erweiterung: Themes, danach Skins
+
+Nach dem ersten Editorabschnitt einen separat freizugebenden kleinen Theme-Meilenstein planen: semantische Tokens, mehrere lokale Farbpaletten, Wechsel ohne Neustart und lokale Auswahl; datenbasierten JSON-Import/-Export dabei ausdrücklich abgrenzen. Anforderungen und Abnahme in REQUIREMENTS.md, technischer Vorschlag in ARCHITECTURE.md. Reihenfolge innerhalb dieses Abschnitts, erste Paletten und Schema vor Implementierung zur Prüfung vorlegen.
+
+Aufwendigere Skins und ein Theme-Editor mit Live-Vorschau bleiben spätere, getrennt freizugebende Abschnitte. Kein Ausbau von M1 durch diese Planungsnotiz, keine Animationseffekte oder Pluginplattform.
 
 ## Erster Spike: Edge und Testordner
 

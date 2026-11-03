@@ -1,5 +1,13 @@
 # Architekturvorschlag – zur Freigabe
 
+## Freigegebener Abschnitt: Phase 2 M1 (2026-11-03)
+
+Native Weboberfläche und CodeMirror 6, ein aktives Markdown-Dokument. Editor meldet Textänderungen an einen separaten Storage-Adapter; nur dieser verwaltet Datei-Handles, Rohbytes, Entwürfe, Konflikte und Sicherungen. Der geprüfte Schreibpfad aus `spike/storage.mjs` bleibt Grundlage. Kein Markdown-/YAML-Parser oder neues Datenmodell.
+
+UTF-8 wird strikt gelesen; BOM und unberührte Zeilenenden müssen trotz normalisierter Editoransicht erhalten bleiben. Neue Zeilen verwenden einen aus der Datei abgeleiteten Stil. Ungültiges UTF-8 blockiert das Öffnen statt verlustbehafteter Umwandlung. Browserentwürfe sind kein unabhängiges Backup.
+
+Grenze: synthetische Testdaten; das externe Schreibrennen ist hierfür akzeptiert. Sicherungen bleiben separat im Test-Vault ohne automatische Löschung. Keine Garantie für OS-Dateimetadaten. Abnahme: Öffnen/Bearbeiten/Speichern, No-op, Konflikt und Fehler mit Entwurfserhalt automatisiert prüfen; echte Edge-, QWERTZ-, Idle- und Performanceprüfung separat kennzeichnen. Frühere Sperren im folgenden historischen Vorschlag gelten nicht für M1.
+
 Aktualisierung 2026-11-03: Phase 0 wurde geprüft/freigegeben, Phase 1 separat autorisiert (DECISIONS.md). Der Storage-Spike verwendet native Module, Bytevergleiche, IndexedDB-Entwürfe, verifizierte Rohbytesicherungen und ein originweites Web Lock. Keine Parser-/Editorwahl abgeleitet. Abnahme und Grenzen: [STORAGE_SPIKE.md](STORAGE_SPIKE.md). Das automatisiert reproduzierte externe Schreibrennen verhindert weiterhin eine Aussage „kein Datenverlust“; vor Phase 2 Speicherstrategie entscheiden. Browsernachweis noch offen.
 
 Stand: 2026-11-02. Alle folgenden technischen Entscheidungen sind Vorschläge. Bestätigte Produktentscheidungen bleiben unverändert in DECISIONS.md.
@@ -17,6 +25,17 @@ Empfehlung: statische Edge-Webanwendung ohne Backend. Oberfläche, Dokumentmodel
 Spike mit Browser-JavaScript und nativen APIs; später TypeScript als Kandidat für überprüfbare Modulgrenzen. Markdown-/YAML-Parser und sichere Vorschau separat auswählen, keinen vollständigen Parser selbst bauen. Keine Pakete oder Versionen beschlossen.
 
 Abnahme: Fachmodell ohne UI prüfbar; Dateiadapter austauschbar. Grenze: kein Framework und kein Backend in Phase 0.
+
+## Theme-System: Architekturvorschlag zur weiteren UI-Planung
+
+Die Produktanforderungen in REQUIREMENTS.md sind bestätigt; folgende technische Ausgestaltung bleibt Vorschlag bis zur Umsetzungsfreigabe:
+
+- Eine gemeinsame semantische Token-Schicht für UI und CodeMirror: etwa Flächen, Text, Akzent, Fokus, Auswahl, Fehler, Rahmen, Schriftfamilie/-größe und Syntaxrollen. CSS-Variablen für die Oberfläche und eine austauschbare CodeMirror-Theme-Konfiguration aus denselben validierten Werten ableiten. Vorteil: konsistente Paletten ohne Editor-Neuaufbau; Aufwand: Zustände und Syntaxrollen vollständig abdecken.
+- Versioniertes JSON mit begrenzten bekannten Feldern und typisierten Werten. Importgröße, Wertebereiche und erlaubte Schriftangaben begrenzen; keine Skripte, HTML, frei formulierbaren CSS-Regeln, URLs oder externen Schrift-/Bildabrufe. Nur geprüfte Tokens übernehmen, unbekannte Formatversionen verständlich ablehnen. Vorteil: datenbasierter Import; Grenze: keine beliebige Skinbeschreibung im ersten Format.
+- Theme-Verwaltung getrennt von Editorinhalt und Storage halten. Ein Wechsel aktualisiert ausschließlich Darstellung, erhält Undo, Fokus und Auswahl und schreibt keine Markdown-Datei. Lokale Auswahl außerhalb des Vaults speichern; bei ungültiger Einstellung oder fehlendem Theme auf ein mitgeliefertes Basistheme zurückfallen.
+- Nur aktive Palette anwenden; keine Hintergrundschleifen. Mitgelieferte Paletten lokal bündeln. Aufwendige Skins später als eigene Darstellungsschicht mit gleichem Token-Vertrag planen; keine Pluginplattform ableiten. Feuer/Lava oder Terminalästhetik zunächst statisch, keine Effektengine.
+
+Abnahme: Kriterien in REQUIREMENTS.md, einschließlich unverändertem Dokumenttext beim Wechsel, sicherem JSON-Rundlauf, lokalem Neustart und lesbaren Zuständen. Vor Umsetzung Token-/JSON-Schema, erste Paletten, Kontrastgrenzen und Messmethode konkret zur Prüfung vorlegen. Theme-Editor/Live-Vorschau und Skins folgen in separaten Abschnitten; öffentliche Assets erst nach geklärter Herkunft/Lizenz. Dieser Vorschlag ändert keinen Anwendungscode.
 
 ## Dateizugriff und Bereitstellung
 

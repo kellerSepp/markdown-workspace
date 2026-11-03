@@ -1,5 +1,19 @@
 # Architekturentscheidungen
 
+## Produktplanung: Themes und Skins — 2026-11-03
+
+PO bestätigt eine langfristige ressourcenschonende Theme-Bibliothek mit den in REQUIREMENTS.md aufgeführten Stilrichtungen. Farbthemes und aufwendige Skins werden getrennt; zuerst schlankes System mit mehreren Paletten, später Skins und Theme-Editor mit Live-Vorschau. Design-Tokens, eigene datenbasierte JSON-Themes ohne Programmierung, lokaler Wechsel ohne Neustart und ohne externe Ladeabhängigkeit sind Anforderungen.
+
+Grenzen: kein ausführbarer Code in Themes, keine Inhaltsänderung, keine unnötigen Animationen/Hintergrundeffekte; lesbare Texte und barrierearme Kontraste. Bei Veröffentlichung keine ungeklärten Markenassets/geschützten Grafiken mitliefern. Noch keine Implementierung, Paketwahl, konkretes JSON-Schema oder Auswahl der ersten Paletten beschlossen. Technischer Vorschlag und Abnahmegrenzen in ARCHITECTURE.md und REQUIREMENTS.md.
+
+## Freigabe Phase 2, Meilenstein 1 — 2026-11-03
+
+Nach erfolgreichen QA- und parallelen Storage-/Developer-Reviews: direktes Speichern mit Konfliktprüfung und verifizierter Sicherung; externes Schreibrennen ausschließlich für synthetische Testdaten als Restrisiko akzeptiert. Keine persönlichen oder produktiven Vaults. Sicherungen separat im Test-Vault, keine automatische Löschung.
+
+CodeMirror 6 und notwendiger Buildprozess sind für Öffnen, Rohtextbearbeitung und explizites Speichern freigegeben. Schlichte Oberfläche, Tastatur/Maus, QWERTZ; Performanceziele bleiben vorläufig. Kein neues Datenmodell, Framework, Cloud-Dienst, Agenda, Wiki-Links, Board oder Pluginplattform. Weitere Meilensteine benötigen Freigabe.
+
+Abnahme: unveränderte Dateien ohne Schreibstream; erkannte externe Änderungen blockieren Speichern und erhalten Entwürfe; keine Markdown-/YAML-Umformatierung; bestehende Storage-Tests bleiben bestehen. Developer und Storage implementieren abgegrenzt, anschließend unabhängige QA. Kein Produktionsnachweis.
+
 ## Freigabe: Teamaktivierung und Bedienungsanforderungen, 2026-11-03
 
 Kontext: vier Projektrollen wurden vom PO geprüft. Entscheidung: Konfiguration grundsätzlich freigegeben, Subagenten aktivieren; Limit zwei beibehalten. Aktuell ausschließlich ein lesender QA-Dokumentationsauftrag autorisiert, keine Tests, Dateiänderungen durch QA oder Unterdelegation. Phase 2 bleibt gesperrt. Ein fehlender Rollenstart darf nicht durch einen Lead-Bericht als Delegationserfolg ersetzt werden.

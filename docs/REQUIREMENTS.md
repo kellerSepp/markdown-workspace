@@ -32,6 +32,36 @@ Abnahme in einer später freigegebenen Entwicklungsphase: wesentliche Aktionen l
 
 Grenze: hier nur Produktanforderungen; keine Implementierung, keine Editor- oder Bibliothekswahl und keine Phase-2-Freigabe. Journal-/Agenda-Funktionen bleiben an ihre eigenen Phasen gebunden.
 
+## Theme- und Skin-System (Produktanforderung, 2026-11-03)
+
+Langfristig eine umfangreiche, ressourcenschonende Bibliothek. Farbthemes ändern die Palette und Typografie; aufwendigere Skins gestalten die Oberfläche darüber hinaus. Beide getrennt behandeln.
+
+Gewünschte Stilrichtungen:
+
+| Richtung | Gestaltungsziel |
+| --- | --- |
+| Matrix | grün/schwarzes Terminal |
+| Star Trek | LCARS-inspirierte Oberfläche |
+| Star Wars | galaktisches Archiv |
+| Lord of the Rings | Pergament, Gold, dunkle Erdtöne, Grün und Braun |
+| DOOM | dunkel, industriell, Feuer und Lava als statische Gestaltung |
+| Wolfenstein | militärisch-industrieller Retro-Stil |
+| Winamp Classic | Retro-Mediaplayer-Ästhetik |
+| Midnight, Terminal, Nord, Paper | schlichte Basisthemes |
+
+- Design-Tokens für Farben, Rahmen, Schrift und Syntaxhervorhebung; Oberfläche und Editor konsistent gestalten.
+- Eigene Themes ohne Programmierung erstellen und anpassen; Import/Export als JSON. Langfristig einfacher Theme-Editor mit Live-Vorschau.
+- Wechsel ohne Neustart; Auswahl lokal speichern. Laden ohne externe Abhängigkeit oder Netzwerkzugriff.
+- Importierte Themes enthalten ausschließlich Daten, keinen ausführbaren Code. Markdown-Inhalte, YAML, Entwürfe und Speicherverhalten bleiben unverändert.
+- Keine unnötigen Animationen oder laufenden Hintergrundeffekte. Barrierearme Kontraste, gut lesbare Texte und erkennbare Fokus-/Auswahl-/Fehlerzustände in jeder Palette.
+- Vor öffentlicher Veröffentlichung keine ungeklärten Markenassets oder urheberrechtlich geschützten Grafiken mitliefern. Die Stilnamen beschreiben Wünsche und erlauben keine Assetübernahme.
+
+Priorität: zuerst schlankes Theme-System mit mehreren Farbpaletten; aufwendige Skins und Theme-Editor erst später. Welche Paletten zuerst geliefert werden, bleibt offen.
+
+Abnahme für einen später freizugebenden Abschnitt: Wechsel erhält Dokumenttext, Auswahl und Undo; Auswahl bleibt nach erneutem Start erhalten; JSON-Export/-Import erhält unterstützte Werte; ungültige oder aktive Inhalte werden abgewiesen, ohne das funktionierende Theme zu verlieren. Alle UI-/Syntaxzustände auf Kontrast und Lesbarkeit prüfen; kein Netzwerkabruf und keine dauernde Hintergrundarbeit durch Themes. Konkrete Kontrast- und Ressourcenmesskriterien vor Umsetzung festlegen.
+
+Grenze: dieser Auftrag dokumentiert Anforderungen und Architektur; keine Implementierungsfreigabe für Themes, Skins oder Theme-Editor, keine neuen Pakete oder Änderung des Notizdatenmodells.
+
 ## Noch offene Entscheidungen
 - Markdown-Syntax für Aufgabenstatus, Zeitstempel und Metadaten.
 - Wahl des Editors/Frameworks (geringe Komplexität und RAM sind Entscheidungskriterien).

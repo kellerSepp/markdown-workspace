@@ -1,9 +1,26 @@
 # Projektstatus
 
-**Phase:** 1 — Storage-Spike praktisch teilgeprüft; Agententeam aktiviert, QA-Rollentest blockiert
+**Phase:** 2 — Meilenstein 1, experimenteller Markdown-Editor
 **Stand:** 2026-11-03
-**Anwendungscode:** technisches Wegwerfexperiment in `spike/`; keine Pakete installiert
-**Freigabe:** Teamkonfiguration bestätigt und Aktivierung autorisiert; ausschließlich ein lesender QA-Auftrag erlaubt. Phase 2 und weitere Agentenarbeit gesperrt.
+**Anwendungscode:** separater Editor in `editor/`; unveränderter Schreibkern in `spike/storage.mjs` wiederverwendet.
+**Freigabe:** M1 Öffnen/Bearbeiten/explizites Speichern mit CodeMirror 6. Nur synthetische Testdaten; externes Schreibrennen hierfür akzeptiert. Keine Produktfreigabe oder weiteren Meilensteine.
+
+## Aktueller Meilenstein
+
+- Nutzerbericht 2026-11-03: erster Editor erfolgreich in Edge praktisch getestet; Schreiben, Speichern, Schließen und erneutes Öffnen funktionierten. Nicht durch Lead wiederholt; keine genauen Browser-/Geräteversionen oder Messprotokolle geliefert. Dies ersetzt keine vollständige Sicherheits-, QWERTZ- oder Performanceabnahme.
+- Planungsarbeit Themes: gewünschte Stilrichtungen, Trennung von Paletten/Skins, Tokens, sicherer JSON-Import/-Export, lokale Auswahl und spätere Live-Vorschau dokumentiert. Anforderungen in REQUIREMENTS.md, bestätigte Priorität in DECISIONS.md, technischer Vorschlag in ARCHITECTURE.md und Etappen in PHASES.md. Nur Dokumentation geändert; keine neuen Agenten, Pakete oder Implementierung.
+
+- QA-Delegationstest und parallele Storage-/Developer-Reviews wurden erfolgreich durchgeführt; die nachstehenden historischen Blockiert-Meldungen sind überholt.
+- Beteiligte Implementierung: `developer_m1` (Rolle developer) und `storage_m1` (Rolle storage) parallel; anschließend unabhängige `qa_m1` (Rolle qa). Keine Unterdelegation.
+- Editor und Storage getrennt. Striktes UTF-8, BOM/unberührte Zeilenenden erhalten, keine YAML-/Markdown-Neuformatierung. Verifizierte Sicherungen samt JSON-Dateizuordnung im Test-Vault, keine automatische Löschung. IndexedDB-Entwürfe und Wiederaufnahme; explizites Speichern mit Web Lock und Konfliktprüfung.
+- Vorbestehender Fixturefehler: `test-vault/vault-a/mixed.md` enthielt kein CRLF; ausschließlich dem ersten LF wurde ein CR vorangestellt, alle übrigen Bytes erhalten. Danach alle 11 bestehenden Storage-Tests bestanden. Keine Abschwächung der Tests oder Änderung des Spike-Schreibkerns.
+- Anleitung und genaue Abhängigkeiten: [EDITOR_M1.md](EDITOR_M1.md). `npm run build`, Syntaxprüfungen und 24 automatisierte Tests bestanden (11 bestehende, 13 neue). Minifiziertes JavaScript etwa 528 KB; dies ist kein RAM-/Performancebeleg.
+- QA fand einen CR/LF-Grenzfall beim Löschen: zwei logische Zeilen konnten verschmelzen. Lead korrigierte ihn samt Regressionstest; unabhängiger QA-Retest einschließlich 37 zusätzlicher In-Memory-Fälle erfolgreich. UI-Integration wurde zusätzlich auf Undo-Dateigrenzen und ausstehende Entwurfssicherung geprüft.
+- Unabhängige QA: 24/24 Tests, Build, Syntax und `git diff --check` bestanden. Vier Serverassets plus HEAD erfolgreich; Vault-Zugriff, direkte/kodierte Pfadtraversierung, `package.json` und POST mit 404 abgewiesen; Testserver beendet. CodeMirror-Zustandsprüfung zur Undo-Grenze bestanden. Keine verbleibenden M1-Blocker im geprüften Umfang; keine tatsächliche Edge- oder Performanceabnahme behauptet.
+
+**Nächste Aktion:** Auf PO-Rückmeldung bzw. nächsten begrenzten Umsetzungsauftrag warten. Für Themes noch erste Paletten, Token-/JSON-Schema, Kontrastkriterien und messbare Ressourcenabnahme konkretisieren. Weiter offen: vollständige Edge-/QWERTZ-Abnahme, Rechteentzug/vollständiger Browserneustart, Restore und Idle-/Langzeit-/Performancebelege. Weitere Funktionen sowie persönliche/produktive Vaults bleiben gesperrt. Sicherungsaufbewahrung über das vorläufige „nicht löschen“ hinaus und spätere Bereitstellung sind offen.
+
+## Historischer Stand vor M1 (durch aktuelle Freigabe teilweise überholt)
 
 ## Aktuelles Arbeitspaket
 
