@@ -1,6 +1,10 @@
 # Entwicklungsphasen – zur Freigabe
 
-## Aktuelle Freigabe: Phase 2 M1, 2026-11-03
+## Aktuelle Freigabe: Phase 2 M2, 2026-11-03
+
+Nur Theme-Grundgerüst: Midnight als Standard sowie Terminal, Nord, Paper, sofortiger Wechsel per UI-Auswahl und Browserpersistenz. Gemeinsame Tokens für Oberfläche und Syntax, keine Inhalts-/Storageänderungen. Developer implementiert, anschließend unabhängige QA; Abnahme: bestehende Tests, Themewechsel ohne Text-/Undoverlust, persistierte Auswahl mit Fallback, lesbare Zustände, keine dauernde Hintergrundarbeit. JSON-Import/-Export, Skins, Theme-Editor und weitere Funktionen bleiben gesperrt. Danach stoppen und auf PO-Rückmeldung warten.
+
+### Vorherige Freigabe M1
 
 Nur Datei aus synthetischem Test-Vault öffnen, CodeMirror-Rohtext bearbeiten und explizit mit Konfliktprüfung/Sicherung speichern. Keine vollständige Produktoberfläche. Faltung, weitere Codeblocksprachen, Sequenzhilfe/Palette und spätere Funktionen sind keine verpflichtenden M1-Erweiterungen. Performancebudgets unten bleiben vorläufig; keine Abnahme durch bloße Bibliothekswahl. Weitere Entwicklung nach M1 erst nach Rückmeldung des PO. Historische Sperren unten sind für diesen Abschnitt überholt.
 

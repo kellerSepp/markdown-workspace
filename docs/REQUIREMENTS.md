@@ -56,11 +56,11 @@ Gewünschte Stilrichtungen:
 - Keine unnötigen Animationen oder laufenden Hintergrundeffekte. Barrierearme Kontraste, gut lesbare Texte und erkennbare Fokus-/Auswahl-/Fehlerzustände in jeder Palette.
 - Vor öffentlicher Veröffentlichung keine ungeklärten Markenassets oder urheberrechtlich geschützten Grafiken mitliefern. Die Stilnamen beschreiben Wünsche und erlauben keine Assetübernahme.
 
-Priorität: zuerst schlankes Theme-System mit mehreren Farbpaletten; aufwendige Skins und Theme-Editor erst später. Welche Paletten zuerst geliefert werden, bleibt offen.
+Priorität: zuerst schlankes Theme-System mit mehreren Farbpaletten; aufwendige Skins und Theme-Editor erst später. Phase 2 M2 ist für Midnight (Standard), Terminal, Nord und Paper freigegeben: UI-Auswahl, sofortiger Wechsel und im Browser gespeicherte Auswahl. Alle vier Paletten müssen UI und Markdown-Syntax konsistent gestalten, insbesondere Auswahl, Cursor und Codeblöcke.
 
 Abnahme für einen später freizugebenden Abschnitt: Wechsel erhält Dokumenttext, Auswahl und Undo; Auswahl bleibt nach erneutem Start erhalten; JSON-Export/-Import erhält unterstützte Werte; ungültige oder aktive Inhalte werden abgewiesen, ohne das funktionierende Theme zu verlieren. Alle UI-/Syntaxzustände auf Kontrast und Lesbarkeit prüfen; kein Netzwerkabruf und keine dauernde Hintergrundarbeit durch Themes. Konkrete Kontrast- und Ressourcenmesskriterien vor Umsetzung festlegen.
 
-Grenze: dieser Auftrag dokumentiert Anforderungen und Architektur; keine Implementierungsfreigabe für Themes, Skins oder Theme-Editor, keine neuen Pakete oder Änderung des Notizdatenmodells.
+Grenze: M2 erlaubt nur das Theme-Grundgerüst mit vier Paletten; JSON-Import/-Export, Skins und Theme-Editor bleiben Zukunftsanforderungen. Keine Änderung des Notizdatenmodells oder neuer Editor-/Storagefunktionen.
 
 ## Noch offene Entscheidungen
 - Markdown-Syntax für Aufgabenstatus, Zeitstempel und Metadaten.

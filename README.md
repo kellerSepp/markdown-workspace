@@ -4,7 +4,7 @@ Minimalistischer, lokaler Markdown-Workspace, inspiriert von Org-mode, Obsidian,
 
 ## Status
 
-**Phase 1: Storage-Spike.** Technisches Wegwerfexperiment, keine Produktanwendung. Start: `python spike/serve.py`, dann in Edge `http://127.0.0.1:8765`. Ausschließlich synthetische Ordner unter `test-vault` auswählen. [Testanleitung und Risiken](docs/STORAGE_SPIKE.md). Edge-Abnahme offen; Phase 2 nicht begonnen.
+**Phase 2, Meilenstein 2: Theme-Grundgerüst für den experimentellen Markdown-Editor.** Midnight (Standard), Terminal, Nord und Paper; [Theme-Anleitung](docs/THEMES_M2.md). Nur synthetische Ordner unter `test-vault` verwenden, keine Produktanwendung. Start: `npm ci`, `npm start`; in Edge `http://127.0.0.1:8766` öffnen. [Editor-Anleitung und Grenzen](docs/EDITOR_M1.md). Der separate Phase-1-Spike bleibt unverändert verfügbar: [Anleitung](docs/STORAGE_SPIKE.md). Weitere Meilensteine und produktive Verwendung sind nicht freigegeben.
 
 ## Prinzipien
 

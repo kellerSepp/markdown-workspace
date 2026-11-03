@@ -3,7 +3,13 @@
 ## Purpose
 Build a lightweight, local-first Markdown workspace. The product owner wants to work iteratively and review each architectural decision.
 
-## Current gate: TEAM APPROVED; READ-ONLY QA DELEGATION TEST; PHASE 2 BLOCKED
+## Current gate: PHASE 2, MILESTONE 2 THEMES APPROVED; SYNTHETIC DATA ONLY
+- Current authorization: add only modular Midnight (default), Terminal, Nord and Paper themes, immediate UI/editor switching and browser-local selection. Developer implements; QA independently checks afterward. No Storage changes unless necessary, no new editor features, skins, theme import/export/editor, frameworks or unnecessary dependencies. Further milestones require approval.
+- Current authorization (2026-11-03): implement only opening, raw Markdown editing with CodeMirror 6, and explicit protected saving. Developer and Storage may work in parallel; QA may subsequently review and run bounded checks independently. No further subdelegation.
+- Direct replacement with conflict checks and separate backups in the test vault is approved. The external write race is accepted only for synthetic test data. No automatic backup deletion, production/personal vaults, publishing, cloud services, or unrelated features.
+- CodeMirror and necessary build dependencies are approved; no large framework. Later Phase 2 milestones still require approval. The historical restrictions below are superseded only within this scope.
+
+### Historical gate before milestone 1
 - Phase 0 and the Phase 1 throwaway storage spike were explicitly approved.
 - Current authorization: project agent configuration and documentation only; no application changes.
 - Team configuration and activation are approved. Only one subagent named `qa` is authorized for the first read-only documentation check. No tests, edits or further agents by QA.

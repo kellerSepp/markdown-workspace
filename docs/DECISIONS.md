@@ -1,5 +1,11 @@
 # Architekturentscheidungen
 
+## Freigabe Phase 2, Meilenstein 2 — 2026-11-03
+
+PO gibt ausschließlich ein schlankes Theme-Grundgerüst frei: Midnight (Standard, Anthrazit/Blau), Terminal (Dunkel/Grün), Nord (gedämpftes Blau/Grau) und Paper (warm/hell). Auswahl in der Oberfläche, sofortiger Wechsel ohne Reload und lokale Wiederherstellung beim nächsten Start. Zentrale CSS-Tokens, konsistente UI-/Editor-/Syntaxfarben und lesbare Auswahl, Cursor und Codeblöcke.
+
+Theme-Daten möglichst unabhängig von CodeMirror; spätere Bibliothek und eigene JSON-Themes architektonisch ermöglichen. JSON-Import/-Export, Theme-Editor und Skins sind noch nicht freigegeben. Keine Markdown-/Storageänderungen, Hintergrundprozesse, Animationen, neuen Frameworks oder unnötigen Abhängigkeiten. Developer implementiert, QA prüft unabhängig; Storage nur bei tatsächlichem Bedarf. Bestehende Tests müssen bestehen. Keine produktive Nutzung oder Veröffentlichung.
+
 ## Produktplanung: Themes und Skins — 2026-11-03
 
 PO bestätigt eine langfristige ressourcenschonende Theme-Bibliothek mit den in REQUIREMENTS.md aufgeführten Stilrichtungen. Farbthemes und aufwendige Skins werden getrennt; zuerst schlankes System mit mehreren Paletten, später Skins und Theme-Editor mit Live-Vorschau. Design-Tokens, eigene datenbasierte JSON-Themes ohne Programmierung, lokaler Wechsel ohne Neustart und ohne externe Ladeabhängigkeit sind Anforderungen.

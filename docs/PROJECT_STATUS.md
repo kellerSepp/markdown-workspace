@@ -1,11 +1,22 @@
 # Projektstatus
 
-**Phase:** 2 — Meilenstein 1, experimenteller Markdown-Editor
+**Phase:** 2 — Meilenstein 2, Theme-Grundgerüst
 **Stand:** 2026-11-03
 **Anwendungscode:** separater Editor in `editor/`; unveränderter Schreibkern in `spike/storage.mjs` wiederverwendet.
-**Freigabe:** M1 Öffnen/Bearbeiten/explizites Speichern mit CodeMirror 6. Nur synthetische Testdaten; externes Schreibrennen hierfür akzeptiert. Keine Produktfreigabe oder weiteren Meilensteine.
+**Freigabe:** ausschließlich M2 Themes Midnight (Standard), Terminal, Nord und Paper mit sofortigem Wechsel und Browserpersistenz. Keine neuen Editor-/Storagefunktionen, Skins oder JSON-Import/-Export. Nur synthetische Testdaten; keine Produktfreigabe oder weiteren Meilensteine.
 
 ## Aktueller Meilenstein
+
+- `developer_themes` (Rolle developer) implementierte das Theme-Grundgerüst; `qa_themes` (Rolle qa) prüfte unabhängig lesend. Storage-Spezialist nicht benötigt, Speicherbereich unverändert. Lead dokumentierte. Keine Unterdelegation.
+- Midnight (Standard), Terminal, Nord, Paper mit CSS-Tokens und getrenntem CodeMirror-Adapter umgesetzt. Sofortiger Wechsel, lokale Auswahl und Midnight-Fallback; kein Theme-Import, Skin oder grafischer Theme-Editor.
+- Lead und Developer: abschließend 29/29 Tests bestanden (24 bestehende plus fünf Themeprüfungen), Build und Syntaxprüfungen erfolgreich. Neue Prüfungen: Auswahlpersistenz/Fallback, Tokenanwendung, wiederholter Wechsel mit Text-/Auswahl-/Undoerhalt, rechnerische Kontrastpaare und erzeugte CSS-Auswahl-/Fokusregeln. `git diff --check` bestanden. Bundle etwa 532 KB; kein RAM-/Latenznachweis.
+- QA fand eine CSS-Spezifitätskollision: CM-Basisregeln überstimmten fokussierte Auswahl und Fokusrahmen. Developer korrigierte den Adapter und ergänzte einen Regressionstest am erzeugten CSS. QA bestätigte die Korrektur lesend; keine weiteren M2-Blocker im geprüften Umfang. Kein automatisierter Browsernachweis daraus abgeleitet.
+- QA-Ausführungsgrenze: aktive QA-Rolleninstruktionen enthalten noch das historische Verbot von Tests/Dateiänderungen. Deshalb unabhängiger lesender Review; automatisierte Läufe durch Lead/Developer. Keine Agentenkonfiguration im M2-Auftrag geändert.
+- Browser-Sichtprüfung durch Lead versucht, Browserzugriff meldet „browser access host unavailable“. Kein Theme-Browsererfolg behauptet. Port 8766 war bereits belegt, bestehender Server nicht beendet. Anleitung und manuelle Abnahme: [THEMES_M2.md](THEMES_M2.md).
+
+**Nächste Aktion:** M2 implementiert; stoppen und auf PO-Rückmeldung warten. Manuelle Lesbarkeit in Edge, native Menüs, Zoom/Hochkontrast, lokale Wiederaufnahme, Fokus/Auswahl/Undo und später Ressourcenmessungen getrennt nachweisen. Keine weitere Entwicklungsphase ableiten.
+
+## Vorheriger Meilenstein M1 und Theme-Planung
 
 - Nutzerbericht 2026-11-03: erster Editor erfolgreich in Edge praktisch getestet; Schreiben, Speichern, Schließen und erneutes Öffnen funktionierten. Nicht durch Lead wiederholt; keine genauen Browser-/Geräteversionen oder Messprotokolle geliefert. Dies ersetzt keine vollständige Sicherheits-, QWERTZ- oder Performanceabnahme.
 - Planungsarbeit Themes: gewünschte Stilrichtungen, Trennung von Paletten/Skins, Tokens, sicherer JSON-Import/-Export, lokale Auswahl und spätere Live-Vorschau dokumentiert. Anforderungen in REQUIREMENTS.md, bestätigte Priorität in DECISIONS.md, technischer Vorschlag in ARCHITECTURE.md und Etappen in PHASES.md. Nur Dokumentation geändert; keine neuen Agenten, Pakete oder Implementierung.
