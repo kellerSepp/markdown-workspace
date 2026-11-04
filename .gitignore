@@ -12,3 +12,5 @@ Thumbs.db
 # no personal vaults or accidental import datasets
 personal-vault/
 imports/
+# Local test-run backups are retained on disk, never committed.
+**/.storage-spike-backups/

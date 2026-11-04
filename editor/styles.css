@@ -8,6 +8,7 @@ button:disabled,select:disabled{cursor:default;color:var(--muted)}
 input{accent-color:var(--accent)}
 button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin:.6rem 0}
+fieldset{border:1px solid var(--border);margin:.6rem 0;padding:.3rem .6rem}legend{color:var(--muted)}
 select{max-width:35rem}
 #editor{border:1px solid var(--border);background:var(--surface)}
 .cm-editor{min-height:20rem}
@@ -19,3 +20,13 @@ select{max-width:35rem}
 details{margin-top:1rem}summary{cursor:pointer}strong{color:var(--warning)}
 code{background:var(--code-background);color:var(--text)}
 ::selection{background:var(--selection);color:var(--selection-text)}
+.command-palette{width:min(44rem,calc(100vw - 3rem));max-height:80vh;padding:1rem;color:var(--text);background:var(--surface);border:1px solid var(--border)}
+.command-palette::backdrop{background:var(--background);opacity:.7}
+.command-palette input{display:block;box-sizing:border-box;width:100%;font:inherit;padding:.6rem;background:var(--control);color:var(--text);border:1px solid var(--border)}
+.command-results{max-height:55vh;overflow:auto;margin:.5rem 0}
+.command-row{display:block;width:100%;text-align:left;white-space:normal;border:0;border-bottom:1px solid var(--border);border-radius:0;padding:.55rem .65rem;background:var(--surface)}
+.command-name,.command-detail{display:block}.command-detail{font-size:.85rem;color:var(--muted);margin-top:.2rem}
+.command-row[aria-disabled=true]{color:var(--muted);cursor:default}
+.command-row.command-active{background:var(--hover);outline:2px solid var(--focus);outline-offset:-2px}
+.command-context{position:fixed;z-index:10;width:min(26rem,calc(100vw - 1rem));max-height:65vh;overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--border);padding:.2rem}
+.command-context[hidden]{display:none}

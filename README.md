@@ -4,7 +4,19 @@ Minimalistischer, lokaler Markdown-Workspace, inspiriert von Org-mode, Obsidian,
 
 ## Status
 
-**Phase 2, Meilenstein 2: Theme-Grundgerüst für den experimentellen Markdown-Editor.** Midnight (Standard), Terminal, Nord und Paper; [Theme-Anleitung](docs/THEMES_M2.md). Nur synthetische Ordner unter `test-vault` verwenden, keine Produktanwendung. Start: `npm ci`, `npm start`; in Edge `http://127.0.0.1:8766` öffnen. [Editor-Anleitung und Grenzen](docs/EDITOR_M1.md). Der separate Phase-1-Spike bleibt unverändert verfügbar: [Anleitung](docs/STORAGE_SPIKE.md). Weitere Meilensteine und produktive Verwendung sind nicht freigegeben.
+**Aktuell: Phase 2 M4b.1 einschließlich Alt-Tastaturkorrektur.** Gemeinsame Command Registry, Palette über Alt+X, Editor-Kontextmenü und Org-referenzierte Strukturkürzel. [Bedienung und Grenzen](docs/ORG_KEYBOARD_M4B1.md), [Command Gamebook](docs/COMMAND_GAMEBOOK.md), [Projektstatus](docs/PROJECT_STATUS.md). Developer und unabhängige QA: 110/110 Tests und Build bestanden. PO berichtet erfolgreiche Bedienprobe ohne aktuell festgestellte Bugs. Start: `npm start`, in Edge `http://127.0.0.1:8766`; nur synthetische Ordner unter `test-vault/` wählen. M4b.2 und produktive Vaults bleiben gesperrt.
+
+### Historie bis M3.2b
+
+**Aktuell: M3.2b — Textformatierung und kräftigere Überschriftenfarben.** Fünf Auswahlformatierungen, sichere Toggles und zentrale H1–H6-Paletten in vier Themes. [Anleitung, Tests und Grenzen](docs/FORMATTING_M32B.md). Start `npm start`, dann `http://127.0.0.1:8766`; synthetische Probe `test-vault/vault-structure/formatting.md`. Keine neue Einrückung, Sprachbibliothek oder Storageänderung.
+
+**Bereits vorhanden: M3.2a.1 — Struktur-Tab und visuelle Hierarchie.** Tab/Shift+Tab, Fokusausstieg über Escape, optionale Headingeinrückung, Gliederungsmarker/-nummern im Rand und Theme-Codeflächen. Synthetische Probe `test-vault/vault-structure/hierarchy.md`. [Anleitung, Tests und Grenzen](docs/HIERARCHY_M32A1.md). Textfarbe, Kontextmenü/Palette und weitere Produktbereiche bleiben gesperrt.
+
+**Bereits vorhanden: M3.2a — Überschriften-/Listenstrukturverwaltung.** [Bedienung, Tests und Grenzen](docs/STRUCTURE_M32A.md). Formatierungsfunktionen aus M3.2b bleiben gesperrt; optionale visuelle Headingeinrückung ist nur im oben begrenzten M3.2a.1 freigegeben.
+
+**Bereits vorhanden: M3.1 — Kontextfaltung und Lesbarkeit.** Mehrstufige Sichtbarkeit und H1–H6-Farben, [Anleitung](docs/FOLDING_M31.md). Weitere Struktur-/Formatierungsplanung: [M3.2-Plan](docs/M3_2_STRUKTURPLAN.md); M3.2b noch nicht freigegeben.
+
+**Phase 2, Meilenstein 3: Markdown-Folding.** Überschriften per Maus oder Tastatur ein-/ausklappen; [Folding-Anleitung](docs/FOLDING_M3.md). Midnight (Standard), Terminal, Nord und Paper bleiben verfügbar; [Theme-Anleitung](docs/THEMES_M2.md). Nur synthetische Ordner unter `test-vault` verwenden, keine Produktanwendung. Start: `npm ci`, `npm start`; in Edge `http://127.0.0.1:8766` öffnen. [Editor-Anleitung und Grenzen](docs/EDITOR_M1.md). Der separate Phase-1-Spike bleibt unverändert verfügbar: [Anleitung](docs/STORAGE_SPIKE.md). Weitere Meilensteine und produktive Verwendung sind nicht freigegeben.
 
 ## Prinzipien
 

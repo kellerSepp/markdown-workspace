@@ -1,6 +1,16 @@
 # Projektbezogenes Agententeam
 
-Stand: 2026-11-03. Konfiguration vom PO grundsätzlich freigegeben und aktiviert; ausschließlich der erste lesende QA-Dokumentationsauftrag autorisiert. Phase 2 bleibt gesperrt. Kein Spezialagent wurde gestartet: die aktuelle Sitzung bietet keinen nachweisbaren Projektrollen-Selektor.
+Stand: 2026-11-03. Rollenrevision `M32A-2026-11-03` freigegeben und wirksam nachgewiesen. Developer darf innerhalb freigegebener Delegation implementieren und testen; QA darf unabhängig freigegebene Tests ausführen, aber Anwendungscode nicht eigenmächtig ändern. Tech Lead koordiniert/integriert und implementiert nur im begründeten Ausnahmefall. Storage bleibt zuständig für sicherheitskritische Speicheränderungen; Documentation nur nach explizitem Auftrag. Freigabe-/Datei-/Sicherheitsgrenzen gelten weiterhin.
+
+## Tatsächlich geprüfte Rollenübernahme vor M3.2a
+
+Nach Änderung der beiden TOML-Dateien, Rollenbriefe und AGENTS.md wurden **neue** Subagenten `/root/developer_role_check` mit `agent_type: developer` und `/root/qa_role_check` mit `agent_type: qa` gestartet. Beide bestätigten Revision `M32A-2026-11-03` in ihren tatsächlich geladenen Rolleninstruktionen; ausdrücklich nicht nur im nachträglich gelesenen Dateitext. Keine alten pauschalen Entwicklungs-/Test-/Phase-2-Sperren aktiv. Die Probe führte noch keine Implementierung oder Tests aus. Erst nach beiden Bestätigungen wurde M3.2a delegiert; QA führte danach die Baseline 52/52 aus.
+
+Ein Neustart der gesamten Hauptsitzung wurde nicht durchgeführt und erwies sich für diese frisch geladenen Rollen als nicht erforderlich. Bereits laufende ältere Agenten werden nicht als aktualisiert betrachtet. Bei erneutem Auftreten alter Instruktionen anhalten und frische Sitzung/erneute Prüfung vor Implementierung verlangen; kein Lead-Bypass.
+
+Das Rollenformat mit projektbezogenen TOML-Dateien und `name`, `description`, `developer_instructions` entspricht der [offiziellen OpenAI-Dokumentation](https://learn.chatgpt.com/docs/agent-configuration/subagents), am 2026-11-03 geprüft. Die praktische Übernahme ist durch die Agentenprobe belegt, nicht aus der Dokumentation abgeleitet.
+
+## Historische Einrichtungsnachweise (frühere Sperren überholt)
 
 ## Nachgewiesene Grundlage
 

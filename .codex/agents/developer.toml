@@ -10,7 +10,9 @@ Beachte die Produktanforderungen zu mehrstufigen Sequenzen, kontextueller Folgeh
 durchsuchbarer Command Palette, DE-DE/QWERTZ und langfristig konfigurierbaren Kürzeln.
 Normale Texteingabe darf niemals Kürzel auslösen; Windows-/Browserkonflikte berücksichtigen.
 Schlichte schnelle UI ohne unnötige Animationen oder dauerhaftes Hintergrund-Polling.
-Aktueller Stand: Teamkonfiguration freigegeben; keine Entwicklungsarbeit, Phase 2 gesperrt.
+Innerhalb ausdrücklich vom PO freigegebener und vom Tech Lead delegierter Arbeitspakete
+darfst du Anwendungscode in den benannten Dateien implementieren und zugehörige Tests/Builds ausführen.
+Rollenrevision M32A-2026-11-03: keine pauschale Phase-2-Sperre; Umfang immer aus aktueller Freigabe.
 Produktentscheidungen und Phasenfreigaben darf nur der Product Owner ändern.
 Keine Installationen, Frameworkeinführung, persönlichen Vaults, produktiven Daten,
 Veröffentlichungen oder Ausführung von Befehlen aus Notizen. Testdaten nur in test-vault/.

@@ -1,5 +1,83 @@
 # Architekturvorschlag – zur Freigabe
 
+## M4b.1: Org-referenzierte Struktursteuerung — 2026-11-04
+
+Nach PO-Browserbefund: CodeMirror-Keymaps und DOM-Handler müssen in der tatsächlichen gemeinsamen Ereignisreihenfolge geprüft werden. Ein direkter Unitaufruf des Org-Resolvers beweist keine Priorität vor Standardcursorbewegung. Recognized Org-Handler daher mit expliziter Präzedenz; kein zweiter Bearbeitungsalgorithmus. Bare-Alt-Unterdrückung nur bei Editorfokus und getrennt von Alt-Kombinationen, mit Modifier-/IME-/Fokusverlustschutz. Browserreserve bleibt praktischer Abnahmepunkt, keine Web-App-Garantie für OS-/Browsermenüs.
+
+Vorhandene Registry/AST-Planer wiederverwenden; explizite Einzel-/Unterbaumvarianten mit festen Optionen verhindern unterschiedliche Semantik zwischen Tastatur, Palette und Kontextmenü. Legacy-Befehle mit Unterstrukturwahl bleiben als solche kenntlich. Editor-Keymap löst ausschließlich erkannte Kontexte in Registry-IDs auf und prüft AltGr/IME/Modifier. Browsernavigation nur bei erkanntem Editorbefehl verhindern. Kein globaler Alt-Blocker oder paralleler Bearbeitungsalgorithmus.
+
+Explizite sitzungsweite Org-Tab-Option löst den Konflikt mit bestehendem Struktur-Tab. Standard bleibt unverändert; Org-Faltzyklen gesondert von vorhandener progressiver Vierstufenöffnung halten. Neue Faltzustände ausschließlich Ansicht, keine Markdown-/Storagepersistenz. Escape-Fokusnavigation erhalten. Vorteil: überprüfbare Semantik pro Command-ID und keine stille Umbelegung; Kosten: zwei klar benannte Tab-Modi und zusätzliche Dokumentation.
+
+Referenzen: [Structure Editing](https://orgmode.org/manual/Structure-Editing.html), [Plain Lists](https://orgmode.org/manual/Plain-Lists.html), [Global/local cycling](https://orgmode.org/manual/Global-and-local-cycling.html), [Orgcard](https://orgmode.org/orgcard.pdf). Org-Meta-Auf/Ab bewegt bereits Unterbäume; Shift-Meta-Auf/Ab ist Zeilenverschieben. PO bestätigte nach Rückfrage ausdrücklich diese Unterscheidung: Shift-Meta-Auf/Ab soll die aktuelle Zeile unabhängig von Hierarchiegrenzen verschieben. Gemeinsamer Registry-Handler mit atomarem Undo/Redo, Cursor-/EOF-Erhalt und transparenten Markdown-Sicherheitsgrenzen. Keine Stillevelanpassung oder Refile-Ersatz.
+
+Abnahme: 95 Regressionen plus neue Einzel-/Unterbaum-, Hierarchiegrenz-, Keymap-, Fokus-, Falt- und Dokumentationsprüfungen. Tatsächliche Edge-/QWERTZ-Zustellung getrennt vom Node-Nachweis berichten. Keine neuen Pakete, keine Shortcutkonfiguration/Sequenzmaschine oder M4b.2-Funktionen.
+
+## M4a: gemeinsame Befehlsoberfläche — 2026-11-04
+
+Freigegebener Ansatz: UI-unabhängiges Registry mit stabilen IDs und lokalen Handlern; Adapter verbinden vorhandene Editor-/Dateiaktionen. Palette, Kontextmenü und bestehende Bedienelemente rufen dieselbe Ausführung auf. Kontext wird vor Anzeige und erneut vor Ausführung geprüft. Sperrgründe bleiben sichtbar. Kein Laden ausführbarer Gamebook-/Notizdefinitionen, kein Pluginmechanismus.
+
+Getrennte DOM-Oberflächen erhalten Fokus und Editorauswahl; nur tatsächlicher Editor-Kontext ersetzt das Browsermenü. Alt+X öffnet die Palette, gewöhnliche Eingabe und AltGr dürfen keine Befehle starten. Suche arbeitet nur bei Interaktion, ohne Polling/Worker. Vorhandene Tokens und CodeMirror-Operationen wiederverwenden. Vorteil: eine Befehlsdefinition für mehrere Bedienwege; Kosten: explizite Adapter für UI-Zustand und fokussensible Browseraktionen.
+
+Abnahme: vorhandene Aktionen inventarisieren und weiterhin erreichbar halten; Namen/Beschreibungen/Kategorien durchsuchen; Maus/Pfeile/Enter/Escape, Kontextgründe, Auswahl/Fokus und Undo/Redo prüfen. Gamebook mit maschinell prüfbaren IDs und manuell editierbaren Beschreibungen gegen unbemerkte Drift absichern. Automatisierte Prüfung ersetzt keine tatsächliche Edge-/QWERTZ-/Langzeitabnahme.
+
+M4b-Grenze: IDs, Kontext und Shortcut-Metadaten sind Erweiterungspunkte für spätere konfigurierbare DE-QWERTZ-Kürzel, Sequenzen und Folgehilfe. Noch keine Sequenzmaschine, Benutzerkonfiguration oder neue Produktbefehle. Storage-Sicherheitsmodell und Markdown-Datenmodell unverändert.
+
+## Formatuntersuchung Markdown/Org – 2026-11-03
+
+[Vergleich mit Beispielen, Quellen und offenen Entscheidungen](FORMAT_COMPARISON.md). Developer und Storage untersuchten parallel ausschließlich lesend. Empfehlung: Markdown vorerst beibehalten; Org spart Konventionsarbeit bei Aufgabenmetadaten, erfordert aber eigene Browserlogik und neue Syntaxintegration. Spätere Formatadapter sind ein Vorschlag, keine Implementierungsentscheidung. Keine automatische Doppeldatei-Synchronisierung. Markdown bleibt das beschlossene Primärformat; PO-Entscheidung abwarten.
+
+## M3.2b: Auswahlformatierung und unterscheidbare Überschriftenfarben
+
+Developer ergänzt `editor/formatting.mjs` mit reinem `planFormat(state,kind)` für Vorschlag/Ablehnung und `runFormat(view,kind,notify)` für geprüfte Ausführung. Ein gemeinsamer Weg für fünf UI-Schaltflächen, einzelne atomare Undo-Einheit, gezielte Auswahl/Begrenzungen statt vollständiger Neuformatierung. Vorhandenen Markdown-AST für Erkennung und Prüfung verwenden; Wrapper/Inhaltsauswahl nur bei eindeutiger Zuordnung entfernen. Codeblöcke und Frontmatter einschließlich Auswahlüberlappungen schützen. Unterstreichung ausdrücklich `<u>…</u>`, keine Umdeutung von `_…_` oder Änderung fremder HTML-Attribute.
+
+Konservative erste Grenze: eine nichtleere einzeilige Auswahl; unsichere verschachtelte/partielle Syntax verständlich verweigern. Inlinecode muss ausreichende Backtick-Begrenzungen und Markdown-konforme Leerzeichenbehandlung verwenden. Auswahlrichtung und Zeichenpositionen im UTF-16-Dokument erhalten, BOM/äußere Zeilenenden über den unveränderten Codec absichern.
+
+Installierte `markdown()`-Standardbasis ist CommonMark und erkennt Durchstreichung noch nicht. Die vorhandene `markdownLanguage`-Basis bringt Strikethrough-Unterstützung mit; Anwendung und Formatprüfungen nutzen diese vorhandene Variante, ohne neue Bibliothek oder Sprachmodule. Keine Aufgabenverwaltung aus erweiterter Syntaxerkennung ableiten.
+
+Sechs H1–H6-Farben je Theme über zentrale Tokens deutlich nach Farbton unterscheiden, nicht nur über minimale RGB-/Helligkeitsabstände. Vorhandene Codeblock-Darstellung samt Auswahlebene erhalten; bei Bedarf nur Theme-Farbwerte justieren. Keine neue Einrückung oder Änderung gespeicherter Markdown-Level. Abnahme: echte Syntaxwirkung/Toggles/Undo/Außenbereichsschutz und Theme-Kontraste; perceptuelle Farbunterschiede und generiertes Highlighting zusätzlich prüfen. Echte visuelle Edge-Abnahme separat ausweisen.
+
+## M3.2a.1: kontextuelle Tastatur und getrennte Darstellung
+
+Vorhandene APIs geprüft: CodeMirror unterstützt `indentMore`/`indentLess`, kontextuelle Keymaps, `setTabFocusMode`, viewportbezogene Line-Decorations und eigene Gutter. Die bisherigen AST-Strukturbefehle werden wiederverwendet. Tab bezieht sich auf echte Überschriftenzeilen oder Listenknoten, nicht auf beliebige Absätze ihres Abschnitts. Codekontext hat Vorrang vor Strukturbefehlen. Escape aktiviert einen Fokusnavigationsmodus; beim echten Wiedereintritt von außen wieder Struktur-Tab. Keine globalen Browserkürzel.
+
+Visuelle Marker/mehrteilige Nummern erscheinen in einer eigenen Randspalte statt als Ersatz des Markdown-Listentextes. Vorteil: Rohtext, Auswahlpositionen und Kopieren bleiben verlässlich, Unicode und mehrteilige Ziffern werden nicht als inkompatible Syntax gespeichert. Grenze: native Rohpräfixe bleiben zusätzlich im Editor sichtbar. Konfiguration für fünf Marker-Ebenen; tiefere Ebenen verwenden den letzten Stil. Alternative alphanumerische Nummerierung bleibt Zukunftsplanung.
+
+Heading-Einrückung und Codeflächen sind zeilenbezogene Darstellungsdekorationen, keine Textänderungen. Einrückung deckeln; Codehintergrund/Seitenrand verwenden vorhandene Theme-Tokens. Die Auswahl darf nicht hinter deckenden Codeflächen verschwinden: Überlappung mit CodeMirrors Selection-Layer explizit prüfen. Der Syntaxbaum liefert die Bereiche; Änderungen von Dokument, Parsebaum, Viewport und Anzeigeoptionen aktualisieren die Darstellung. Keine neuen Timer/Frameworks/Sprachpakete oder Storageabhängigkeit.
+
+Abnahme: reale CodeMirror-Keymapbehandlung, zeitunabhängiger Fokusausstieg samt Wiedereintritt, fünf echte Listentiefen und Undo/Redo; Darstellungswechsel ohne Text-/Folding-/Historienänderung; Codeflächen in vier Themes samt Auswahl. DOM-/Browser-/Hochkontrast- und Performanceprüfungen separat ausweisen. Textfarbe und gemeinsame Kontextmenü-/Palettenbefehle nur [vormerken](FUTURE_COLORS_COMMANDS.md).
+
+## M3.2a: delegierte Strukturverwaltung
+
+Nach tatsächlich bestätigter Rollenübernahme implementiert Developer `editor/structure.mjs`: `planStructure` erzeugt aus dem vorhandenen Markdown-AST einen atomaren Änderungsvorschlag oder eine erklärte Verweigerung; `runStructure` prüft Analyse/Readonly und dispatcht. UI ruft dieselben benannten Befehle über einfache Maus-/Tab-/Enter-Schaltflächen auf. Keine Command Palette, neue globale Kürzel oder eigenen Parser. Quell-/Ziellisten werden begrenzt mit vorhandener Markdown-Unterstützung nachgeprüft; Blockumdeutungen werden abgewiesen.
+
+Überschriften: Geschwistertausch mit gesamtem Unterbaum, Ebenenmarker einzeln/mit Kindern und atomare H1–H6-Grenzen. Listen: Bewegung/Einrückung einzeln/mit Children, Präfixwechsel und lokale Nummerierung. Einzelmodus fördert Children am bisherigen Ort; Ausrücken verschiebt hinter den bisherigen Eltern-Unterbaum. Konservative Grenzen für Mischcontainer, mehrzeilige Setext→ATX und Nummernbreitenwechsel stehen in [STRUCTURE_M32A.md](STRUCTURE_M32A.md).
+
+`isolateHistory` macht jede Operation einzeln rückgängig. Gezielte Marker-MultiChanges und gekürzte Ersetzungen erhalten unveränderte Außenbereiche; betroffene Falten werden in neuen Koordinaten geöffnet, andere durch CodeMirror gemappt. Der unveränderte TextCodec erhält unberührte EOL/BOM-Bereiche; verschobene Replacement-Teile können den vorhandenen ersten EOL-Stil erhalten. Keine Storageänderung zur Erweiterung dieser Grenze. M3.2b bleibt ausdrücklich gesperrt.
+
+## M3.2-Planung: visuelle Hierarchie und Strukturänderungen trennen
+
+Optionale Hierarchieeinrückung als reine Editor-Darstellung vorsehen, getrennt von Operationen, die den Rohtext bewusst ändern. Keine Einrückungsleerzeichen als Darstellungsersatz in die Datei schreiben. Verschieben/Einrücken/Präfixwechsel und Formatierungen als nachvollziehbare Undo-/Redo-Einheiten über den vorhandenen Editoränderungspfad planen; bestehende Syntax und fremde Formatierungen erhalten. Unterstreichung ist als `<u>Text</u>` festgelegt, `_Text_` behält seine Markdown-Bedeutung. Minimalistische UI, Maus und QWERTZ berücksichtigen. Details/Abnahme im [Strukturplan](M3_2_STRUKTURPLAN.md). Keine Umsetzung oder Storageänderung mit dieser Planungsnotiz freigegeben.
+
+## Phase 2 M3.1: Kontext und progressive Sichtbarkeit
+
+API-Vorabcheck: native Fold-Effekte können mehrere Bodybereiche verstecken, bieten aber keinen fertigen Org-mode-Zyklus. `toggleFold` allein kann einen lokalen Codeblock statt der zugehörigen Überschrift wählen. Deshalb liest `editor/section-folding.mjs` echte ATX-/Setext-Knoten aus dem vorhandenen Syntaxbaum; Abschnittsfalten verwenden native `foldable`-Grenzen. Ein pro Baum zwischengespeicherter Index ergänzt Container-/Elternzuordnung und Kontextgrenzen inklusive Leerzeilen. Kein zweiter Markdown-Parser, kein Scan pro Tastenanschlag, kein Timer.
+
+Aus Absatz/Liste/Codeblock zuerst zugehörige Überschrift; ohne Überschrift lokaler Syntaxblock. Sichtbarkeit ausschließlich über `foldEffect`/`unfoldEffect`: geschlossen → alle Überschriften sichtbar/Prosa verborgen → Bodies von Root und direkten Kindern sichtbar → alles sichtbar. Gleiche Stufen überspringen; gemischte Teilfalten beim weiteren Öffnen vollständig öffnen, niemals mehr verbergen. Nur Foldbereiche im Zielabschnitt ändern. Der Zustand wird aus tatsächlichen Falten abgeleitet statt in einer konkurrierenden Zustandsmaschine gespeichert.
+
+Verborgenen Cursor auf sichtbare Überschrift setzen; CodeMirror würde sonst Falten mit enthaltener Auswahl löschen. Native Mausrandmarkierung und ein tastaturbedienbarer Platzhalter verwenden denselben Zyklus; drei explizite Knöpfe bieten Einklappen, nächste Stufe und vollständiges Öffnen. Kein neues globales Vollöffnen-Kürzel: Strg+Umschalt+U kollidiert mit Edge-Vorlesen. Bei unvollständiger Analyse öffnet ein begrenzter Notausstieg nur tatsächlich vorhandene Foldbereiche; vollständige semantische Stufen nach erfolgreicher Analyse erneut anfordern.
+
+Lesbarkeit: sechs Theme-Tokens `syntaxHeading1` bis `syntaxHeading6`, Code-/Zitat-/Marker-Tokens und bestehende Link-/Literalfarben. Adapter ordnet echte Parser-Tags zu, ohne Festfarben. Kontrastprüfung umfasst neue Syntax-Tokens gegen Editor-, Code- und Auswahlflächen. Keine Preview, zusätzlichen Sprachen/Pakete oder Formatierungsbefehle. M3.2 bleibt [Planung](M3_2_STRUKTURPLAN.md).
+
+## Phase 2 M3: Markdown-Folding
+
+Vor Implementierung im installierten Code geprüft: `@codemirror/lang-markdown` liefert `headerIndent`/`findSectionEnd` für ATX H1–H6 und Setext H1/H2. `@codemirror/language` stellt `codeFolding`, `foldGutter`, `foldCode` und `unfoldCode` bereit. `editor/folding.mjs` verbindet diese APIs mit vorhandener Markdown-Konfiguration; kein eigener Parser oder neues Paket. CodeMirror kann daneben seine vorhandenen Blockfalten anzeigen; keine neue Blockbearbeitung.
+
+Tastatur: Strg+Umschalt+Komma einklappen, Strg+Umschalt+Punkt ausklappen, auf der Überschriftenzeile. Kein AltGr oder unmodifizierter Text als Befehl. Maus über native Randmarkierung, Auslassung `…` entfaltet. Platzhalter/Markierung verwenden bestehende Theme-Tokens. Faltzustand nur im Editor, ohne Texttransaktion oder Vaultzugriff; keine dauerhafte Faltzustandsspeicherung.
+
+Lange Dokumente: native Randmarkierungen betreffen den sichtbaren Bereich. Vor neuem Einklappen wird der Syntaxbaum bei Bedarf bis EOF weitergeführt, mit 50 ms Budget je Aktion. Unvollständige Analyse blockiert das Einklappen mit Hinweis statt einen nur teilweise bekannten Abschnitt zu verstecken. Entfalten bleibt sofort möglich. Kein eigener Vollscan pro Tastenanschlag und keine neuen Hintergrundtimer. Bereits vorhandene Falten folgen CodeMirrors Mapping bei Textänderungen; neu hinzugefügte Überschriften erfordern gegebenenfalls Aus-/Einklappen zur Neuberechnung.
+
+Abnahme/Grenzen: H1–H6, Eltern/Kinder, EOF, Codeblöcke, Text-/Undo-/Themeerhalt und längeres synthetisches Dokument automatisiert prüfen. Echte QWERTZ-/Edge-, Zoom-, Maus- und Langzeitprüfung separat. Keine RAM-/Latenzzusage aus Zustandsprüfungen.
+
 ## Freigegebener Abschnitt: Phase 2 M1 (2026-11-03)
 
 Native Weboberfläche und CodeMirror 6, ein aktives Markdown-Dokument. Editor meldet Textänderungen an einen separaten Storage-Adapter; nur dieser verwaltet Datei-Handles, Rohbytes, Entwürfe, Konflikte und Sicherungen. Der geprüfte Schreibpfad aus `spike/storage.mjs` bleibt Grundlage. Kein Markdown-/YAML-Parser oder neues Datenmodell.

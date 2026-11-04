@@ -1,0 +1,2 @@
+# Synthetic storage fixtures must retain BOM, mixed EOL and sample whitespace.
+test-vault/** -text -whitespace

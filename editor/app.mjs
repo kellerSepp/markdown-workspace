@@ -1,14 +1,27 @@
 import {EditorState, Compartment} from '@codemirror/state';
 import {EditorView, keymap, lineNumbers, drawSelection} from '@codemirror/view';
-import {history, historyKeymap, defaultKeymap} from '@codemirror/commands';
-import {markdown} from '@codemirror/lang-markdown';
+import {history, historyKeymap, defaultKeymap, undo, redo} from '@codemirror/commands';
+import {markdown,markdownLanguage} from '@codemirror/lang-markdown';
 import {createSession, createBrowserStore} from './storage-session.mjs';
 import {THEMES,readThemeChoice,saveThemeChoice,applyTheme} from './themes.mjs';
 import {editorTheme} from './theme-editor.mjs';
+import {markdownFolding,guardedFold,stagedUnfold} from './folding.mjs';
+import {runStructure} from './structure.mjs';
+import {structureKeyboard,withoutOrgArrowConflicts} from './structure-keymap.mjs';
+import {visualStructure,DEFAULT_VISUAL_STRUCTURE,MARKER_STYLES} from './visual-structure.mjs';
+import {runFormat} from './formatting.mjs';
+import {createCommandRegistry} from './command-registry.mjs';
+import {commandDefinitions} from './commands.mjs';
+import {createCommandSurfaces} from './command-surfaces.mjs';
+import {ORG_STRUCTURE,runOrgStructure} from './org-structure.mjs';
+import {cycleOrgVisibility} from './org-folding.mjs';
+import {runLineMove} from './line-move.mjs';
 
 const $ = id => document.getElementById(id);
 const editable = new Compartment();
 const appearance = new Compartment();
+const visualAppearance = new Compartment();
+let visualOptions={...DEFAULT_VISUAL_STRUCTURE};
 let themeStorage;
 try {themeStorage = window.localStorage;} catch {}
 let activeTheme = applyTheme(document.documentElement,readThemeChoice(themeStorage));
@@ -17,8 +30,11 @@ $('theme').value = activeTheme.id;
 let session, vault, busy = true, syncing = false, timer, persistPending = false;
 const status = message => {$('status').textContent = message;};
 const extensions = () => [
-  lineNumbers(), history(), drawSelection(), markdown(), appearance.of(editorTheme(activeTheme)),
-  keymap.of([...defaultKeymap, ...historyKeymap]),
+  lineNumbers(), history(), drawSelection(), markdown({base:markdownLanguage}), markdownFolding(status,id=>registry.execute(id)), structureKeyboard(()=>$('structureChildren').checked,status,id=>registry.execute(id),()=>$('orgTab').checked), visualAppearance.of(visualStructure(visualOptions)), appearance.of(editorTheme(activeTheme)),
+  keymap.of([{key:'Mod-z',run:()=>{registry.execute('edit.undo');return true;}},{key:'Mod-y',run:()=>{registry.execute('edit.redo');return true;}},{key:'Mod-Shift-z',run:()=>{registry.execute('edit.redo');return true;}}]),
+  // Remove CM's competing line move/copy shortcuts. Outside a recognized Org
+  // context the browser receives Alt arrows; Shift+Alt up/down stays unbound.
+  keymap.of([...withoutOrgArrowConflicts(defaultKeymap), ...historyKeymap]),
   EditorView.contentAttributes.of({'aria-label':'Markdown-Rohtext', spellcheck:'false'}),
   editable.of([EditorState.readOnly.of(true),EditorView.editable.of(false)]),
   EditorState.transactionFilter.of(transaction => {
@@ -46,17 +62,65 @@ const extensions = () => [
   })
 ];
 const view = new EditorView({parent:$('editor'), state:EditorState.create({extensions:extensions()})});
-$('theme').addEventListener('change', () => {
-  activeTheme = applyTheme(document.documentElement,$('theme').value);
+const handlers={};
+const registry=createCommandRegistry(commandDefinitions(handlers),()=>({busy,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
+const surfaces=createCommandSurfaces({registry,view,notify:status});
+for(const [id] of ORG_STRUCTURE) handlers['structure.'+id]=()=>{runOrgStructure(view,id,status);view.focus();};
+for(const [id,down] of [['line-up',false],['line-down',true]]) handlers['edit.'+id]=()=>{runLineMove(view,down,status);view.focus();};
+for(const [id,global] of [['org-local-cycle',false],['org-global-cycle',true]]) handlers['fold.'+id]=()=>{cycleOrgVisibility(view,global,status);view.focus();};
+handlers['view.org-tab']=()=>{$('orgTab').checked=!$('orgTab').checked;status($('orgTab').checked?'Org-Tab aktiv: Heading-Tab faltet; Shift+Tab außerhalb Liste/Code faltet global. Escape, dann Tab verlässt den Editor.':'Struktur-Tab aktiv: bisheriges Ein-/Ausrücken bleibt Standard.');};
+$('orgTab').addEventListener('change',()=>{$('orgTab').checked=!$('orgTab').checked;registry.execute('view.org-tab');});
+for(const kind of ['bold','italic','underline','strike','code']) handlers['format.'+kind]=()=>{runFormat(view,kind,status);view.focus();};
+for(let n=1;n<=5;n++) {
+  const select=$('markerLevel'+n);
+  select.replaceChildren(...MARKER_STYLES.map(marker=>new Option(marker,marker)));
+  select.value=DEFAULT_VISUAL_STRUCTURE.markers[n-1];
+}
+function updateVisualOptions() {
+  visualOptions={headingIndent:$('headingIndent').checked,listMarkers:$('visualMarkers').checked,hierarchicalNumbers:$('hierarchicalNumbers').checked,
+    markers:Array.from({length:5},(_,n)=>$('markerLevel'+(n+1)).value)};
+  view.dispatch({effects:visualAppearance.reconfigure(visualStructure(visualOptions))});
+}
+for(let level=1;level<=5;level++) {
+  const select=$('markerLevel'+level);
+  handlers['view.marker-level-'+level]=value=>{select.value=MARKER_STYLES.includes(value)?value:MARKER_STYLES[(MARKER_STYLES.indexOf(select.value)+1)%MARKER_STYLES.length];updateVisualOptions();};
+  select.addEventListener('change',()=>registry.execute('view.marker-level-'+level,select.value));
+}
+for(const [element,id] of [['headingIndent','heading-indent'],['visualMarkers','list-markers'],['hierarchicalNumbers','hierarchical-numbers'],['structureChildren','children']]) $(element).addEventListener('change',()=>{
+  $(element).checked=!$(element).checked;registry.execute('view.'+id);
+});
+for (const action of ['heading-up','heading-down','heading-promote','heading-demote','list-up','list-down','list-indent','list-outdent','list-prefix']) handlers['structure.'+action]=()=>{
+  runStructure(view,action,{children:$('structureChildren').checked,prefix:$('listPrefix').value},status);
+  view.focus();
+};
+for(const [id,action] of [['undo',undo],['redo',redo]]) handlers['edit.'+id]=()=>{
+  if(!action(view)) status('Keine weitere Undo-/Redo-Aktion verfügbar.');
+  view.focus();
+};
+for (const [id,action] of [
+  ['collapse',()=>guardedFold(view,status)],
+  ['reveal',()=>stagedUnfold(view,status)],
+  ['open',()=>stagedUnfold(view,status,true)]
+]) handlers['fold.'+id]=()=>{
+  action(); view.focus();
+};
+for(const theme of THEMES) handlers['theme.'+theme.id]=()=>{
+  activeTheme = applyTheme(document.documentElement,theme.id);
+  $('theme').value=activeTheme.id;
   view.dispatch({effects:appearance.reconfigure(editorTheme(activeTheme))});
   $('themeNote').textContent = saveThemeChoice(themeStorage,activeTheme.id) ? '' : 'Auswahl gilt nur für diese Sitzung: Browserspeicher nicht verfügbar.';
-});
+};
+$('theme').addEventListener('change',()=>registry.execute('theme.'+$('theme').value));
+for(const [id,element] of [['heading-indent','headingIndent'],['list-markers','visualMarkers'],['hierarchical-numbers','hierarchicalNumbers'],['children','structureChildren']]) handlers['view.'+id]=()=>{$(element).checked=!$(element).checked;if(id!=='children') updateVisualOptions();};
+handlers['ui.options']=()=>{$('editorOptions').open=true;$('editorOptions').querySelector('summary').focus();};
+handlers['ui.development']=()=>{$('development').open=true;$('development').querySelector('summary').focus();};
+handlers['ui.palette']=()=>surfaces.palette();
 function render() {
   $('document').textContent = session?.hasDocument ? `${session.vault.name}/${session.path}${session.dirty ? ' · geändert' : ' · unverändert'}` : 'Keine Datei geöffnet.';
 }
 function setBusy(value) {
   busy = value;
-  for (const element of document.querySelectorAll('button,select,input')) element.disabled = value;
+  for (const element of document.querySelectorAll('button,select,input')) if(!element.closest('.command-palette,.command-context')) element.disabled = value;
   view.dispatch({effects:editable.reconfigure([EditorState.readOnly.of(value || !session?.hasDocument),EditorView.editable.of(!value && !!session?.hasDocument)])});
 }
 function syncEditor() {
@@ -83,7 +147,8 @@ async function run(action) {
     if (persistPending) timer = setTimeout(() => {void persistDraft();},300);
   }
 }
-function bind(id, action) {$(id).addEventListener('click', () => {void run(action);});}
+const actionIds={choose:'workspace.choose',grant:'workspace.grant',scan:'workspace.scan',open:'file.open',save:'file.save',check:'file.check',listDrafts:'draft.list',recover:'draft.recover'};
+function bind(id, action) {handlers[actionIds[id]]=()=>run(action);}
 function requireSynthetic() {if (!$('synthetic').checked) throw Error('Synthetischen Test-Vault zuerst bestätigen.');}
 async function permission(request = false) {
   if (!vault) throw Error('Test-Vault wählen.');
@@ -110,8 +175,9 @@ async function scan() {
   status(`${paths.length} Markdown-Datei(en) im Test-Vault gefunden.`);
 }
 bind('choose', async () => {
-  requireSynthetic(); await session.persist();
+  requireSynthetic();
   const selected = await showDirectoryPicker({mode:'readwrite'});
+  await session.persist();
   $('files').replaceChildren(); vault = selected; await scan();
 });
 bind('grant', async () => {
@@ -151,7 +217,9 @@ bind('recover', async () => {
 });
 window.addEventListener('keydown', event => {
   if (event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey && !event.isComposing && event.key.toLowerCase() === 's') {
-    event.preventDefault(); void run(save);
+    event.preventDefault();
+    if(document.querySelector('dialog[open]')) return;
+    void registry.execute('file.save');
   }
 }, true);
 window.addEventListener('beforeunload', event => {
@@ -163,6 +231,10 @@ window.addEventListener('focus', () => {
     if (result.conflict) status('Externe Änderung erkannt; Entwurf bleibt erhalten. Speichern blockiert.');
   });
 });
+for(const element of document.querySelectorAll('[data-command]')) {
+  element.addEventListener('mousedown',event=>{if(event.button===0&&view.hasFocus) event.preventDefault();});
+  element.addEventListener('click',()=>{void registry.execute(element.dataset.command);});
+}
 try {
   if (!window.showDirectoryPicker || !navigator.locks) throw Error('Microsoft Edge mit File System Access API und Web Locks erforderlich.');
   session = createSession({store:await createBrowserStore()});

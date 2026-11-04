@@ -1,5 +1,21 @@
 # Anforderungen (Stand 2026-11-03)
 
+## Aktuelle Freigabe M4b.1 — 2026-11-04
+
+PO-Rückmeldung und Bugfixfreigabe: Alt-Links/Rechts löst in Edge noch Cursorbewegung statt Struktur aus; Alt-Auf/Ab und Shift-Alt-Auf/Ab funktionieren laut PO grundsätzlich. Shortcut-Präzedenz korrigieren. Alt allein soll bei tatsächlichem Editorfokus die Browserauswahl/-menüaktivierung unterbinden, soweit Browserereignisse dies erlauben; AltGr/IME und Verhalten außerhalb des Editors erhalten. Kein globaler Alt-Blocker. Bei Browsergrenze eine ähnlich erreichbare Alternative vorschlagen, keine unbelegte Erfolgsbehauptung. Developer korrigiert, QA prüft unabhängig; M4b.2 bleibt gesperrt.
+
+Org-Handbuch/Orgcard sind verbindlich für ausdrücklich Org-kompatible Befehle. Alt+Links/Rechts verändert nur aktuelle Überschrift beziehungsweise Listenpunkt; mit Shift Unterbaum, unabhängig von bisheriger Unterstrukturwahl. Alt+Oben/Unten verschiebt einschließlich Unterbaum innerhalb gültiger Geschwister und Eltern-Grenzen. H1–H6 atomar prüfen, Ebenen beim Verschieben unverändert lassen; Undo/Redo und sinnvolle Cursorposition erhalten. PO-Klarstellung: Alt+Shift+Oben/Unten verschiebt die aktuelle physische Zeile unabhängig von Überschriftenebenen wie Org/Emacs; keine automatische Änderung der Überschriftenmarker. Sichere Markdown-/Auswahlgrenzen ausdrücklich dokumentieren.
+
+Struktur-Tab bleibt Standard. Explizite Org-Tab-Sitzungsoption ergänzt lokale/globale Sichtbarkeit; Konflikte für Überschriften, Listen und Code sowie Escape-Fokusausstieg sichtbar erklären. Registry für alle Bedienwege, bestehende IDs möglichst erhalten, einfache Shortcutübersicht in Palette. Org-Original und Workspace-Kürzel/Abweichungen getrennt im Gamebook dokumentieren. Nur erkannte Editorbefehle abfangen, AltGr/IME und normale Texteingabe schützen; Edge-Zustellung tatsächlich prüfen oder offen ausweisen.
+
+Abnahme: verschachtelte/übersprungene Ebenen, H1/H6, Einzel-/Unterbaumvarianten, Listen, Faltkonflikte, Cursor/Auswahl, Undo/Redo und alle 95 bisherigen Tests. Developer implementiert, QA unabhängig; ausschließlich synthetische Daten. Kein Refile, dateiübergreifendes Verschieben, Aufgaben/Journal/Agenda, Shortcuteditor, Storageänderung, neue Formate oder Abhängigkeiten. M4b.2 gesperrt; nach Bericht stoppen.
+
+## Aktuelle Freigabe M4a — 2026-11-04
+
+Bestandsaufnahme und gemeinsames modulares Command Registry für vorhandene Aktionen; Palette über Alt+X mit Suche in Name/Beschreibung/Kategorie, Pfeiltasten/Enter/Escape und Maus. Editor-Kontextmenü verwendet dasselbe Register. Kontextbedingungen mit verständlichen Sperrgründen, Fokus-/Auswahlerhalt und Schutz normaler Texteingabe sind verbindlich. Browsermenüs außerhalb des Editors erhalten. Bestehende Werkzeugleiste reduzieren, jede Aktion weiterhin zugänglich machen; technische Testaktionen gesondert halten.
+
+Bearbeitbares `COMMAND_GAMEBOOK.md`: ID, Name/Kategorie, Verhalten, Kontext, Bedienwege, gewünschte Kürzel, Status (Implementiert/Teilweise implementiert/Geplant/Idee), offene Fragen. Keine ausführbare Konfiguration oder automatische Implementierungsfreigabe. Konsistenz mit Registry prüfen. M4b nur vorbereiten; keine Kürzelkonfiguration oder mehrstufigen Sequenzen implementieren. Bestehende Themes/Pakete nutzen; keine Storage-/Markdown-Modelländerungen. Developer implementiert, QA prüft unabhängig; nach Bericht stoppen. Frühere Planungssperren für Palette/Kontextmenü sind ausschließlich in diesem Umfang aufgehoben.
+
 ## Ziel
 Ein schneller, schlichter, ressourcenschonender Markdown-Workspace, der ohne klassische Installation und ohne eigenen permanenten Server funktioniert.
 
@@ -18,7 +34,52 @@ Ein schneller, schlichter, ressourcenschonender Markdown-Workspace, der ohne kla
 - Copy/Export, später PDF und optional Logseq-Import.
 - Optionale spätere portable Desktopvariante.
 
+## Markdown-Folding (Phase 2 M3 freigegeben)
+
+- H1 bis H6: Abschnitt enthält seinen gesamten Inhalt einschließlich untergeordneter Überschriften bis zur nächsten Überschrift derselben oder einer höheren Ebene.
+- Ein-/Ausklappen per kleiner Randmarkierung und QWERTZ-tauglichen Kürzeln; dezente Auslassung zeigt den verborgenen Inhalt an. Normale Texteingabe darf nicht abgefangen werden.
+- Falten ist ausschließlich Ansichtszustand: kein Markdown-/YAML-Eingriff, keine Storageänderung. Nach Ausklappen ist der Originaltext vollständig erhalten. Syntax und alle vier Themes bleiben nutzbar.
+- Vorhandenen Markdown-Parser und Folding-APIs nutzen; lange Dokumente berücksichtigen. Keine neuen Pakete, falls vorhandene Module ausreichen, keine Animationen oder weiteren UI-Funktionen.
+
+Abnahme: H1–H6-/Verschachtelungsgrenzen, ignorierte Überschriften in Code, Text-/Undoerhalt und Themewechsel automatisiert prüfen; Maus, Kürzel, Auswahl und Sichtbarkeit in Edge anschließend praktisch prüfen. Faltzustände werden in M3 nicht dauerhaft gespeichert; bei Datei-/Entwurfswechsel oder Reload gelten neu aufgebaute Ansichten.
+
+## Phase 2 M3.1: Kontext, Sichtbarkeitsstufen und Lesbarkeit
+
+- Cursor in Absatz, Liste oder Codeblock findet den zugehörigen nächstgelegenen Überschriftenabschnitt. Ohne Überschrift ist lokale Listen-/Codeblockfaltung möglich. Wird die Cursorstelle verborgen, Cursor auf die sichtbare Überschrift bzw. Blockanfangszeile setzen.
+- Stufenweise öffnen: geschlossen → reine Gliederung → Text des Abschnitts und seiner direkten Kinder → vollständig. In der Gliederung bleiben alle Unterüberschriften sichtbar; in der nächsten Stufe bleiben nur tiefere Textkörper verborgen. Gleiche Stufen überspringen. Bei manuell gemischten Falten öffnet der nächste Schritt vollständig, ohne neuen Text zu verstecken.
+- Expliziter Befehl zum vollständigen Öffnen, auch per Maus und Tab/Enter erreichbar. Bestehende QWERTZ-Kürzel und Randmarkierungen bleiben; normale Texteingabe und Storage unverändert.
+- H1–H6 mit eigenen zentralen Theme-Tokens und zurückhaltender Gewichtung unterscheiden. Erkannte Code-, Link-, Zitat- und Syntaxmarkierungen differenzieren; vier Themes und Kontraste prüfen, keine Editor-Festfarben oder Effekte.
+
+Abnahme: Kontext-/Cursor-/Stufentests, keine erneute Verbergung beim Öffnen, unveränderter Text/Undo, Erhalt anderer Abschnitte, Theme-/Kontrastprüfung. Echte Edge-Maus-/QWERTZ-/Fokus-/Zoomprüfung bleibt eigener Praxisnachweis. Keine neuen Pakete nötig. M3.2 nur vormerken: [Strukturplan](M3_2_STRUKTURPLAN.md).
+
+## M3.2: ergänzte Planungsanforderungen
+
+### Aktuelle Freigabe M3.2b
+
+Fett, Kursiv, Unterstrichen, Durchgestrichen und Inlinecode für markierten Text per Schaltflächen erzeugen und möglichst wieder entfernen. Ausgabe `**…**`, `*…*`, `<u>…</u>`, `~~…~~`, Backticks; `_Text_` behält seine Bedeutung. Änderungen auf Auswahl/gezielte Begrenzungen beschränken, Undo/Redo und sinnvolle Auswahl erhalten. Codeblöcke einschließlich überlappender Auswahl schützen. Keine unnötige Neuformatierung anderer Bereiche.
+
+H1–H6 müssen in jedem der vier Themes auf Anhieb farblich erkennbar verschieden sein; unterschiedliche Paletten je Theme erlaubt, kräftig aber angenehm. Zentrale Tokens, Kontrast und tatsächliche Syntaxzuordnung prüfen. Codeflächen erhalten; keine neue visuelle Einrückung oder Änderung der gespeicherten Hierarchie. Frühere Planungssperren für die fünf Formatierungsbefehle sind damit aufgehoben, nicht für Textfarbe oder weitere Produktbereiche.
+
+Abnahme: Ein-/Entfernen der fünf Formate samt Auswahlrichtungen, Unicode, Syntaxgrenzen, Undo/Redo, Codeblockschutz und Außenbereichserhalt prüfen. Alle bisherigen Tests, Theme-Kontraste und Codeflächenregeln weiterführen. Echte Edge-Maus-/Tastatur-/Darstellungsprüfung separat ausweisen. Keine neuen Abhängigkeiten oder Storageänderung.
+
+Historischer Planungsstand vor M3.2a.1/M3.2b (durch obige Freigabe begrenzt überholt): M3.2a ausschließlich für Überschriften-/Listenstrukturverwaltung, nach tatsächlich bestätigter Rollenübernahme. Atomare Undo-/Redo-Operationen; keine Aktionen aus Codeblöcken; vorhandenes Folding und fremde Außenbereiche erhalten. M3.2b war damals Planung. Keine Storageänderung und keine neue Abhängigkeit ohne gesonderte Freigabe.
+
+Optionale visuelle Überschrifteneinrückung nach Hierarchie ohne Rohtextänderung und ohne Aufgabe des minimalistischen Designs. Überschriften mit Unterabschnitten verschieben; Listenpunkte einzeln oder mit Children verschieben, ein-/ausrücken und Präfixe ändern. Struktur- und Formatierungsoperationen über Undo/Redo rückgängig machen. Fett, Kursiv, Unterstrichen, Durchgestrichen und Inlinecode per Tastatur sowie Maus bedienbar; QWERTZ unterstützen.
+
+Unterstreichung für M3.2b standardmäßig `<u>Text</u>`; `_Text_` nicht umdeuten. Bestehende Markdown-Syntax und fremde Formatierungen möglichst erhalten. **Keine Storageänderung ohne gesonderte Freigabe.** Abnahme und Bedienungsdetails im [M3.2-Strukturplan](M3_2_STRUKTURPLAN.md); aktuelle Umsetzung nur im ausdrücklich freigegebenen M3.2b-Umfang oben.
+
 ## Ergänzung: Tastaturbedienung und Command Palette (freigegebene Anforderung)
+
+### Freigegebener Abschnitt M3.2a.1
+
+- Tab in einer tatsächlichen Überschriftenzeile stuft H1→H2 ab, Shift+Tab hebt an; in Listen ein-/ausrücken. Vorhandene Einzel-/Unterstrukturwahl respektieren, H1/H6 und ungültige Listenaktion atomar behandeln.
+- In Codeblöcken Codeeinrückung beibehalten. Normale Texteingabe/QWERTZ nicht abfangen. Ein klar dokumentierter Tastaturweg aus dem Editor muss auch bei ungültiger Aktion funktionieren; keine dauerhafte Fokusfalle.
+- Mindestens fünf Listenebenen, sichere Strukturanpassung und konfigurierbare Anzeige je Ebene. `-`, `*`, `+`, `○`, `●` und Nummern wie `1.1`, `1.2.1` dürfen visuell angezeigt werden, ohne inkompatible Markdown-Präfixe zu speichern. Alternative `1.a`/`1.b` erst später.
+- Optionale dezente, gedeckelte visuelle Überschrifteneinrückung ohne Rohtextänderung. Codeblöcke durch Theme-Hintergrund und Rahmen/Seitenmarkierung abgrenzen; Auswahl/Cursor müssen sichtbar bleiben. Alle vier Themes, keine Effekte oder neuen Frameworks.
+- Sprachsyntax später modular erweitern. Textfarbe per Auswahl/Kontextmenü, vordefinierte/eigene Farben, offenes kompatibles Speicherformat und Kontextmenü/Palette als gemeinsame Befehlsoberfläche nur dokumentieren; keine Umsetzung.
+
+Abnahme: reale CodeMirror-Tastenbehandlung einschließlich Fokusausstieg, Undo/Redo und fünf Ebenen, Anzeige ohne Dokumentänderungen, Copy-/Auswahl-/Folding-/Themeerhalt und Codeflächenkontraste prüfen. Bestehende Tests weiterführen; keine Storageänderung. Manuelle Edge-/Assistenz-/Zoomprüfung getrennt nachweisen.
+
 
 - Tastaturzentrierte Hauptbedienung nach Org-mode und Emacs; sämtliche wesentlichen Funktionen auch per Maus erreichbar.
 - Mehrstufige Tastensequenzen, etwa `G → J` für Journal und `G → A` für Agenda; Beispiele sind noch keine verbindlichen Belegungen.

@@ -1,6 +1,34 @@
 # Entwicklungsphasen – zur Freigabe
 
-## Aktuelle Freigabe: Phase 2 M2, 2026-11-03
+## Aktuelle Freigabe: Phase 2 M4b.1, 2026-11-04
+
+Org-kompatible Strukturkürzel anhand offizieller Referenzen; Einzel-/Unterbaumvarianten, sichere Hierarchiegrenzen, explizite Tab-Faltkonfliktlösung und einfache Hilfe in Palette. Gamebook aktualisieren, bestehende 95 Tests und neue Semantikfälle unabhängig prüfen. Keine Storage-/Format-/Abhängigkeitsänderung, kein Refile/Shortcuteditor oder Aufgabenbereich. PO-Klarstellung: Shift-Alt-Auf/Ab verschiebt die aktuelle Zeile unabhängig vom Ebenenlevel wie Org/Emacs. Nach Bericht stoppen; M4b.2 gesperrt.
+
+## Vorherige Freigabe: Phase 2 M4a, 2026-11-04
+
+Bestandsaufnahme, gemeinsames Command Registry, Palette über Alt+X, Editor-Kontextmenü, reduzierte Werkzeugleiste und manuell bearbeitbares Command Gamebook. Developer implementiert, QA prüft unabhängig Tastatur/Maus/Fokus/Kontexte und Regressionen. Bestehende Funktionen erhalten, aktuelle Themes verwenden, keine Storage-/Datenmodelländerung oder zusätzlichen Frameworks. M4b (konfigurierbare Kürzel, Sequenzen, Folgehilfe) nur architektonisch vorbereiten. Abnahme und Grenzen: REQUIREMENTS.md; nach Bericht stoppen und neue PO-Freigabe abwarten.
+
+## Vorherige Freigabe: Phase 2 M3.2b, 2026-11-03
+
+Fünf Formatierungsbefehle für Auswahl, sichere Erkennung/Entfernung und Undo/Redo; deutlichere H1–H6-Themefarben. Bestehende Codeflächen erhalten, keine neue Einrückungsfunktion oder Storage-/Abhängigkeitsänderung. Keine Textfarbe, Palette, Agenda oder andere Produktbereiche. Developer implementiert/testet, QA prüft unabhängig; danach stoppen und Rückmeldung abwarten.
+
+### Vorherige Freigabe M3.2a.1
+
+Tab-Strukturbedienung mit Fokusausstieg, sichere fünfstufige Listenstruktur/-anzeige, optionale visuelle Überschrifteneinrückung und Theme-Codeblockflächen. Rohtext/Storage unverändert bei reiner Darstellung. Keine Textfarbe, Kontextmenü/Palette, neuen Sprachpakete oder sonstigen Produktbereiche. Developer implementiert/testet, QA prüft unabhängig; danach stoppen. Einzelheiten/Abnahme in REQUIREMENTS.md.
+
+### Vorherige Freigabe M3.2a
+
+Rollenbereinigung und tatsächliche Übernahme zuerst, danach begrenzte Überschriften-/Listenstrukturverwaltung. Developer implementiert und testet, QA führt unabhängig Prüfungen aus. Abnahme: verschachtelte Strukturen, Undo/Redo, Codeblockschutz, Außenbereiche/Zeilenenden, Folding und bestehende Tests. Keine Storageänderung oder neue Abhängigkeit freigegeben. M3.2b (Formatierung/visuelle Einrückung) bleibt gesperrt. Nach Abschluss stoppen und PO-Rückmeldung abwarten.
+
+### Vorherige Freigabe M3.1
+
+Kontextabhängiges Falten, progressive Sichtbarkeit und bessere Theme-/Syntaxlesbarkeit. Kein Ausbau um Struktur- oder Formatierungsoperationen. Abnahme: Kontext, Cursor, monotone Öffnung, Vollöffnen, Text-/Undo-/Themeerhalt, Kontraste und weiterhin alle Storage-Tests. M3.2 ist nur vorgemerkt; konkrete Befehle, Syntaxentscheidungen, Tastenkürzel und Abnahme vor separater Freigabe festlegen. Nach M3.1 stoppen.
+
+### Vorherige Freigabe M3
+
+Nur Markdown-Folding: H1–H6 samt hierarchischem Inhalt, Randmarkierung/Maus, QWERTZ-Kürzel und Auslassung. Bestehende CodeMirror-Funktionen nutzen; Storage und Dokumenttext bleiben unverändert. Themes/Syntax erhalten, lange Dokumente prüfen. Keine weiteren Editorfunktionen oder neuen Pakete notwendig. Nach M3 stoppen und auf Rückmeldung warten.
+
+### Vorherige Freigabe M2
 
 Nur Theme-Grundgerüst: Midnight als Standard sowie Terminal, Nord, Paper, sofortiger Wechsel per UI-Auswahl und Browserpersistenz. Gemeinsame Tokens für Oberfläche und Syntax, keine Inhalts-/Storageänderungen. Developer implementiert, anschließend unabhängige QA; Abnahme: bestehende Tests, Themewechsel ohne Text-/Undoverlust, persistierte Auswahl mit Fallback, lesbare Zustände, keine dauernde Hintergrundarbeit. JSON-Import/-Export, Skins, Theme-Editor und weitere Funktionen bleiben gesperrt. Danach stoppen und auf PO-Rückmeldung warten.
 
