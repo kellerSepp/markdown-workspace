@@ -51,10 +51,7 @@ CHILDREN zeigt den eigenen Text der Überschrift und die direkten Kindüberschri
 ## Grenzen und Sicherheitsabweichungen
 
 - H1–H6 statt unbegrenzter Org-Level; verletzt ein Unterbaum die Grenzen, wird die gesamte Aktion verweigert. Levelmarker der Nachbarabschnitte werden nie still angepasst.
-- Erste Itemzeile nötig, konservative vorhandene Markdown-Mischcontainer-/Tab-/Nummernbreiten-Grenzen bleiben bestehen. Beschreibungslisten und Org-Counter-Syntax sind keine neuen Markdown-Funktionen.
 - Einzel-Ausrücken eines Items mit Children wird entsprechend dem Quellcheck verweigert. Einzel-Einrücken lässt die absolute Einrückung der Children unverändert; das kann sie zu Geschwistern machen. Legacy-Checkboxaktionen behalten ihre frühere, anders bezeichnete Semantik.
-- Org verschiebt beim Shift-Meta-Einrücken des ersten Items die ganze Liste. Dieser Sonderfall ist hier gesperrt. Ebenso wird Ausrücken mit folgenden Geschwisteritems verweigert, weil die vollständige Org-Neuzuordnung noch nicht abgebildet ist.
-- Org hält bei unmittelbar wiederholtem Shift-Meta-Listenrücken die anfänglich gewählte Region fest. Hier wird eine zweite unmittelbare Unterbaum-Einrückung ohne zwischenzeitliche Cursor-/Zustandsänderung ausdrücklich gesperrt; keine stillschweigende Neuinterpretation desselben Befehls.
 - Zeilenbewegung ist bewusst einzeln und nicht auf aktive Regionen erweitert. In oder über Codeblöcke/Fences und Frontmatter wird sie zusätzlich verweigert. Gegenüber allgemeiner Emacs-Zeilenbewegung ist das eine Markdown-Sicherheitsgrenze. Außerhalb dieser Grenzen kann Zeilenbewegung die abgeleitete Hierarchie ändern; Rohmarker bleiben exakt gleich.
 - Kein Refile, dateiübergreifendes Verschieben, Shortcuteditor, Sequenzautomat, neues Dateiformat, Storage-Eingriff oder Paket.
 
@@ -64,9 +61,12 @@ CHILDREN zeigt den eigenen Text der Überschrift und die direkten Kindüberschri
 2. In `### A` Alt+Links und Alt+Rechts mit ausgeschalteter und eingeschalteter Unterstruktur-Checkbox vergleichen: nur aktuelle Marker ändern. Undo/Redo muss Text und Cursor wiederherstellen. Mit Shift dieselben Aktionen auf den Unterbaum anwenden; Kindabstände erhalten.
 3. In `### A` Alt+Unten: gesamter Unterbaum tauscht mit `### B`; `## Zweiter Elternabschnitt` darf nicht übersprungen werden. In `### B` am Rand Verweigerung prüfen. H1-Promote und H6-Demote müssen atomar ablehnen.
 4. In einer Headingzeile Alt+Shift+Oben/Unten: genau eine physische Zeile verschieben, auch an einer andersstufigen Headingzeile vorbei. Kinder nicht automatisch mitnehmen, keine `#` ändern. Undo/Redo, Anfang/Ende und Unicode-Cursor prüfen. Fences/Frontmatter dürfen nicht überquert werden.
-5. Listenitemzeilen mit Alt und Alt+Shift Links/Rechts prüfen: Single und Subtree unterscheiden; oben/unten nimmt Children mit. First-item-, Children-Outdent-, nachfolgende Geschwister- und Wiederholungsgrenzen müssen erklären statt verändern.
+5. Listenitemzeilen mit Alt und Alt+Shift Links/Rechts prüfen: Single und Subtree unterscheiden; oben/unten nimmt Children mit. Erstpunkt bewegt die ganze Liste; Wiederholungen behalten die Anfangsregion. Single-Outdent mit Kindern und Markdown-Codeumdeutung verweigern.
 6. Ohne Org-Tab bisheriges Tab prüfen. Org-Tab explizit aktivieren, Heading-Tab dreimal und Shift+Tab dreimal drücken. Liste/Code behalten dokumentierte Struktur-/Codebelegung. Escape, dann Tab muss zuverlässig den Editor verlassen.
 7. Alt+X → „Kürzelübersicht“ anklicken: Org-Original und Workspace getrennt lesen, suchen und dieselben Commands ausführen. Kontextmenü vergleichen. Klick/Enter/Escape müssen Auswahl und Fokus korrekt behandeln.
 8. Außerhalb Editor Alt+Links/Rechts auf Browserverhalten prüfen. Im normalen Text `gj`, `ga`, `x`, AltGr-Zeichen und IME eingeben; keine Strukturaktion. Echte DE-QWERTZ-, Windows-/Edge-Konflikte, vier Themes und Zoom separat protokollieren.
 
 Automatisiert werden reine Planer, echte Markdown-ASTs, CodeMirror-Historie/-Tab-Keymaps, Shortcutguard, Scope-Metadaten und ein begrenztes DOM-Modell geprüft. Diese Tests beweisen keine native Edge-Ereigniszustellung, sichtbare Auswahl, Screenreaderbedienung oder Langzeitressourcen. QA berichtet tatsächliche Browseraktionen separat.
+
+
+M4b.1a aktualisiert Listen-Erstpunkt, Folgegeschwister, Wiederholungsregion und Nummernbreiten. Aktuelle Semantik, verbleibende Grenzen und Testanleitung: [ORG_LISTS_M4B1A.md](ORG_LISTS_M4B1A.md).

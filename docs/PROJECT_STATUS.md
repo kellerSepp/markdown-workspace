@@ -1,11 +1,56 @@
 # Projektstatus
 
-**Phase:** 2 — M4b.1 Org-referenzierte Tastatursteuerung
-**Stand:** 2026-11-04
-**Anwendungscode:** separater Editor in `editor/`; unveränderter Schreibkern in `spike/storage.mjs` wiederverwendet.
-**Freigabe:** M4b.1 gemäß PO-Auftrag: Org-referenzierte Strukturkürzel, klare Tab-Faltkonfliktlösung, Registry/Gamebook und einfache Palettenhilfe. M4b.2 bleibt gesperrt; keine Storage-/Datenmodelländerung, neuen Pakete oder Veröffentlichung.
+**Phase:** 2 — M4b.1a Org-Listensteuerung
+**Stand:** 2026-11-05
 
-## Aktuelles Arbeitspaket M4b.1
+**Commitfreigabe:** PO beauftragt den lokalen Git-Commit des geprüften Listenarbeitspakets. Nach erneuter Diskussion der offiziellen Org-Erstpunkt-Sonderregel bleibt die aktuelle Listensteuerung ausdrücklich unverändert; keine zusätzliche Semantikänderung. Kein Push beauftragt.
+**Anwendungscode:** separater Editor in `editor/`; unveränderter Schreibkern in `spike/storage.mjs` wiederverwendet.
+**Freigabe:** gezielte Return-/Listenteilbaumkorrektur nach PO-Nachtrag; Headingsteuerung/Storage/Abhängigkeiten erhalten. M4b.2 bleibt gesperrt.
+
+## Aktuelles Arbeitspaket M4b.1a
+
+### Return und Listenteilbaum — 2026-11-05, implementiert und unabhängig geprüft
+
+- PO meldet vertauschte Return-/Alt-Return-Erwartung und ungewolltes Mitausrücken eines geringer eingerückten Folgepunkts nach physischer Zeilenbewegung. Begrenzte Korrektur durch `list_fix`, danach unabhängige QA durch `list_qa`; Rollenrevision `M32A-2026-11-03` verbindlich.
+- Return setzt das Item passend eingerückt ohne neuen Marker fort, Alt+Return fügt neuen Punkt ein; wiederholte leere Fortsetzungen und Einfügen auf Fortsetzungszeilen berücksichtigt. Gemeinsame Registry ergänzt `list.newline`, nun 63 Befehle.
+- Ursache des Ausrückfehlers: AST-Itembeginn kann vor dem tatsächlichen Marker liegen; Erstpunktregion umfasst außerdem weitere AST-Geschwister. Einrückung wird am Marker gemessen, der Zielbereich endet vor geringer eingerücktem Folgepunkt. Dessen physische Zwischenebene verhindert Überspringen einer Stufe: im PO-Beispiel `test3` vier → zwei Leerzeichen, `test2` unverändert zwei. Echte Kinder bewegen sich mit; bisherige Org-Erstpunktregel für gleich eingerückte Geschwister bleibt erhalten.
+- Developer und unabhängige QA: jeweils **141/141 Tests**, Build, drei Modulsyntaxprüfungen und Diffcheck bestanden. QA zusätzlich **57 unabhängige Fälle** sowie **12 finale Grenzfälle** bestanden. Zwischenbefund: leerer Folgepunkt ohne Schlussleerzeichen wurde noch erfasst; Developer korrigierte EOL-Markererkennung und physische Zwischenebene auch an einer Parserlistengrenze, QA-Retest grün. Kein verbleibender belegter Blocker. [QA-Bericht](../_Communication_Pipeline/qa_list_return_subtree.md). Geändert: `editor/list-interaction.mjs`, `editor/structure-keymap.mjs`, `editor/structure.mjs` und drei Testdateien; Lead pflegt Anforderungen, Entscheidungen, Architektur, Gamebook, Listenanleitung und Status. Keine Storage-/Abhängigkeitsänderung, Installation oder Commit/Push.
+
+**Nächste Aktion:** nach Bericht stoppen; PO-Handprobe in Edge nach Neuladen mit Return/Alt+Return sowie Zeilentausch→Ausrücken und Undo/Redo. Native Edge-Tastenzustellung und Langzeitressourcen bleiben offen; keine weitere Meilensteinfreigabe.
+
+### Listen-Tab/Folding/Einfügen — 2026-11-05, implementiert und unabhängig geprüft
+
+PO meldet Textitem-Tab rückt unerwünscht ein und setzt Cursor an Anfang. Neue explizite Anforderungen: Leerpunkt-Tab/Shift-Tab Ebene ändern; textgefülltes Tab Children falten, Leaf unverändert; nichtleeres Shift-Tab globaler Sichtbarkeitszyklus; Alt-Enter neuer Punkt, Shift-Alt-Enter Checkboxpunkt. `developer_m4b1a` prüft vorhandene Architektur und implementiert begrenzte Schritte, QA folgt unabhängig. Ausgangsbasis 122 Tests/Build. Keine Änderungen an Speicher-/Konfliktsicherheit oder außerhalb Listenkontext; kein Commit/Push.
+
+- Nach Wiederaufnahme prüfte `developer_list_correction` die begonnenen Änderungen und stellte das begrenzte Paket fertig; `qa_list_correction` prüfte anschließend unabhängig. Beide bestätigten geladene Rollenrevision `M32A-2026-11-03`; keine Unterdelegation. Lead reviewte und integrierte Dokumentation.
+- Vier gemeinsame Registry-Befehle `list.tab`, `list.shift-tab`, `list.insert`, `list.insert-checkbox` verwenden `editor/list-interaction.mjs`. Leere Punkte rücken gerichtet unter den vorherigen Geschwisterpunkt beziehungsweise zur Elternebene, ohne Wrap; logische Cursorposition bleibt erhalten. Erneute Markdown-Analyse schützt Blockarten, Itemanzahl und Elternzuordnungen anderer Punkte. Unsichere Aktionen werden unverändert verweigert.
+- Gefülltes Tab faltet ausschließlich tatsächliche direkte Unterlisten; Leaf bleibt unverändert. Eigene Absätze und lokale Codefalten bleiben erhalten. Shift-Tab schließt/öffnet globale Heading-/Listenstufen; Fortsetzung nach faltbedingter Cursorversetzung endet bei Navigation, Bearbeitung, Escape oder Fokusverlust. Einfügen erhält Inhalt und führt Nummerierung samt Breitenwechsel nach; Textänderungen sind atomare Undo-/Redo-Einheiten mit Cursorwiederherstellung.
+- Developer und QA jeweils **137/137 Tests**, Build, zwei Syntaxprüfungen und Diffcheck bestanden. Gegenüber der 122er-Basis 15 additive Listentests. QA zusätzlich **51 unabhängige Randfälle** sowie **vier Korrektur-Repros** bestanden. QA fand zuvor zu breite lokale Faltbereiche: eigener Schlussabsatz wurde verborgen beziehungsweise eigene Codefalte geöffnet. Developer korrigierte lokale/globale Bereiche auf tatsächliche Unterlisten; unabhängiger Retest grün. Kein verbleibender Blocker im geprüften Umfang. [QA-Bericht](../_Communication_Pipeline/qa_list_correction.md).
+- Paketdateien: neues `editor/list-interaction.mjs` und zugehöriger Test, Integration in `editor/app.mjs`, `editor/commands.mjs`, `editor/structure-keymap.mjs` und betroffene Tastatur-/Registrytests; Gamebook/Listenanleitung und Lead-Dokumentation aktualisiert. Bisherige Org-/EOL-Änderungen erhalten. Keine Storage-/Abhängigkeitsänderung, Installation oder Commit/Push.
+
+**Nächste Aktion:** nach Bericht stoppen und PO-Rückmeldung abwarten. In Edge nach Neuladen Leerpunkt-/Textpunkt-Tab, globales Shift-Tab, Alt-Enter/Shift-Alt-Enter und Undo/Redo gemäß [Listenanleitung](ORG_LISTS_M4B1A.md) praktisch prüfen. Native Edge-/QWERTZ-/AltGr-/IME-Zustellung und Langzeitressourcen bleiben offen. Komplexe Splits, Auswahlregionen und unsichere Container bleiben konservativ gesperrt; Checkboxeinfügen kann eine nummerierte Liste in getrennte Markdown-Listen aufteilen. M4b.2 benötigt neue Freigabe.
+
+### Nachbesserung Zeilenende — 2026-11-05, implementiert und unabhängig geprüft
+
+PO meldet fehlende Strukturaktion bei Cursor direkt hinter dem letzten Zeilenzeichen. Gezielter Bugfix freigegeben: aktueller Heading-/Listenkontext über alle Spalten von 0 bis Zeilenlänge, einschließlich EOF, ohne Semantik-/Schutzänderung. `developer_m4b1a` erhält den begrenzten Folgeauftrag; QA prüft danach unabhängig. Kein neuer Meilenstein/Commit/Push.
+
+- Ursache reproduziert: gemeinsamer Planer löste Syntax am gewöhnlichen EOL nach rechts auf, während Dokumentende bereits links aufgelöst wurde. Dadurch fand die vorgelagerte Kürzelerkennung die Liste, der Planer aber kein ListItem. `ancestors()` verwendet jetzt an nichtleeren physischen Zeilenenden die linke Auflösung; leere Zeilen erben keinen vorherigen Kontext.
+- Developer und unabhängige `qa_m4b1a` jeweils **122/122 Tests**, Build, zwei Syntaxprüfungen und Diffcheck bestanden. Beide Rollenrevision `M32A-2026-11-03` bestätigt. Zwei additive echte CM-Handlerreihenfolge-Tests prüfen alle Spalten inklusive EOL/EOF für Bullet/Ordered/nested/multiline erste Itemzeile und Heading mit Undo/Redo sowie fünf Schutzkontexte. QA zusätzlich sechs eigene EOL/EOF-/Nachbar-/Heading-/Leerzeilen-/Code-Repros inklusive Cursor und atomarer Historie bestanden; kein Blocker im geprüften Umfang. [QA-Bericht](../_Communication_Pipeline/qa_m4b1a_eol.md).
+- Fix-Dateien: `editor/structure.mjs`, `editor/alt-keyboard.test.mjs`, `docs/ORG_LISTS_M4B1A.md`; Bericht `_Communication_Pipeline/qa_m4b1a_eol.md`, Gate und dieser Status. Org-Resolver, Keymap, Storage und Befehlssemantik unverändert. Native neue Edge-Prüfung offen; Seite nach Build neu laden und Cursor ganz ans Ende einer Itemzeile setzen. Nach Bericht stoppen, Rückmeldung abwarten.
+
+### Vorheriger M4b.1a-Abschluss
+
+- Ausgangspunkt sauberer Commit `33e29d5`, 110 Tests. `developer_m4b1a` implementierte/testete, `qa_m4b1a` prüfte danach unabhängig. Beide bestätigten geladene Rollenrevision `M32A-2026-11-03`; keine Unterdelegation. Lead prüfte Referenzen, reviewte und integrierte Dokumentation.
+- Offizielle Listenregeln/Orgcard erneut gelesen: Alt-Auf/Ab nimmt Children mit; Shift-Alt-Auf/Ab bleibt Zeile. Original hat laut PO Vorrang. Keine neue widersprüchliche Unterbaumbelegung.
+- Developer und QA jeweils **120/120 Tests und Build bestanden**, Diffprüfung erfolgreich; Developer zusätzlich Syntaxprüfungen. Zehn neue gezielte Listentests, drei frühere Tests auf bekannte Nichtimplementierung durch echte Ergebnis-/Undo-Prüfungen ersetzt. Heading-, Alt-Präzedenz-, Registry- und Tabregressionen erhalten. QA zusätzlich neun eigene Repros grün: Marker-/Single-Children-Fälle, 10→9-Fortsetzung, Grenzen, Wiederholungsreset durch Bearbeitung und reine Planung. Kein Blocker im geprüften Umfang; [QA-Bericht](../_Communication_Pipeline/qa_m4b1a.md).
+- Gemeinsamer Listenplaner ergänzt: First-item-Teilbaumaktion verschiebt gesamte Geschwisterliste; Wiederholung behält anfängliche Region bis Cursor-/Zustandsänderung; Ausrücken erfolgt an Ort und Stelle mit Org-Neuzuordnung nachfolgender Geschwister. Nummernbreitenwechsel richtet Fortsetzungszeilen/Kinder aus; unsichere Lazy-Fortsetzung verwirft atomar die ganze Aktion. Verfügbarkeitsplanung bleibt rein lesend.
+- Einschränkungen: einzelne Cursorstelle auf erster Itemzeile, normale Markdown-Marker; keine Auswahlregionen, Tab-Einrückung, Misch-/Codecontainer oder mehrere direkte Unterlisten/Absatzblöcke. Globale Einrückung verweigert Markdown-Codeumdeutung. Single-Indention kann Children absichtlich zu Geschwistern machen; Einzel-Outdent mit Children bleibt Org-Verweigerung. Details und Handprobe: [ORG_LISTS_M4B1A.md](ORG_LISTS_M4B1A.md).
+- Keine Keymap-/Heading-/Storage-/Dependencyänderung. Neue native Edge-Prüfung nicht durchgeführt; bisherige PO-Bedienprobe zur unveränderten Alt-Basis getrennt erhalten. Keine erneuten lang hängenden Browser-Versuche, keine Langzeitmessungen.
+- Geändert: `editor/structure.mjs`, `editor/org-structure.mjs`, `editor/commands.mjs`, `editor/org-keyboard.test.mjs`, `docs/COMMAND_GAMEBOOK.md`, `docs/ORG_KEYBOARD_M4B1.md`; neu `editor/org-list.test.mjs`, `docs/ORG_LISTS_M4B1A.md`, `test-vault/vault-structure/org-lists.md`, `_Communication_Pipeline/qa_m4b1a.md`. Lead aktualisiert AGENTS/REQUIREMENTS/DECISIONS/ARCHITECTURE/PHASES und Status. Kein Commit/Push.
+
+**Nächste Aktion:** nach Abschlussbericht stoppen und PO-Rückmeldung abwarten. Manuelle Edge-Handprobe gemäß Listenanleitung. M4b.2 und weitere Umsetzung benötigen neue Freigabe.
+
+## Vorheriger Meilenstein M4b.1
 
 ### Nachbesserung nach PO-Edge-Test — implementiert und unabhängig geprüft
 

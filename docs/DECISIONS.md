@@ -1,5 +1,21 @@
 # Architekturentscheidungen
 
+## Erstpunktregel beibehalten und Commitfreigabe — 2026-11-05
+
+Nach erneuter Prüfung des [Org-Handbuchs](https://orgmode.org/manual/Plain-Lists.html) und Beispieldiskussion entscheidet PO ausdrücklich gegen eine weitere Änderung: Die aktuelle Erstpunkt-/Geschwisterlistenregel bleibt erhalten. PO gibt anschließend den lokalen Git-Commit des bereits geprüften Listenarbeitspakets frei. Keine neue Implementierung oder Pushfreigabe.
+
+## Freigabe Return und Listenteilbaum — 2026-11-05
+
+PO präzisiert Return als eingerückte Fortsetzung im selben Listenitem und Alt+Return als neuen Punkt. Nach physischer Zeilenbewegung begrenzen geringere Markereinrückungen den Zielbereich auch dann, wenn der Markdown-Parser sie einem größeren Itemcontainer zuordnet. Nur aktuelle Zeile und echte Kinder verändern; Markdown-Schutz und atomare Historie erhalten. Developer und unabhängige QA nacheinander, danach Bericht und Stopp; kein Commit/Push.
+
+## Freigabe Listen-Tab/Einfügen — 2026-11-05
+
+PO ersetzt bisheriges textgefüllte Items einrückendes Listen-Tab: Leerpunkt ändert Ebene, gefüllter Punkt faltet Children beziehungsweise bleibt als Leaf unverändert. Shift-Tab außerhalb Leerpunkt globaler Sichtbarkeitszyklus. Alt-Enter neuer Listenpunkt, Shift-Alt-Enter neuer Checkboxpunkt. Cursorlogik/Textintegrität und Undo/Redo verbindlich; keine globale Tab-Umbelegung außerhalb Listen, keine Storageänderung oder neuen Pakete. Developer setzt gezielt über vorhandene Architektur um, QA prüft unabhängig; weitere Meilensteine nicht ableiten.
+
+## Freigabe M4b.1a — Org-Listensteuerung
+
+PO gibt ausschließlich gezielte Ergänzung vorhandener Listenbefehle nach offiziellen Org-Regeln frei. Org-Original hat ausdrücklich Vorrang vor abweichenden Beschreibungen: Alt-Auf/Ab inklusive Children, Shift-Alt-Auf/Ab weiterhin Zeile. Links/Rechts unterscheidet Einzelitem/Teilbaum. Überschriftenkürzel, gemeinsame Registry, atomare Historie und Markdown-/Storagegrenzen erhalten. Keine neue UI/Abhängigkeit oder weiterer Meilenstein; tatsächliche Edge-bedingte Semantikänderung mit PO besprechen. Developer und QA nacheinander, gezielter Prüfauftrag; nach Bericht stoppen.
+
 ## Freigabe M4b.1 — 2026-11-04
 
 Nach PO-Praxistest zusätzlich freigegeben: Korrektur von Alt-Links/Rechts gegenüber konkurrierender Cursorbewegung; lokal auf Editorfokus begrenzte Unterdrückung der Alt-allein-Browserreaktion, soweit möglich. Keine globale Tastensperre; AltGr/IME und normale Eingabe erhalten. Alt-Auf/Ab und Shift-Alt-Auf/Ab vom PO grundsätzlich als funktionierend berichtet, kein unabhängiger Vollnachweis. Eine alternative leicht erreichbare Taste erst bei belegter Browsergrenze auswählen.

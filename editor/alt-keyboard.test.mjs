@@ -80,3 +80,37 @@ test('Alt allein: nur fokussierter linker Alt-Down/Up; AltGr, fremde Chords und 
   assert.equal(f.dispatch(event('Alt',{type:'keyup',code:'AltLeft'})).defaultPrevented,true);
   assert.equal(f.calls,2);assert.equal(f.fallback,0);
 });
+
+test('Struktur-Alt: alle physischen Zeilenpositionen einschliesslich EOL/EOF erreichen denselben Kontext',()=>{
+  const cases=[
+    ['- A\n- Beta\n- C',2,'ArrowRight',false,'- A\n  - Beta\n- C'],
+    ['- A\n- Beta',2,'ArrowRight',true,'- A\n  - Beta'],
+    ['1. A\n2. Beta\n3. C',2,'ArrowRight',false,'1. A\n   2. Beta\n2. C'],
+    ['- Root\n  - A\n  - Beta\n  - C',3,'ArrowLeft',false,'- Root\n  - A\n- Beta\n  - C'],
+    ['- A\n- Beta\n  continuation\n- C',2,'ArrowRight',true,'- A\n  - Beta\n    continuation\n- C'],
+    ['- A\n- Beta\n- C',2,'ArrowUp',false,'- Beta\n- A\n- C'],
+    ['## Beta\nText',1,'ArrowRight',false,'### Beta\nText'],
+    ['## Beta',1,'ArrowLeft',true,'# Beta']
+  ];
+  for(const [doc,lineNo,key,shiftKey,expected] of cases) {
+    const source=EditorState.create({doc}).doc.line(lineNo);
+    for(let col=0;col<=source.length;col++) {
+      const f=harness(doc,source.from+col),e=f.dispatch(event(key,{shiftKey}));
+      assert.equal(f.view.state.doc.toString(),expected,`${JSON.stringify(doc)} column ${col}`);
+      assert.equal(f.calls,1);assert.equal(f.fallback,0);assert.equal(e.defaultPrevented,true);
+      assert.equal(undo(f.view),true);assert.equal(f.view.state.doc.toString(),doc);
+      assert.equal(f.view.state.selection.main.head,source.from+col);
+      assert.equal(redo(f.view),true);assert.equal(f.view.state.doc.toString(),expected);
+    }
+  }
+});
+
+test('Struktur-Alt am EOL: Code, Frontmatter, Fortsetzung und leere Folgezeile erhalten Schutz',()=>{
+  for(const [doc,lineNo] of [
+    ['```\n- Fake\n```',2],['    - Fake\nText',1],['---\n- Fake\n---\n- Real',2],
+    ['- Real\n  continuation\n- Next',2],['- Real\n\nPlain',2]
+  ]) {
+    const line=EditorState.create({doc}).doc.line(lineNo),f=harness(doc,line.to);
+    f.dispatch(event('ArrowRight'));assert.equal(f.calls,0);assert.equal(f.view.state.doc.toString(),doc);
+  }
+});

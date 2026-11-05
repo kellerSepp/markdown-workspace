@@ -15,7 +15,7 @@ export const ORG_STRUCTURE = Object.freeze([
   ['list-up-subtree','list-up',true,'Listen-Unterbaum nach oben','Alt+Oben','M-UP'],
   ['list-down-subtree','list-down',true,'Listen-Unterbaum nach unten','Alt+Unten','M-DOWN']
 ].map(Object.freeze));
-const repeatGuard=new WeakSet();
+const repeatRegions=new WeakMap();
 
 export function orgContext(state) {
   if(state.readOnly||state.selection.ranges.length!==1||!state.selection.main.empty||state.selection.main.head<frontmatterEnd(state)||!syntaxTreeAvailable(state,state.doc.length)) return null;
@@ -32,15 +32,14 @@ export function planOrgStructure(state,id) {
   const definition=ORG_STRUCTURE.find(c=>c[0]===id);
   if(!definition) return {message:'Unbekannter Org-Strukturbefehl.'};
   if(orgContext(state)!==(id.startsWith('heading')?'heading':'list')) return {message:'Org-Struktur: einzelne Cursorstelle auf einer Überschriftenzeile oder der ersten Listenpunktzeile verwenden; Code und Mischcontainer bleiben geschützt.'};
-  if(/^list-(indent|outdent)-subtree$/.test(id)&&repeatGuard.has(state)) return {message:'Org-Unterlisten: vor einer weiteren Unterbaum-Einrückung den Cursor bewegen. Die gespeicherte Org-Wiederholungsregion ist noch nicht implementiert.'};
-  return planStructure(state,definition[1],{children:definition[2],orgSemantics:true});
+  return planStructure(state,definition[1],{children:definition[2],orgSemantics:true,orgRegion:repeatRegions.get(state)});
 }
 export function runOrgStructure(view,id,notify=()=>{}) {
   const result=planOrgStructure(view.state,id);
   if(!result.spec) {notify(result.message);return false;}
   view.dispatch(result.spec);
   view.dispatch({selection:view.state.selection,userEvent:'select.structure'});
-  if(/^list-(indent|outdent)-subtree$/.test(id)) repeatGuard.add(view.state);
+  if(/^list-(indent|outdent)-subtree$/.test(id)) repeatRegions.set(view.state,result.orgRegion);
   notify('Org-Struktur geändert. Undo/Redo verfügbar.');return true;
 }
 export function orgShortcutCommand(state,event) {

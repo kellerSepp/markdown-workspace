@@ -1,3 +1,4 @@
+import {LIST_COMMANDS,planListInteraction} from './list-interaction.mjs';
 import {planStructure} from './structure.mjs';
 import {planFormat} from './formatting.mjs';
 import {foldingContext} from './section-folding.mjs';
@@ -23,7 +24,8 @@ add('draft.recover','Ausgewählten Entwurf laden','Wiederaufnahme','Gewählten E
 for(const [id,name] of [['collapse','Abschnitt einklappen'],['reveal','Nächste Sichtbarkeitsstufe'],['open','Abschnitt vollständig öffnen']])
   add('fold.'+id,name,'Folding','Ansicht des aktuellen Abschnitts oder lokalen Blocks verändern; Text bleibt erhalten.','editor',c=>documentReason(c)||(!foldingContext(c.state)?'Kein faltbarer Abschnitt oder Block im Cursorkontext.':''),id==='collapse'?'Strg+Umschalt+,':id==='reveal'?'Strg+Umschalt+.':'');
 for(const [id,name] of [['heading-up','Abschnitt nach oben'],['heading-down','Abschnitt nach unten'],['heading-promote','Überschrift: Ebene höher'],['heading-demote','Überschrift: Ebene tiefer'],['list-up','Listenpunkt nach oben'],['list-down','Listenpunkt nach unten'],['list-indent','Listenpunkt einrücken'],['list-outdent','Listenpunkt ausrücken'],['list-prefix','Gewähltes Listenpräfix anwenden']])
-  add('structure.'+id,name,id.startsWith('heading')?'Überschriften':'Listen','Vorhandene sichere Strukturaktion; Wahl „Unterstruktur mitnehmen“ beachten.','editor',c=>documentReason(c)||planStructure(c.state,id,c.structure).message||'',id==='list-indent'?'Tab (Liste)':id==='list-outdent'?'Umschalt+Tab (Liste)':'');
+  add('structure.'+id,name,id.startsWith('heading')?'Überschriften':'Listen','Vorhandene sichere Strukturaktion; Wahl „Unterstruktur mitnehmen“ beachten.','editor',c=>documentReason(c)||planStructure(c.state,id,c.structure).message||'','');
+for(const [id,name,shortcut] of LIST_COMMANDS) add('list.'+id,name,'Listen','Kontextuelle Listenbedienung; Markdown-Schutzgrenzen beachten.','editor',c=>documentReason(c)||planListInteraction(c.state,id).message||'',shortcut);
 for(const [id,name] of [['bold','Fett'],['italic','Kursiv'],['underline','Unterstrichen'],['strike','Durchgestrichen'],['code','Inline-Code']])
   add('format.'+id,name,'Textformatierung','Formatierung der Auswahl setzen oder bei passender Auswahl entfernen. Codeblöcke bleiben geschützt.','selection',c=>documentReason(c)||planFormat(c.state,id).message||'');
 for(const [id,name,depth,shortcut] of [['undo','Rückgängig',undoDepth,'Strg+Z'],['redo','Wiederholen',redoDepth,'Strg+Y / Strg+Umschalt+Z']])
@@ -36,7 +38,7 @@ add('ui.development','Entwicklungsbereich anzeigen','Entwicklung','Rechteprüfun
 add('ui.palette','Command Palette öffnen','Bedienung','Alle registrierten Befehle durchsuchen.','global',idle,'Alt+X');
 for(const [id,,children,name,shortcut,orgShortcut] of ORG_STRUCTURE) {
   add('structure.'+id,name,id.startsWith('heading')?'Überschriften':'Listen','Explizite Org-Aktion '+(children?'mit Unterbaum':'ohne Unterbaum')+'; unabhängig von der Unterstrukturwahl. Markdown-Schutzgrenzen beachten.','editor',c=>documentReason(c)||planOrgStructure(c.state,id).message||'',shortcut);
-  Object.assign(catalog.at(-1),{orgShortcut,compatibility:id.startsWith('heading')?'Org-Kernverhalten, einzelne Cursorstelle; H1–H6.':'Org-Teilumfang: erste Itemzeile; Sonderfälle gesperrt, siehe Org-Hilfe.'});
+  Object.assign(catalog.at(-1),{orgShortcut,compatibility:id.startsWith('heading')?'Org-Kernverhalten, einzelne Cursorstelle; H1–H6.':'Org-Listen: erste Itemzeile; Single/Subtree, Erstpunkt und Wiederholungsregion; Markdown-Schutzgrenzen.'});
 }
 for(const [id,name,global,shortcut,orgShortcut] of [['org-local-cycle','Org: lokale Sichtbarkeit',false,'Tab (Org-Tab, Überschrift)','TAB'],['org-global-cycle','Org: globale Sichtbarkeit',true,'Umschalt+Tab (Org-Tab, außerhalb Liste/Code)','S-TAB']]) {
   add('fold.'+id,name,'Folding','Org-Sichtbarkeitszyklus; Legacy-Faltbefehle bleiben erhalten.','editor',c=>documentReason(c)||orgFoldReason(c.state,global),shortcut);

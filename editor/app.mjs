@@ -6,6 +6,7 @@ import {createSession, createBrowserStore} from './storage-session.mjs';
 import {THEMES,readThemeChoice,saveThemeChoice,applyTheme} from './themes.mjs';
 import {editorTheme} from './theme-editor.mjs';
 import {markdownFolding,guardedFold,stagedUnfold} from './folding.mjs';
+import {LIST_COMMANDS,runListInteraction} from './list-interaction.mjs';
 import {runStructure} from './structure.mjs';
 import {structureKeyboard,withoutOrgArrowConflicts} from './structure-keymap.mjs';
 import {visualStructure,DEFAULT_VISUAL_STRUCTURE,MARKER_STYLES} from './visual-structure.mjs';
@@ -65,6 +66,7 @@ const view = new EditorView({parent:$('editor'), state:EditorState.create({exten
 const handlers={};
 const registry=createCommandRegistry(commandDefinitions(handlers),()=>({busy,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
 const surfaces=createCommandSurfaces({registry,view,notify:status});
+for(const [id] of LIST_COMMANDS) handlers['list.'+id]=()=>{runListInteraction(view,id,status);view.focus();};
 for(const [id] of ORG_STRUCTURE) handlers['structure.'+id]=()=>{runOrgStructure(view,id,status);view.focus();};
 for(const [id,down] of [['line-up',false],['line-down',true]]) handlers['edit.'+id]=()=>{runLineMove(view,down,status);view.focus();};
 for(const [id,global] of [['org-local-cycle',false],['org-global-cycle',true]]) handlers['fold.'+id]=()=>{cycleOrgVisibility(view,global,status);view.focus();};

@@ -4,11 +4,13 @@ import {indentMore,indentLess} from '@codemirror/commands';
 import {syntaxTree,syntaxTreeAvailable,forceParsing} from '@codemirror/language';
 import {runStructure,frontmatterEnd} from './structure.mjs';
 import {orgShortcutCommand} from './org-structure.mjs';
+import {listContext,listGlobalContinuation,clearListGlobalContinuation,runListInteraction} from './list-interaction.mjs';
 import {cycleOrgVisibility} from './org-folding.mjs';
 
 const navigation = new WeakSet();
 const pendingAlt = new WeakSet();
 export function enableFocusNavigation(view,notify=()=>{}) {
+  clearListGlobalContinuation(view.state);
   navigation.add(view);view.setTabFocusMode(true);
   notify('Fokusnavigation aktiv: Tab/Shift+Tab verlässt den Editor. Beim erneuten Fokussieren gilt wieder Struktur-Tab.');
   return false; // Keep CodeMirror's ordinary Escape selection behavior.
@@ -39,6 +41,11 @@ export function structuralTab(view,outdent=false,getChildren=()=>true,notify=()=
   if(navigation.has(view)) return false;
   if(!syntaxTreeAvailable(view.state) && !forceParsing(view,view.state.doc.length,50)) return false;
   const context=tabContext(view.state);
+  if(context==='list'||outdent&&listGlobalContinuation(view.state)) {
+    const id=outdent?'shift-tab':'tab';
+    if(execute)execute('list.'+id);else runListInteraction(view,id,notify);
+    return true;
+  }
   if(!context) return false; // Native keyboard focus movement in ordinary prose.
   if(context==='code') {(outdent?indentLess:indentMore)(view);return true;}
   const command=context==='heading'?(outdent?'heading-promote':'heading-demote'):(outdent?'list-outdent':'list-indent');
@@ -48,6 +55,7 @@ export function structuralTab(view,outdent=false,getChildren=()=>true,notify=()=
 }
 export function handleOrgShortcut(event,view,execute) {
   if(!execute) return false;
+  if(event.key==='Enter'&&!event.ctrlKey&&!event.metaKey&&!event.isComposing&&!event.getModifierState?.('AltGraph')&&(event.altKey||!event.shiftKey)&&listContext(view.state,true)) {execute(event.altKey?(event.shiftKey?'list.insert-checkbox':'list.insert'):'list.newline');event.preventDefault();return true;}
   const id=orgShortcutCommand(view.state,event);if(!id) return false;
   execute?.(id);event.preventDefault();return true;
 }
@@ -73,7 +81,7 @@ export function withoutOrgArrowConflicts(bindings) {
   return bindings.filter(binding=>!['Alt-ArrowUp','Alt-ArrowDown','Shift-Alt-ArrowUp','Shift-Alt-ArrowDown'].includes(binding.key));
 }
 export function orgTab(view,outdent,getOrgTab,execute,notify) {
-  if(!getOrgTab()||navigation.has(view)) return null;
+  if(!getOrgTab()||navigation.has(view)||outdent&&listGlobalContinuation(view.state)) return null;
   const context=tabContext(view.state);
   // Code indentation and legacy list structure keep their established meaning.
   if(context==='code'||context==='list') return null;
@@ -95,7 +103,7 @@ export function structureKeyboard(getChildren,notify,execute,getOrgTab=()=>false
     Prec.highest(EditorView.domEventHandlers({
       keydown:(event,view)=>editorKeydown(event,view,execute),
       keyup:handleEditorAlt,
-      blur:(_event,view)=>{pendingAlt.delete(view);return false;}
+      blur:(_event,view)=>{pendingAlt.delete(view);clearListGlobalContinuation(view.state);return false;}
     }))
   ];
 }

@@ -1,5 +1,25 @@
 # Architekturvorschlag – zur Freigabe
 
+## Return und Listenteilbaum — gezielter Bugfix 2026-11-05
+
+Bestehenden Listenplaner und Tastaturrouter ergänzen: Return als Fortsetzungszeile mit Einrückung bis zum Itemtext, Alt+Return weiterhin neuer Punkt. Gemeinsame Schutzprüfung und atomare Transaktion verwenden. Bei Teilbaumeinrückung zusätzlich zu AST-Grenzen die physische Markereinrückung beachten: Ein geringer eingerückter Folgepunkt beendet den Zielbereich; die bestehende Org-Erstpunktregel für gleich eingerückte Geschwister bleibt erhalten. Das ist nach unverändertem physischen Zeilenverschieben nötig, weil Markdown unterschiedlich eingerückte Marker als AST-Geschwister führen kann. Keine zweite Parserbibliothek oder Storageänderung.
+
+Abnahme: PO-Repro vor/nach Zeilenbewegung, unveränderter Folgepunkt, echte Kinder/Fortsetzungen, Return und Alt+Return, Undo/Redo sowie bestehende Schutzfälle. Unabhängige QA; native Browserzustellung und Langzeitressourcen separat offen lassen.
+
+## Listen-Tab/Einfügen — 2026-11-05
+
+Listeninteraktion verwendet gemeinsame AST-Kontext-/Planerfunktionen in `editor/list-interaction.mjs` innerhalb vorhandener Registry, keinen parallelen Editor. Tastaturrouter unterscheidet leeres Item, gefülltes Item mit Children und Leaf, bevor bisheriges Struktur-Tab greifen könnte. Leere Items rücken gerichtet unter den vorherigen Geschwisterpunkt beziehungsweise zur Elternebene, ohne umlaufenden Zyklus; gefüllte Items ändern bei Tab nie den Text. Gezielte Änderungen werden erneut als Markdown analysiert: Itemanzahl, geschützte Blockarten und Elternzuordnung bestehender Items müssen erhalten bleiben; nur der gezielt bewegte Leerpunkt darf seinen Elternpunkt wechseln. Das kostet eine zusätzliche Analyse und verweigert unsichere Fälle, verhindert aber unbeabsichtigtes Umhängen. Cursorposition und atomare Historie bleiben erhalten.
+
+Lokale Listenfalten und globaler Gliederungszyklus verwenden native Fold-/Unfold-Effekte ohne Textänderung. Eine an den unveränderten Editorzustand gebundene Fortsetzung erlaubt weitere Shift-Tab-Stufen nach faltbedingter Cursorversetzung; andere Navigation, Bearbeitung, Escape oder Fokusverlust beendet sie. Alt-Enter/Checkboxeinfügen erfolgt als lokale Transaktion mit gemeinsamer Handlerausführung; komplexe Markdown-Splits werden transparent abgewiesen. Referenz [Org Plain Lists](https://orgmode.org/manual/Plain-Lists.html). Code-/Frontmatter-/Modifier-/Fokusgrenzen erhalten; keine Storageänderung.
+
+Abnahme: fünf Listenebenen, Standardmarker, Nummernbreitenwechsel und Mehrzeilen; Cursor einschließlich EOL/EOF und atomare Undo-/Redo-Wiederherstellung; display-only Folding und Fortsetzungsreset; bestehende Heading-/Alt-/Code-/Fokus-/Registrytests. Native Edge-Zustellung und Langzeitressourcen bleiben gesonderte Praxisnachweise. Keine neuen Pakete oder weiteren Meilensteine.
+
+## M4b.1a: gezielte Org-Listenoperationen
+
+Vorhandenen gemeinsamen Listenplaner über seine explizite Org-Option ergänzen, keine zweite Tastaturalgorithmik. Bestehende Registry-IDs und bewährten Alt-Ereignisvorrang behalten. Offizielle Referenz [Plain Lists](https://orgmode.org/manual/Plain-Lists.html)/[Orgcard](https://orgmode.org/orgcard.pdf): vertikaler Itemtausch nimmt Children bereits mit; Shift-Alt-Auf/Ab bleibt Zeilenbewegung. Zu prüfen: bisher konservativ gesperrte First-item-/Ausrück-/Wiederholungsfälle und nummerierte Fortsetzungszeilen. Jede freigegebene Änderung erneut als Markdown analysieren und atomar ausführen; Fremdbereiche/Code schützen. Grenzen transparent benennen statt erfundene Annäherung als Org-Kompatibilität auszugeben.
+
+Abnahme: mindestens fünf Ebenen, Marker-/Nummern-/Mehrzeilen-/Geschwistergrenzen, Single/Subtree, Cursor/Undo/Redo, Code und Headingregression; bestehende 110 Tests. Keine neue Architekturplattform oder breite Untersuchung. Native Edge-Ergebnisse nur tatsächlich gemessen oder als PO-Bericht kennzeichnen.
+
 ## M4b.1: Org-referenzierte Struktursteuerung — 2026-11-04
 
 Nach PO-Browserbefund: CodeMirror-Keymaps und DOM-Handler müssen in der tatsächlichen gemeinsamen Ereignisreihenfolge geprüft werden. Ein direkter Unitaufruf des Org-Resolvers beweist keine Priorität vor Standardcursorbewegung. Recognized Org-Handler daher mit expliziter Präzedenz; kein zweiter Bearbeitungsalgorithmus. Bare-Alt-Unterdrückung nur bei Editorfokus und getrennt von Alt-Kombinationen, mit Modifier-/IME-/Fokusverlustschutz. Browserreserve bleibt praktischer Abnahmepunkt, keine Web-App-Garantie für OS-/Browsermenüs.

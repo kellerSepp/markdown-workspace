@@ -1,5 +1,13 @@
 # Entwicklungsphasen – zur Freigabe
 
+## Aktueller Nachtrag: Listen-Tab/Folding/Einfügen — 2026-11-05
+
+Leere Punkte gerichtet ein-/ausrücken mit Careterhalt; gefüllte Punkte per Tab lokal falten, Leaf unverändert, Shift-Tab globale Sichtbarkeit. Alt-Enter fügt Listenpunkt ein, Shift-Alt-Enter ungeprüften Checkboxpunkt. Gültige Markdown-Hierarchie, atomare Undo/Redo und bestehende Tastatur-/Storagegrenzen erhalten. Developer und unabhängige QA nacheinander; danach Bericht und Stopp. Keine neuen Abhängigkeiten, weiteren Meilensteine oder Commit/Push.
+
+## Aktuelle Freigabe: M4b.1a — Org-Listensteuerung
+
+Gezielte Ergänzung existierender Listenoperationen anhand Org-Original, fünf Ebenen/Standardmarker/Nummerierung/Mehrzeilen, Registry und Headingregression. Developer implementiert, QA unabhängig. Keine anderen Meilensteine/Storage-/Abhängigkeitsänderungen. Nach Bericht stoppen; M4b.2 gesperrt.
+
 ## Aktuelle Freigabe: Phase 2 M4b.1, 2026-11-04
 
 Org-kompatible Strukturkürzel anhand offizieller Referenzen; Einzel-/Unterbaumvarianten, sichere Hierarchiegrenzen, explizite Tab-Faltkonfliktlösung und einfache Hilfe in Palette. Gamebook aktualisieren, bestehende 95 Tests und neue Semantikfälle unabhängig prüfen. Keine Storage-/Format-/Abhängigkeitsänderung, kein Refile/Shortcuteditor oder Aufgabenbereich. PO-Klarstellung: Shift-Alt-Auf/Ab verschiebt die aktuelle Zeile unabhängig vom Ebenenlevel wie Org/Emacs. Nach Bericht stoppen; M4b.2 gesperrt.

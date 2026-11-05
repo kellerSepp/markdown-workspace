@@ -33,29 +33,31 @@ test('Absatz-Tab navigiert; H1/H6 und ungültige Einrückung fügen keine Tabzei
     const {view}=harness(doc,pos);assert.equal(runScopeHandlers(view,event,'editor'),handled);assert.equal(view.state.doc.toString(),doc);
   }
 });
-test('Fünf Listenebenen: Tab rückt echten aktuellen Punkt ein, Shift+Tab wieder aus',()=>{
+test('Five list levels: filled Tab preserves source and cursor; empty Tab indents',()=>{
   for(let depth=1;depth<=5;depth++) {
-    let doc='';for(let n=0;n<depth-1;n++) doc+='  '.repeat(n)+'- Parent'+n+'\n';
+    let doc='';for(let n=0;n<depth-1;n++)doc+='  '.repeat(n)+'- Parent'+n+'\n';
     doc+='  '.repeat(depth-1)+'- First\n'+'  '.repeat(depth-1)+'- Second\n';
-    const {view}=harness(doc,doc.indexOf('Second'));
+    const pos=doc.indexOf('Second'),{view}=harness(doc,pos);
     assert.equal(tabContext(view.state),'list');assert.ok(runScopeHandlers(view,tab(),'editor'));
-    const pos=view.state.doc.toString().indexOf('Second');let count=0;
-    for(let n=syntaxTree(view.state).resolveInner(pos,1);n;n=n.parent) if(n.name==='ListItem') count++;
-    assert.equal(count,depth+1);
-    assert.ok(runScopeHandlers(view,tab(true),'editor'));assert.equal(view.state.doc.toString(),doc);
-    assert.ok(undo(view));assert.ok(undo(view));assert.equal(view.state.doc.toString(),doc);
+    assert.equal(view.state.doc.toString(),doc);assert.equal(view.state.selection.main.head,pos);
+    const empty=doc.replace('Second',''),v=harness(empty,empty.length-1).view;
+    assert.ok(runScopeHandlers(v,tab(),'editor'));
+    assert.equal(v.state.doc.toString(),empty.slice(0,empty.lastIndexOf('\n',empty.length-2)+1)+'  '.repeat(depth)+'- \n');
+    assert.ok(undo(v));assert.equal(v.state.doc.toString(),empty);
   }
 });
-test('Listenpunkt am Home-/Whitespace-Cursor wird korrekt gewählt und Children bleiben zugeordnet',()=>{
-  for(const pos of [4,5,6]) {
+
+test('List Home/whitespace and continuation Tab fold or no-op, never change source',()=>{
+  for(const pos of [4,5,6,12]) {
     const doc='- A\n  - B\n    - C\n',{view}=harness(doc,pos);
-    assert.ok(runScopeHandlers(view,tab(true),'editor'));assert.equal(view.state.doc.toString(),'- A\n- B\n  - C\n');
-    assert.ok(undo(view));assert.equal(view.state.doc.toString(),doc);assert.equal(view.state.selection.main.head,pos);
+    assert.ok(runScopeHandlers(view,tab(),'editor'));assert.equal(view.state.doc.toString(),doc);
+    assert.equal(view.state.selection.main.head,pos);
   }
-  const {view}=harness('- A\n- B\n  - C\n',6,false);
-  assert.ok(runScopeHandlers(view,tab(),'editor'));assert.equal(view.state.doc.toString(),'- A\n  - B\n- C\n');
-  assert.ok(undo(view));assert.equal(view.state.doc.toString(),'- A\n- B\n  - C\n');
+  const doc='- A\n  continuation\n- B',pos=8,{view}=harness(doc,pos);
+  assert.ok(runScopeHandlers(view,tab(),'editor'));assert.equal(view.state.doc.toString(),doc);
+  assert.equal(view.state.selection.main.head,pos);
 });
+
 test('Codeblock-Tab bleibt native Codeeinrückung einschließlich Mehrzeilenauswahl',()=>{
   const doc='```js\nconst a=1;\nconst b=2;\n```',{view}=harness(doc,8);
   view.dispatch({selection:{anchor:doc.indexOf('const a'),head:doc.indexOf('const b')+8}});

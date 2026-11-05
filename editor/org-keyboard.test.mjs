@@ -56,11 +56,12 @@ test('Org-Listen: Unterbaumverschieben, Einrücken, Cursor und konservative Sond
   const w=harness('- A\n- B\n  - Kid',6);
   assert.equal(runOrgStructure(w,'list-indent-subtree'),true);
   assert.equal(w.state.doc.toString(),'- A\n  - B\n    - Kid');
-  assert.match(planOrgStructure(w.state,'list-indent-subtree').message,/Cursor bewegen/);
+  assert.equal(runOrgStructure(w,'list-indent-subtree'),true);
+  assert.equal(w.state.doc.toString(),'- A\n    - B\n      - Kid');
   w.dispatch({selection:{anchor:w.state.selection.main.head}});
   assert.doesNotMatch(planOrgStructure(w.state,'list-indent-subtree').message??'',/Cursor bewegen/);
-  const first=harness('- A\n- B',2);assert.match(planOrgStructure(first.state,'list-indent-subtree').message,/vorherigen/);
-  const siblings=harness('- A\n  - B\n  - C',8);assert.match(planOrgStructure(siblings.state,'list-outdent-subtree').message,/folgenden Geschwister/);
+  const first=harness('- A\n- B',2);roundtrip(first,()=>runOrgStructure(first,'list-indent-subtree'),'  - A\n  - B');
+  const siblings=harness('- A\n  - B\n  - C',8);roundtrip(siblings,()=>runOrgStructure(siblings,'list-outdent-subtree'),'- A\n- B\n- C');
 });
 test('Alt-Pfeile: vier getrennte Fälle, AltGr/IME/Plaintext/Selection und CM-Konflikte',()=>{
   const heading=harness('## A\n### B',3).state;
@@ -110,7 +111,7 @@ test('Org-Tab ist explizite Option; Listen/Code und Escape-Fokusausstieg bleiben
   enabled=true;assert.equal(runScopeHandlers(v,tab(false),'editor'),true);assert.equal(commands.pop(),'fold.org-local-cycle');
   assert.equal(runScopeHandlers(v,tab(true),'editor'),true);assert.equal(commands.pop(),'fold.org-global-cycle');
   runScopeHandlers(v,{key:'Escape',keyCode:27},'editor');assert.equal(runScopeHandlers(v,tab(false),'editor'),false);
-  const list=harness('- A\n- B',6,structureKeyboard(()=>false,()=>{},id=>commands.push(id),()=>true));runScopeHandlers(list,tab(true),'editor');assert.equal(commands.pop(),'structure.list-outdent');
+  const list=harness('- A\n- B',6,structureKeyboard(()=>false,()=>{},id=>commands.push(id),()=>true));runScopeHandlers(list,tab(true),'editor');assert.equal(commands.pop(),'list.shift-tab');
   const code=harness('```\ncode\n```',6,structureKeyboard(()=>true,()=>{},id=>commands.push(id),()=>true));runScopeHandlers(code,tab(false),'editor');assert.match(code.state.doc.toString(),/  code/);
 });
 test('Zeilenverschieben ist levelunabhängig, erhält Marker/Unicode/EOF/Cursor und atomare Historie',()=>{

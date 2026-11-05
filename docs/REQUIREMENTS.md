@@ -1,5 +1,19 @@
 # Anforderungen (Stand 2026-11-03)
 
+## Return und Listenteilbaum — PO-Korrektur 2026-11-05
+
+Return fügt im Listenitem eine passend eingerückte Fortsetzungszeile desselben Items ein; Alt+Return erzeugt einen neuen Listenpunkt. Shift+Alt+Return bleibt Checkboxeinfügen. Nach physischem Zeilenverschieben darf Shift+Alt+Links nur das aktuelle Item und tatsächlich tiefer eingerückte Kinder ausrücken: ein nachfolgender geringer eingerückter Punkt gehört nicht dazu. Abnahme: konkretes PO-Beispiel, echte Kinder, Fortsetzungen, Cursor und atomare Undo/Redo sowie bestehende Schutz-/Tastaturtests. Nur gezielter Bugfix, unabhängige QA; keine Storageänderung, Abhängigkeit, weiterer Meilenstein oder Commit/Push.
+
+## Listen-Tab und Einfügen — PO-Korrektur 2026-11-05
+
+Auf leerem Item Tab/Shift-Tab Hierarchie sinnvoll ändern und logische Cursorposition erhalten. Auf textgefülltem Item Tab ausschließlich Unterpunkte ein-/ausklappen; ohne Children keine Änderung. Shift-Tab auf nichtleerem Item globale Sichtbarkeit schließen beziehungsweise stufenweise öffnen. Alt-Enter erzeugt Listenpunkt, Shift-Alt-Enter ungeprüften Checkboxpunkt (`- [ ]`). Nur passender Listenkontext, verschachtelte gültige Markdown-Struktur; kein Textverlust/Überschreiben, alle Textänderungen atomar Undo/Redo. Folding ausschließlich Ansicht. Außerhalb Listen bisheriges Tab/Heading-/Code-/AltGr-/IME-Verhalten und Escape-Fokusausstieg erhalten. Bestehende Registry/Planer und native Folding-APIs wiederverwenden; Storage-/Konflikt-/Integritätssicherheit unverändert. Kleine nachvollziehbare Implementierung und unabhängige QA, danach stoppen.
+
+## Aktuelle Freigabe M4b.1a — Org-Listensteuerung
+
+Nur vorhandene Listenoperationen gezielt anhand offizieller Org-Dokumentation/Orgcard ergänzen. Originalsemantik hat Vorrang: Alt-Auf/Ab tauscht Items einschließlich Unterpunkten mit gleich eingerückten Nachbarn; Shift-Alt-Auf/Ab bleibt physische Zeilenbewegung. Alt-Links/Rechts ändert einzelnes Item ohne Children-Einrückung, Shift-Alt auch dessen Teilbaum. Tatsächliche Sonderregeln prüfen, keine eigene Semantik erfinden. Mindestens fünf Ebenen, Standardmarker `-`, `*`, `+`, `1.`, mehrzeilige Items, Nummerierung und Hierarchiegrenzen berücksichtigen.
+
+Vorhandene Registry/Planer verwenden, Headingkürzel und korrigierte Alt-Präzedenz/AltGr-/Fokusgrenzen erhalten. Tab/Shift-Tab soweit kompatibel bewahren; atomare Undo-/Redo-/Cursorprüfung. Developer implementiert, QA unabhängig; 110 bisherige Tests als Basis. Einschränkungen und echte Browsernachweise trennen; tatsächliche Edge-bedingte Umbelegung vorher mit PO besprechen. Kein Refile, Shortcuteditor, Framework, Storageänderung, Aufgabenbereich oder anderer Meilenstein. Budgetbewusst begrenzt arbeiten; getesteten Zwischenstand statt unkontrollierter Erweiterung berichten. Nach Bericht stoppen, M4b.2 gesperrt.
+
 ## Aktuelle Freigabe M4b.1 — 2026-11-04
 
 PO-Rückmeldung und Bugfixfreigabe: Alt-Links/Rechts löst in Edge noch Cursorbewegung statt Struktur aus; Alt-Auf/Ab und Shift-Alt-Auf/Ab funktionieren laut PO grundsätzlich. Shortcut-Präzedenz korrigieren. Alt allein soll bei tatsächlichem Editorfokus die Browserauswahl/-menüaktivierung unterbinden, soweit Browserereignisse dies erlauben; AltGr/IME und Verhalten außerhalb des Editors erhalten. Kein globaler Alt-Blocker. Bei Browsergrenze eine ähnlich erreichbare Alternative vorschlagen, keine unbelegte Erfolgsbehauptung. Developer korrigiert, QA prüft unabhängig; M4b.2 bleibt gesperrt.
