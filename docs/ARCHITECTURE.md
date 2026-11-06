@@ -1,5 +1,37 @@
 # Architekturvorschlag – zur Freigabe
 
+## Gemeinsame Panelnavigation — Ergänzung 2026-11-06
+
+Kill-Ring und Präfixhilfe sollen dieselbe Zeilenauswahl und lokale Sichtbarkeit über `revealPanelRow` verwenden. Ein gemeinsamer Tastaturresolver beziehungsweise Paneladapter übersetzt Alt+Oben/Unten und Enter; Präfixrouter delegiert nur im aktiven Modus, während der Fokus im Editor bleibt. Kein zweiter Scroll- oder Auswahlalgorithmus. Reale Alt-Tastendrücke vor den Pfeilen müssen die Hilfe erhalten; außerhalb des Präfixes gelten bestehende Org-Alt-Befehle. Kontext-/Keyup-/Repeat-/IME-/AltGr-/Abbruchschutz und Cleanup erhalten. Abnahme: kleines Ergebnisviewport mit nur einer sichtbaren Zeile, Navigation/Enter und 1/2/3, gesperrte Zeilen, Ringregression und unabhängige QA; native Fensterprobe bleibt gesondert.
+
+## C-c-Präfix — freigegebener Ansatz AP-06, 2026-11-06
+
+Nach ausdrücklicher Copy-Ersatz-Abnahme einen separaten, kurzlebigen Sequenzzustand an die bestehende Registry anbinden. Nur die bestätigten Folgen 1/2/3 verwenden vorhandene Faltbefehle; Policy hält die Belegung, das Panel zeigt die gültigen Folgeschritte ohne Fokusübernahme. Keine ausführbaren Notiz-/Gamebookdefinitionen und kein neuer Shortcuteditor.
+
+Vorteil: Belegungen, Zustandsautomat und Darstellung bleiben getrennt anpassbar. Aufwand: Abbruch bei Kontext-/Fokuswechsel und Cleanup müssen explizit geprüft werden. Vor Ausführung Kontext erneut validieren; Auswahl beim Start erhalten, Repeat/IME/AltGr schützen, Escape als Abbruch und Fokusausstieg erhalten. Gemeinsamen Layoutschutz auch für Folgehilfe verwenden. Außerhalb des Editors natives Copy erhalten. Abnahme: gezielte Sequenz-/Integrationsfälle, bestehende Suite/Build, unabhängige QA und anschließende PO-Browserprobe. Keine Storageänderung oder Abhängigkeit.
+
+## Horizontaler Arbeitsbereich — freigegebene Nachbesserung 2026-11-06
+
+Editor und bestehende separate Panelhülle in eine gemeinsame begrenzte Layoutfläche setzen. Sichtbarkeit ändert ausschließlich die Höhenverteilung, keine Dokumenttransaktion. Fokuswechsel ohne Seitenscroll; Ergebnisse im eigenen Container scrollen statt `scrollIntoView` über alle Vorfahren. Editor-Scrollanker/-Offsets möglichst bewahren, unvermeidbares Clamping am Dokumentende ausdrücklich prüfen. Keine verzögerte Rücksetzung über neuere Benutzernavigation oder Dateiwechsel hinweg.
+
+Tab im Suchfeld vervollständigt den Suchtext aus passenden Präfixen; kein Einfügen ins Dokument. Mehrdeutig längster gemeinsamer Präfix, bei fehlender Erweiterung Suchtext und Liste erhalten. Einzeiliges Suchfeld darf mehrzeilige Ringeinträge nicht durch unpassendes Setzen voller Inhalte verlieren; Zeilen-/Unicodegrenzen beachten. Alt+Oben/Unten nur lokal im Panel, Guard-/Fokus-/Cleanupregeln unverändert. Belegungen/Layout weiter getrennt vom Ring-/Clipboardmodell; keine neue Abhängigkeit oder Storageänderung. Abnahme: automatisierte State-/Layoutmodell-/Scrolltests plus spätere echte PO-Edge-Probe.
+
+## C-c, Kill-Ring und unterer Arbeitsbereich — Planung 2026-11-05
+
+Vorschlag und Abnahmegrenzen: [TXT-Plan Revision 2](PLAN_C_C_KILL_RING.txt). Gemeinsame Registry und CodeMirror-Auswahl/History/Panel verwenden; Prefixzustand, aktive Marke, interner Ring und Clipboard-Adapter getrennt halten. Ring in begrenztem RAM unabhängig von OS-Berechtigungen; synchrones Editorziel vor asynchroner Clipboard-Antwort erneut validieren. Native Edge-Prüfung und funktionierender Copy-Ersatz vor C-c-Umbelegung. Untere Fläche als gemeinsame Hülle für Hilfe/Auswahl, keine Agenda-/TODO-Implementierung. Keine neuen Pakete oder Storageänderung vorgeschlagen. Konkrete Grenzen und Regeln bleiben vor Umsetzung mit PO zu klären; nur Planungsfreigabe.
+
+### Freigegebene Umsetzung AP-02/03 nach AP-00/01
+
+PO bestätigt Regeln und native Testseiten-Handprobe; Umsetzung darf bis zur Copy-Ersatz-Abnahme fortschreiten. Zentrale `emacs-policy.mjs` hält Belegungen/Grenzen, `kill-ring.mjs` das UI-unabhängige Textmodell, `clipboard-adapter.mjs` den austauschbaren OS-Zugriff, `emacs-editing.mjs` Markierungs-/Yank-Zustand und Editorbefehle. Unteres Panel wird separat angebunden. Registry bleibt gemeinsamer Zugriff für Tastatur, Palette und Maus. So ändern spätere Belegungs-/Speicherregeln weder Storagekern noch die gesamte Anwendung.
+
+8 MiB bezeichnet das UTF-8-Textbudget des Rings, nicht eine behauptete exakte JavaScript-Heapgrenze. Kein stilles Kürzen übergroßer Cuts. Historie ist Sitzungsspeicher, bei Vaultwechsel löschen; Dateiwechsel erhält Ring, verwirft aber aktive Marke, Yank-Ersetzungsbereich und laufende Zielanfragen. Asynchrone Rückgaben müssen gegen aktuellen Zielzustand geprüft werden. Nicht rückholbare bereits gestartete OS-Schreibzugriffe sind von sicher verwerfbaren Editoränderungen zu unterscheiden. C-y ersetzt Redo ausschließlich im Editor; C-Shift-z und bestehende Maus-/Palettenbefehle erhalten. C-c bleibt normales Copy bis zum ausdrücklichen PO-Gate.
+
+### Panelhülle AP-04/05
+
+Implementierungswahl innerhalb des freigegebenen modularen Umfangs: eine eigene untere DOM-Hülle außerhalb des CodeMirror-Dokumentzustands statt einer dokumentgebundenen Panel-Stateerweiterung. Vorteil: Dateiwechsel über `view.setState` zerstört nicht die gemeinsame Hülle, die später auch andere Ansichten aufnehmen kann. Ringmodell und Einfügecallback werden injiziert; UI hält nur Suche/Auswahl und ein prüfbares Ziel, keinen zweiten Editor oder Vault. Nachteil: Fokus-/Abbruch-/Destroy-Verhalten muss ausdrücklich im Modul getestet werden, statt CodeMirror-Panel-Lifecycle zu übernehmen. Keine dauernden Timer, begrenzte Höhe und bestehende Theme-Tokens. M-y mit gültiger Yank-Kette tauscht weiterhin direkt, außerhalb öffnet es die Auswahl.
+
+Native Copy wird beobachtet, nicht zum Prefix umgedeutet. Cut sichert die Region vor Löschung; Native Paste übernimmt nur tatsächlich akzeptierten Klartext. Überbudget-Paste wird vollständig verweigert und gemeldet, nicht gekürzt. Der explizite OS-Clipboardadapter bleibt davon getrennt; keine automatische Leseberechtigungsanfrage oder Hintergrundabfrage. Die Produkt-Handprobe bleibt erforderlich.
+
 ## Return und Listenteilbaum — gezielter Bugfix 2026-11-05
 
 Bestehenden Listenplaner und Tastaturrouter ergänzen: Return als Fortsetzungszeile mit Einrückung bis zum Itemtext, Alt+Return weiterhin neuer Punkt. Gemeinsame Schutzprüfung und atomare Transaktion verwenden. Bei Teilbaumeinrückung zusätzlich zu AST-Grenzen die physische Markereinrückung beachten: Ein geringer eingerückter Folgepunkt beendet den Zielbereich; die bestehende Org-Erstpunktregel für gleich eingerückte Geschwister bleibt erhalten. Das ist nach unverändertem physischen Zeilenverschieben nötig, weil Markdown unterschiedlich eingerückte Marker als AST-Geschwister führen kann. Keine zweite Parserbibliothek oder Storageänderung.

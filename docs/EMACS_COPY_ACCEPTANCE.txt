@@ -1,0 +1,149 @@
+HANDPROBE: Emacs-Auswahl, Copy-Ersatz und AP-06 C-c-Prefix
+====================================================
+Stand: 2026-11-06
+Status: Copy-Ersatz vom PO akzeptiert; AP-06 am 2026-11-06 freigegeben.
+Unabhaengige AP-06-QA und native Prefixprobe noch offen.
+Historischer Stand AP-02 bis05: Developer und unabhaengige QA
+182/182 Tests und Build bestanden (einschliesslich Panelnachbesserung).
+Native Probe der neuen horizontalen Teilung und Scrollstabilitaet offen.
+Grundfunktionen und externer Klartextaustausch vom PO positiv berichtet.
+Editor: http://127.0.0.1:8766/ (nach aktuellem Build Strg+F5).
+Nur synthetische Daten unter test-vault/ verwenden.
+Aktuell: C-c ist nur im Editor Prefix; Alt+W kopiert dort.
+Ausserhalb des Editors bleibt Strg+C normales Kopieren.
+
+Vorbereitung
+------------
+Editorseite nach aktuellem Build mit Strg+F5 neu laden. Synthetischen
+Test-Vault wählen und eine Testdatei öffnen. Vorher wichtige Inhalte aus
+der Windows-Zwischenablage sichern; Kopieren überschreibt sie.
+Kurze unabhängige Testtexte benutzen, zum Beispiel ROT, GRÜN, BLAU.
+Konkrete Testdatei fuer die neue Panel-/Scrollprobe:
+test-vault/vault-structure/emacs-panel-scroll.md
+Sie enthaelt ROT, GRUEN, GRUENLICH, BLAU, 180 nummerierte Zeilen und
+eine lange horizontale Testzeile. Den Test-Vault wie bisher oeffnen und
+die Datei vault-structure/emacs-panel-scroll.md auswaehlen.
+
+1. Marke und Region
+   Cursor vor ein Wort setzen, Strg+Leertaste, Pfeil rechts mehrfach.
+   Auswahl muss wachsen. Links zurück und über den Start hinaus prüfen.
+   Strg+G beziehungsweise Escape löst die Marke ohne Textänderung.
+   Escape und anschließend Tab muss weiterhin aus dem Editor führen.
+
+2. Kopieren
+   ROT mit Maus oder Marke auswählen, Alt+W drücken.
+   Original bleibt stehen. In einem anderen Textfeld normal einfügen:
+   dort muss ROT ankommen. Strg+C nur ausserhalb des Editors als Copy pruefen.
+
+3. Ausschneiden
+   GRÜN auswählen, Strg+X. Nur Auswahl verschwindet.
+   Undo stellt sie wieder her, Redo über Strg+Umschalt+Z entfernt sie erneut.
+   Strg+X ohne Auswahl darf nicht versehentlich eine ganze Zeile entfernen.
+
+4. Einfügen am Cursor
+   BLAU kopieren. An anderer Position Strg+Y.
+   Strg+Y muss Text einfügen und darf nicht als Redo wirken.
+   Bei aktiver Auswahl wird am Cursor eingefügt; markierter Text bleibt.
+
+5. Ältere Einträge
+   Nacheinander ROT, GRÜN, BLAU mit Alt+W kopieren.
+   An freier Position Strg+Y, dann mehrfach Alt+Y.
+   Nur der frisch eingefügte Text darf wechseln, Außenbereich bleibt gleich.
+   Jeder Austausch lässt sich einzeln mit Undo/Redo zurückholen.
+   Nach gewähltem älteren Eintrag fügt Strg+Y diesen erneut ein.
+   Beispiel: Strg+Y ergibt BLAU, Alt+Y ersetzt es durch GRUEN,
+   weiteres Strg+Y ergibt GRUENGRUEN (zusaetzliche Kopie, kein Austausch).
+
+6. Auswahlbereich unten
+   Cursor bewegen oder etwas tippen, danach Alt+Y.
+   Es muss die Ringauswahl öffnen, statt einen alten Dokumentbereich
+   zu überschreiben. Suche, Pfeile/Enter und Maus prüfen.
+   Escape bricht ohne Einfügen ab und führt zum Editor zurück.
+
+7. Andere Windows-Anwendung
+   Dort EXTERN kopieren. Im Editor Strg+Y beziehungsweise Strg+V prüfen.
+   Tatsächlich eingefügter externer Text soll im Ring auffindbar sein.
+   Alt+Y darf die Windows-Zwischenablage nicht fortlaufend überschreiben.
+
+8. Datei- und Vaultgrenzen
+   Innerhalb desselben Vaults Datei wechseln: Ring bleibt verfügbar,
+   aber Alt+Y darf nicht den früheren Yank-Bereich der anderen Datei ersetzen.
+   Beim Vaultwechsel muss der Ring geleert werden.
+
+9. Bestehende Bedienung
+   Alt-Pfeile, Tab/Shift+Tab, Return/Alt+Return, Alt+X-Palette,
+   Mausauswahl, normales Tippen und Undo/Redo kurz gegenprüfen.
+   AltGr/IME nur dann als geprüft melden, wenn tatsächlich benutzt.
+
+Rückmeldung im Chat
+------------------
+Bitte erfolgreiche Punkte und konkrete Abweichungen nennen.
+Clipboard-Berechtigungsfehler mit sichtbarer Meldung angeben.
+Keine produktiven Dokumente oder echten Clipboard-Inhalte mitschicken.
+Die Testseiten-Handprobe AP-01 ist noch keine Abnahme dieser Produktfunktionen.
+Historisches Gate erfuellt: PO hat Copy-Ersatz und AP-06 bestaetigt.
+
+Nachbesserung: horizontale Teilung und Vervollstaendigung
+-----------------------------------------------------
+Nach aktualisiertem Build mit Strg+F5 neu laden. In der genannten Datei
+ROT, GRUEN, GRUENLICH und BLAU einzeln kopieren. Mitte der langen Datei
+anzeigen, etwa Zeile 080 bis 120, und eine gut erkennbare obere Zeile merken.
+
+A. Alt+Y beziehungsweise Kill-Ring oeffnet den unteren Bereich innerhalb
+   derselben Arbeitsflaeche. Editor wird kleiner, beim Schliessen groesser.
+   Gesamte Arbeitsflaeche soll dabei nicht wachsen und die Seite versetzen.
+B. Oeffnen/Schliessen mehrfach pruefen: am Anfang, in der Mitte und nahe
+   Dokumentende; auch mit horizontal gescrollter langer Zeile.
+   Cursor/Auswahl und Text bleiben unveraendert. Am Ende darf der Browser
+   nur so weit begrenzen, wie es durch die groessere sichtbare Flaeche
+   unvermeidbar ist (keinen leeren Raum hinter dem Dokument erzeugen).
+C. Alt+Oben/Unten navigiert Treffer, Enter fuegt ein. Laengere Trefferliste
+   scrollt nur im unteren Ergebnisbereich, nicht im Editor oder in der Seite.
+D. Im Suchfeld GRU tippen, Tab: gemeinsamer Praefix GRUEN. L anhaengen,
+   erneut Tab: eindeutige Vervollstaendigung GRUENLICH. Tab fuegt nichts
+   ins Dokument ein und verlaesst das Suchfeld nicht. Shift+Tab bleibt
+   Fokusnavigation; Escape/Strg+G schliesst die Auswahl.
+E. Suchtext ohne Praefixtreffer: Tab laesst ihn stehen und zeigt einen
+   Hinweis. Mehrzeilige Ringeintraege bleiben vollstaendig erhalten;
+   vervollstaendigt werden einzelne passende Textzeilen im Suchfeld.
+
+Diese neue Layout-/Scrollprobe nach Fertigstellung erneut bestaetigen.
+Die positive Probe des bisherigen Copy-Ersatzes wird dadurch nicht
+als Fehler zurueckgenommen. Die spaetere ausdrueckliche AP-06-Freigabe
+vom 2026-11-06 hebt den damaligen Prefix-Stopp auf; native Layoutprobe offen.
+
+AP-06: native Prefixprobe nach aktuellem Build
+--------------------------------------------
+1. In synthetischer Headingdatei Cursor oder rueckwaertige Auswahl setzen.
+   C-c druecken: kein Copy, kein Text-/Auswahlverlust; untere Folgehilfe
+   oeffnet denselben geschuetzten Split, Fokus bleibt im Editor.
+2. C loslassen, auch Strg loslassen, dann 1 / 2 / 3 getrennt pruefen:
+   Abschnitt einklappen / naechste Sichtbarkeit / vollstaendig oeffnen.
+   Bestehende Faltsemantik und Mausknopfe der Folgehilfe gegenpruefen.
+   Ohne Faltkontext Sperrgruende sehen; kein Texteingriff.
+3. C-c halten und Folgetaste halten: keine automatische Ausfuehrung.
+   Ohne C-keyup keine Folge; erneutes C-c beendet als ungueltige Folge.
+   Ungueltige Taste, z.B. 4, wird nicht als Text nachgetragen.
+4. Escape und C-g abbrechen. Escape dann Tab UND Shift+Tab aus dem Editor
+   pruefen, auch bei Ueberschrift und Liste sowie optionalem Org-Tab.
+5. Fokus wechseln, Alt-Tab, Datei-/Vaultwechsel und Busy pruefen:
+   keine spaete Ausfuehrung und keine alte Hilfe. AltGr/IME/Modifier nur
+   als geprueft melden, wenn nativ benutzt. Alt+W und externes Copy pruefen.
+6. Lange Scrollprobe oben mit Prefixhilfe wiederholen: Anfang/Mitte/Ende,
+   horizontale Zeile, Auswahl/Caret, Undo/Redo und sichtbarer Ausschnitt.
+   Prefixstart/Abbruch erzeugt keinen Undo-Schritt; bestehende Faltaktionen
+   duerfen ihren bisherigen Sichtbarkeits-/Cursorregeln folgen.
+
+Automatisierte Modelle ersetzen keine native Edge-/CodeMirror-Abnahme.
+
+Ergaenzung: Prefixnavigation im kleinen/geviertelten Fenster
+C-c loslassen, echtes linkes Alt keydown vor Pfeil ab/auf pruefen.
+Alt+Auf/Ab waehlt aktive Optionen mit Umlauf und lokalem Ergebnis-Scroll;
+Enter fuehrt einmal aus, gehaltenes Enter nicht. 1/2/3 bleiben direkt.
+Deaktivierte Optionen mit Sperrgrund werden uebersprungen; alle gesperrt: keine Aktion.
+Ohne C-keyup darf auch ein Mausklick nichts ausfuehren.
+Escape/C-g, rechtes Alt/AltGr (code/location), IME, fremde Altchords, Busy
+und Kontextwechsel pruefen. Danach Org-Alt-Pfeile ausserhalb der Hilfe pruefen.
+Text/Undo, Vorwaerts-/Rueckwaertsauswahl, Fokus und Editor-/Seitenscroll
+vergleichen; nur Ergebniscontainer darf lokal scrollen. Alt+W-Hinweis bleibt.
+Native Probe noch nicht ausgefuehrt.

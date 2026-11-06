@@ -6,6 +6,9 @@ import {undoDepth,redoDepth} from '@codemirror/commands';
 import {ORG_STRUCTURE,planOrgStructure} from './org-structure.mjs';
 import {orgFoldReason} from './org-folding.mjs';
 import {planLineMove} from './line-move.mjs';
+import {EMACS_COMMANDS} from './emacs-policy.mjs';
+import {emacsCommandReason} from './emacs-editing.mjs';
+import {PREFIX_BINDINGS} from './emacs-policy.mjs';
 
 const documentReason=c=>c.busy?'Ein Vorgang läuft.':!c.hasDocument?'Bitte zuerst eine Datei öffnen.':'';
 const idle=c=>c.busy?'Ein Vorgang läuft.':'';
@@ -28,8 +31,9 @@ for(const [id,name] of [['heading-up','Abschnitt nach oben'],['heading-down','Ab
 for(const [id,name,shortcut] of LIST_COMMANDS) add('list.'+id,name,'Listen','Kontextuelle Listenbedienung; Markdown-Schutzgrenzen beachten.','editor',c=>documentReason(c)||planListInteraction(c.state,id).message||'',shortcut);
 for(const [id,name] of [['bold','Fett'],['italic','Kursiv'],['underline','Unterstrichen'],['strike','Durchgestrichen'],['code','Inline-Code']])
   add('format.'+id,name,'Textformatierung','Formatierung der Auswahl setzen oder bei passender Auswahl entfernen. Codeblöcke bleiben geschützt.','selection',c=>documentReason(c)||planFormat(c.state,id).message||'');
-for(const [id,name,depth,shortcut] of [['undo','Rückgängig',undoDepth,'Strg+Z'],['redo','Wiederholen',redoDepth,'Strg+Y / Strg+Umschalt+Z']])
+for(const [id,name,depth,shortcut] of [['undo','Rückgängig',undoDepth,'Strg+Z'],['redo','Wiederholen',redoDepth,'Strg+Umschalt+Z']])
   add('edit.'+id,name,'Bearbeiten','Letzte Änderung in der aktuellen Datei rückgängig machen beziehungsweise wiederholen.','document',c=>documentReason(c)||(!depth(c.state)?'Keine weitere '+name+'-Aktion verfügbar.':''),shortcut);
+for(const {id,name,description,shortcut} of EMACS_COMMANDS)add('edit.emacs-'+id,name,'Bearbeiten',description,'editor',c=>documentReason(c)||emacsCommandReason(c.state,id),shortcut);
 for(const id of ['midnight','terminal','nord','paper']) add('theme.'+id,'Theme: '+id[0].toUpperCase()+id.slice(1),'Ansicht','Vorhandenes Farbschema sofort anwenden und lokal merken.','global',idle);
 for(const [id,name] of [['heading-indent','Überschrifteneinrückung umschalten'],['list-markers','Visuelle Listenmarker umschalten'],['hierarchical-numbers','Hierarchische Nummern umschalten'],['children','Unterstruktur mitnehmen umschalten']]) add('view.'+id,name,'Ansicht','Sitzungsoption umschalten; gespeicherte Markdown-Syntax bleibt unverändert.','global',idle);
 for(let level=1;level<=5;level++) add('view.marker-level-'+level,'Listenmarker Ebene '+(level===5?'5+':level)+' wechseln','Ansicht','Nächsten visuellen Marker wählen; die Optionsauswahl kann einen konkreten Marker setzen. Keine Rohtextänderung.','global',idle);
@@ -49,6 +53,7 @@ for(const [id,name,down,shortcut,orgShortcut] of [['line-up','Zeile nach oben',f
   add('edit.'+id,name,'Bearbeiten','Aktuelle physische Zeile tauschen, unabhängig von Hierarchie und Unterstrukturwahl. Marker werden nicht geändert. Code/Fences/Frontmatter sind geschützt.','editor',c=>documentReason(c)||planLineMove(c.state,down).message||'',shortcut);
   Object.assign(catalog.at(-1),{orgShortcut,compatibility:'Org/Emacs-Zeilenbewegung bei einzelnem Cursor; Code-/Frontmatter-Grenzen zusätzlich geschützt, keine Regionen.'});
 }
+for(const {id,key} of PREFIX_BINDINGS){const command=catalog.find(c=>c.id===id);command.shortcut=[command.shortcut,'C-c '+key+' (Editor)'].filter(Boolean).join(' / ');}
 for(const id of ['heading-up','heading-down']) Object.assign(catalog.find(c=>c.id==='structure.'+id),{shortcut:id==='heading-up'?'Alt+Oben':'Alt+Unten',orgShortcut:id==='heading-up'?'M-UP':'M-DOWN',compatibility:'Org-Unterbaumtausch nur mit gleichrangigem Geschwister innerhalb derselben Elterngrenze.'});
 export const COMMAND_METADATA=Object.freeze(catalog.map(c=>Object.freeze(c)));
 export function commandDefinitions(handlers) {

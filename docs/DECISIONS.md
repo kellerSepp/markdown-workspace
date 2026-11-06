@@ -1,5 +1,29 @@
 # Architekturentscheidungen
 
+## Lokaler Abschlusscommit — PO-Freigabe 2026-11-06
+
+Nach positiver Rückmeldung zur Präfixnavigation gibt der PO den lokalen Git-Commit des abgeschlossenen Copy-/Kill-Ring-/Präfix-/Panelpakets frei. Kein Push und kein weiterer Meilenstein freigegeben. Native AltGr-/IME-/Langzeitnachweise bleiben offen.
+
+## Präfixhilfe in kleinen Fenstern — PO-Freigabe 2026-11-06
+
+PO berichtet: Bei geviertelter Gesamtansicht auf 1920×1080 ist nur die erste Befehlszeile sichtbar. Freigegeben: Alt+Oben/Unten wählt in der aktiven Präfixhilfe, Enter führt aus, markierte Zeile scrollt lokal sichtbar. 1/2/3 und Escape/Strg+G bleiben erhalten. Vorhandene Kill-Ring-Navigation möglichst gemeinsam verwenden, Fokus und Editorviewport erhalten; Alt+W-Hinweis bleibt vorerst. Nur begrenzte Ergänzung mit unabhängiger QA, keine Dependencies/Storageänderung/Commit/Push.
+
+## Copy-Ersatz abgenommen, C-c-Umstellung freigegeben — 2026-11-06
+
+PO bestätigt funktionierendes Copy/Paste über die neue Methode und gibt ausdrücklich die Umstellung frei. Das gesonderte Copy-Umschalt-Gate ist erfüllt. AP-06: Strg+C als Editorpräfix, danach 1 einklappen, 2 nächste Sichtbarkeitsstufe, 3 vollständig öffnen; Folgehilfe im unteren Panel. Außerhalb des Editors bleibt Strg+C Copy; im Editor kopiert Alt+W. Developer implementiert, QA prüft unabhängig gemäß AP-07; native Produktprobe folgt. Keine neuen Fachfunktionen, Abhängigkeiten, Storageänderungen oder Commit-/Pushfreigabe.
+
+## Panelteilung und Vervollständigung — PO-Freigabe 2026-11-06
+
+PO bestätigt externen Klartextaustausch und gibt die vorgeschlagene horizontale Editor-/Panelteilung, Alt+Oben/Unten und Tab-Suchvervollständigung frei. Zusätzliche Bedingung: Größenwechsel darf den sichtbaren Editorinhalt nicht unerwartet versetzen. Gemeinsame begrenzte Höhe mit eigenem Ergebnisscroller; Cursor/Auswahl/History und Stale-Zielschutz erhalten. Nur diese modulare Nachbesserung mit unabhängiger QA, C-c bleibt Copy. Native Layout-/Scrollprobe nach Umsetzung bleibt offen; kein Commit/Push.
+
+## AP-00 bestätigt, AP-01 manuell — 2026-11-05
+
+PO bestätigt die sechs vorgeschlagenen Regeln: C-y am Cursor ohne Auswahl zu löschen; 120 Einträge/8 MiB nur RAM, getrennt pro Workspace/Tab und bei Vaultwechsel/Reload leeren; gekennzeichneter interner Clipboard-Fallback, keine veraltete externe Paste; externe Paste in Ring ohne Duplikate; jeder M-y-Austausch einzeln Undo; C-c 1/2/3 für bestehende Faltbefehle. Umsetzung ausdrücklich modular und später anpassbar. Nach CUA-Abbruch wegen unbestimmbarer Edge-URL autorisiert PO eine lokale manuelle AP-01-Testseite. Keine Umgehung der Automatisierungssperre, keine Produkt-C-c-Umbelegung vor Copy-Ersatz-Abnahme.
+
+## Planungsentscheidung Emacs-Belegung — 2026-11-05
+
+PO beauftragt ausschließlich Recherche und lesbaren TXT-Arbeitsplan für C-c-Prefix, Auswahl, Kill-Ring und unteren Arbeitsbereich. Auf Rückfrage: möglichst Emacs folgen, C-y für Yank und M-y für ältere Einträge; C-x statt C-w zum Ausschneiden wegen Edge-Konflikt, M-w kopiert. C-y ist bisher Redo und muss erst bei später freigegebener Umsetzung mit erhaltener Redo-Alternative geändert werden. [Plan und offene Entscheidungen](PLAN_C_C_KILL_RING.txt). Keine Implementierung/Agenda/TODO, kein Commit/Push freigegeben.
+
 ## Erstpunktregel beibehalten und Commitfreigabe — 2026-11-05
 
 Nach erneuter Prüfung des [Org-Handbuchs](https://orgmode.org/manual/Plain-Lists.html) und Beispieldiskussion entscheidet PO ausdrücklich gegen eine weitere Änderung: Die aktuelle Erstpunkt-/Geschwisterlistenregel bleibt erhalten. PO gibt anschließend den lokalen Git-Commit des bereits geprüften Listenarbeitspakets frei. Keine neue Implementierung oder Pushfreigabe.

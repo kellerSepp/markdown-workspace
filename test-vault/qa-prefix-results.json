@@ -1,0 +1,94 @@
+{
+  "latencySampleWindow": 10000,
+  "checks": 46,
+  "cycles": 421400,
+  "durationSeconds": 65.0154055,
+  "ringBytes": 7800360,
+  "syntheticDocumentCharacters": 28,
+  "samples": [
+    {
+      "seconds": 0.002,
+      "rss": 78868480,
+      "heapTotal": 56721408,
+      "heapUsed": 19542520,
+      "external": 4475053,
+      "arrayBuffers": 262181,
+      "cycles": 0
+    },
+    {
+      "seconds": 10.005,
+      "rss": 100528128,
+      "heapTotal": 56459264,
+      "heapUsed": 19736696,
+      "external": 2849449,
+      "arrayBuffers": 262181,
+      "cycles": 65000
+    },
+    {
+      "seconds": 20.007,
+      "rss": 100597760,
+      "heapTotal": 56197120,
+      "heapUsed": 19756304,
+      "external": 2849449,
+      "arrayBuffers": 262181,
+      "cycles": 129700
+    },
+    {
+      "seconds": 30.003,
+      "rss": 100675584,
+      "heapTotal": 56197120,
+      "heapUsed": 19751112,
+      "external": 2849449,
+      "arrayBuffers": 262181,
+      "cycles": 194400
+    },
+    {
+      "seconds": 40.006,
+      "rss": 100855808,
+      "heapTotal": 56197120,
+      "heapUsed": 19802736,
+      "external": 2849449,
+      "arrayBuffers": 262181,
+      "cycles": 259200
+    },
+    {
+      "seconds": 50.01,
+      "rss": 100794368,
+      "heapTotal": 56459264,
+      "heapUsed": 19808272,
+      "external": 2849449,
+      "arrayBuffers": 262181,
+      "cycles": 324000
+    },
+    {
+      "seconds": 60.009,
+      "rss": 101134336,
+      "heapTotal": 56459264,
+      "heapUsed": 19813680,
+      "external": 2849449,
+      "arrayBuffers": 262181,
+      "cycles": 388900
+    },
+    {
+      "seconds": 65.014,
+      "rss": 115089408,
+      "heapTotal": 89489408,
+      "heapUsed": 19734688,
+      "external": 2849449,
+      "arrayBuffers": 262181,
+      "cycles": 421400
+    }
+  ],
+  "p50ms": 0.002300000000104774,
+  "p95ms": 0.004699999997683335,
+  "p99ms": 0.010899999993853271,
+  "first1000p95ms": 0.003700000001117587,
+  "last1000p95ms": 0.0030000000042491592,
+  "afterDestroy": {
+    "rss": 115236864,
+    "heapTotal": 89227264,
+    "heapUsed": 24089552,
+    "external": 2849449,
+    "arrayBuffers": 262181
+  }
+}

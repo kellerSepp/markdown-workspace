@@ -17,6 +17,10 @@ import {createCommandSurfaces} from './command-surfaces.mjs';
 import {ORG_STRUCTURE,runOrgStructure} from './org-structure.mjs';
 import {cycleOrgVisibility} from './org-folding.mjs';
 import {runLineMove} from './line-move.mjs';
+import {createEmacsEditing,emacsMark} from './emacs-editing.mjs';
+import {EMACS_COMMANDS,withoutYankRedo} from './emacs-policy.mjs';
+import {createWorkPanel} from './work-panel.mjs';
+import {createPrefixRouter} from './prefix-router.mjs';
 
 const $ = id => document.getElementById(id);
 const editable = new Compartment();
@@ -30,14 +34,22 @@ $('theme').replaceChildren(...THEMES.map(theme => new Option(theme.name,theme.id
 $('theme').value = activeTheme.id;
 let session, vault, busy = true, syncing = false, timer, persistPending = false;
 const status = message => {$('status').textContent = message;};
+let workPanel,ringVault;
+const editingContext=()=>({busy,hasDocument:!!session?.hasDocument});
+const prefix=createPrefixRouter({registry:{get:id=>registry.get(id),availability:id=>registry.availability(id),execute:id=>registry.execute(id)},getContext:editingContext,
+  showHelp:(...args)=>workPanel.showPrefix(...args),moveHelp:delta=>workPanel.moveSelection(delta),activateHelp:()=>workPanel.activateSelection(),hideHelp:()=>workPanel?.close({restore:false}),notify:status});
+const emacs=createEmacsEditing({getContext:editingContext,notify:status,openChooser:()=>workPanel?.openRing()??false});
 const extensions = () => [
+  prefix.extension(),
+  emacs.extension(id=>registry.execute(id)),
   lineNumbers(), history(), drawSelection(), markdown({base:markdownLanguage}), markdownFolding(status,id=>registry.execute(id)), structureKeyboard(()=>$('structureChildren').checked,status,id=>registry.execute(id),()=>$('orgTab').checked), visualAppearance.of(visualStructure(visualOptions)), appearance.of(editorTheme(activeTheme)),
-  keymap.of([{key:'Mod-z',run:()=>{registry.execute('edit.undo');return true;}},{key:'Mod-y',run:()=>{registry.execute('edit.redo');return true;}},{key:'Mod-Shift-z',run:()=>{registry.execute('edit.redo');return true;}}]),
+  keymap.of([{key:'Mod-z',run:()=>{registry.execute('edit.undo');return true;}},{key:'Mod-Shift-z',run:()=>{registry.execute('edit.redo');return true;}}]),
   // Remove CM's competing line move/copy shortcuts. Outside a recognized Org
   // context the browser receives Alt arrows; Shift+Alt up/down stays unbound.
-  keymap.of([...withoutOrgArrowConflicts(defaultKeymap), ...historyKeymap]),
+  keymap.of(withoutYankRedo([...withoutOrgArrowConflicts(defaultKeymap), ...historyKeymap])),
   EditorView.contentAttributes.of({'aria-label':'Markdown-Rohtext', spellcheck:'false'}),
   editable.of([EditorState.readOnly.of(true),EditorView.editable.of(false)]),
+  EditorView.updateListener.of(update=>{$('markStatus').textContent=update.state.field(emacsMark,false)?.active?'Marke aktiv · Cursorbewegung erweitert Auswahl · Strg+G/Escape beendet':'';}),
   EditorState.transactionFilter.of(transaction => {
     if (transaction.docChanged && !transaction.newDoc.toString().isWellFormed()) {
       status('Ungültige Unicode-Eingabe wurde verworfen; Entwurf bleibt unverändert.');
@@ -66,6 +78,11 @@ const view = new EditorView({parent:$('editor'), state:EditorState.create({exten
 const handlers={};
 const registry=createCommandRegistry(commandDefinitions(handlers),()=>({busy,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
 const surfaces=createCommandSurfaces({registry,view,notify:status});
+workPanel=createWorkPanel({host:$('workPanel'),workspace:$('editorWorkspace'),view,ring:emacs.ring,getContext:editingContext,insert:(id,target)=>emacs.insertRingEntry(view,id,target),notify:status});
+for(const {id} of EMACS_COMMANDS)handlers['edit.emacs-'+id]=()=>{
+  if(id==='show-ring'||id==='yank-pop')workPanel.preserveViewport(()=>view.focus());else view.focus();
+  return emacs.run(view,id);
+};
 for(const [id] of LIST_COMMANDS) handlers['list.'+id]=()=>{runListInteraction(view,id,status);view.focus();};
 for(const [id] of ORG_STRUCTURE) handlers['structure.'+id]=()=>{runOrgStructure(view,id,status);view.focus();};
 for(const [id,down] of [['line-up',false],['line-down',true]]) handlers['edit.'+id]=()=>{runLineMove(view,down,status);view.focus();};
@@ -121,11 +138,15 @@ function render() {
   $('document').textContent = session?.hasDocument ? `${session.vault.name}/${session.path}${session.dirty ? ' · geändert' : ' · unverändert'}` : 'Keine Datei geöffnet.';
 }
 function setBusy(value) {
+  if(value){prefix.cancel();workPanel?.close({restore:false});}
+  if(value)emacs.invalidate();
   busy = value;
   for (const element of document.querySelectorAll('button,select,input')) if(!element.closest('.command-palette,.command-context')) element.disabled = value;
   view.dispatch({effects:editable.reconfigure([EditorState.readOnly.of(value || !session?.hasDocument),EditorView.editable.of(!value && !!session?.hasDocument)])});
 }
 function syncEditor() {
+  prefix.cancel();workPanel?.close({restore:false});
+  emacs.invalidate();
   syncing = true;
   try {
     // New state prevents undo history from crossing file or draft boundaries.
@@ -152,6 +173,14 @@ async function run(action) {
 const actionIds={choose:'workspace.choose',grant:'workspace.grant',scan:'workspace.scan',open:'file.open',save:'file.save',check:'file.check',listDrafts:'draft.list',recover:'draft.recover'};
 function bind(id, action) {handlers[actionIds[id]]=()=>run(action);}
 function requireSynthetic() {if (!$('synthetic').checked) throw Error('Synthetischen Test-Vault zuerst bestätigen.');}
+async function sameVault(left,right){
+  if(left===right)return true;
+  try{return !!left&&!!right&&await left.isSameEntry(right);}catch{return false;}
+}
+async function useRingVault(next){
+  if(!await sameVault(ringVault,next))emacs.invalidate({clearRing:true});
+  ringVault=next;
+}
 async function permission(request = false) {
   if (!vault) throw Error('Test-Vault wählen.');
   let result = await vault.queryPermission({mode:'readwrite'});
@@ -180,6 +209,7 @@ bind('choose', async () => {
   requireSynthetic();
   const selected = await showDirectoryPicker({mode:'readwrite'});
   await session.persist();
+  if(!await sameVault(vault,selected))emacs.invalidate({clearRing:true});
   $('files').replaceChildren(); vault = selected; await scan();
 });
 bind('grant', async () => {
@@ -194,7 +224,7 @@ bind('open', async () => {
   let dir = vault; const parts = path.split('/');
   for (const name of parts.slice(0,-1)) dir = await dir.getDirectoryHandle(name);
   const handle = await dir.getFileHandle(parts.at(-1));
-  await session.open({vault,handle,path}); syncEditor(); persistPending = false;
+  await session.open({vault,handle,path}); await useRingVault(session.vault); syncEditor(); persistPending = false;
   status('Datei geöffnet. Änderungen werden erst mit Speichern in die Datei geschrieben.'); view.focus();
 });
 async function save() {
@@ -213,7 +243,9 @@ bind('listDrafts', async () => {
 bind('recover', async () => {
   requireSynthetic(); const key = $('drafts').value;
   if (!key) throw Error('Entwurf auswählen.');
-  await session.persist(); await session.recover(key); vault = session.vault;
+  await session.persist(); await session.recover(key);
+  await useRingVault(session.vault);
+  vault = session.vault;
   $('files').replaceChildren();
   syncEditor(); persistPending = false; status('Entwurf geladen. Vor Speichern werden Rechte und externe Änderungen geprüft.');
 });

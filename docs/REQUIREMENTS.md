@@ -1,5 +1,23 @@
 # Anforderungen (Stand 2026-11-03)
 
+## Präfixhilfe — Navigation bei kleinem Fenster, 2026-11-06
+
+Bei geviertelter Ansicht auf 1920×1080 sollen auch zunächst unsichtbare Folgebefehle erreichbar sein: Alt+Oben/Unten markiert die vorige/nächste Option, Enter führt aus, Ergebnisse scrollen ausschließlich lokal zur markierten Zeile. 1/2/3 bleiben direkte Auswahl, Escape/Strg+G bricht ab. Kill-Ring-Navigation wiederverwenden, Fokus im Editor und Textausschnitt erhalten; AltGr/IME/Modifier/Repeat, Kontext-/Dateiwechsel und bestehende Org-Alt-Aktionen schützen. Alt+W-Hinweis vorerst unverändert belassen. Nur diese Ergänzung, unabhängige QA und native kleine-Fenster-Probe; keine Dependencies/Storageänderung/Commit/Push.
+
+## C-c-Präfix — Copy-Umschalt-Gate erfüllt, 2026-11-06
+
+PO nimmt den funktionierenden Copy/Paste-Ersatz ab und gibt AP-06 ausdrücklich frei. Im fokussierten Editor startet Strg+C die Folgehilfe; 1 klappt ein, 2 öffnet die nächste Sichtbarkeitsstufe, 3 öffnet vollständig über bestehende Befehle. Alt+W bleibt Copy, außerhalb des Editors bleibt Strg+C Copy. Auswahl beim Präfixstart erhalten, Escape-Abbruch/Fokusausstieg und Kontext-/Modifier-/IME-/Repeat-/Cleanupschutz prüfen. Frühere Hinweise „C-c bleibt Copy“ beschreiben das vorherige Gate. Unabhängige QA gemäß AP-07; native Produktprobe nach Umsetzung, keine neuen Fachfunktionen/Dependencies/Storageänderungen oder Commit/Push.
+
+## Unterer Arbeitsbereich — PO-Nachbesserung 2026-11-06
+
+Editor und Ringauswahl teilen sich horizontal eine begrenzte gemeinsame Höhe. Öffnen verkleinert den Editor, Schließen vergrößert ihn; Ergebnisse scrollen im unteren Bereich. Alt+Oben/Unten navigiert Kandidaten, Tab vervollständigt Suchtext, Enter fügt ein, Escape/C-g schließt. Cursor/Auswahl, Dokument/Undo und möglichst stabiler sichtbarer Textausschnitt bleiben bei Größenänderung erhalten; keine unbeabsichtigte Seitennavigation durch Fokus oder Ergebniswahl. Grenzen bei unvermeidbarer Scrollbegrenzung am Dokumentende transparent testen. Vorhandene Ring-/Clipboard-/AltGr-/IME-/Fokus-/Cleanupregeln erhalten; C-c bleibt Copy. Nur diese Nachbesserung, keine Agenda/TODO, neue Pakete oder Storageänderung.
+
+## C-c / Emacs-Copy-Ersatz — Freigabe 2026-11-05
+
+PO autorisiert den [TXT-Plan](PLAN_C_C_KILL_RING.txt) mit bestätigtem AP-00 und ausdrücklich modularer, später anpassbarer Umsetzung. C-SPC aktiviert die Marke, M-w kopiert, C-x schneidet Region aus; C-y fügt am Cursor ohne Auswahlersetzung ein, M-y ersetzt im direkten Yankzyklus einzeln undo-fähig oder öffnet die untere Ringauswahl. Redo bleibt über C-Shift-z/Maus/Palette. 120 Einträge/8 MiB UTF-8-Text nur RAM pro Workspace/Tab, Vaultwechsel/Reload leert; Dateiwechselschutz und ungültige asynchrone Zielanfragen sind verbindlich. Externe tatsächlich eingefügte Texte ohne Duplikate übernehmen, Clipboardfehler klar melden; kein stiller veralteter Ersatz bei expliziter externer Paste. Gemeinsame Registry, getrennte Policy/Ring/Clipboard/Editor-/Panelmodule; keine neuen Pakete, Storageänderung, Agenda oder TODO.
+
+AP-01-Handprobe vom PO positiv berichtet: gewünschte Kürzel zugestellt/verhindert, Clipboard-Lesen/-Schreiben erfolgreich, keine Auffälligkeit; AltGr/IME ungeprüft. AP-02 bis05 implementieren und unabhängig testen; C-c bleibt Copy, bis PO den funktionierenden Ersatz abnimmt. Erst danach C-c 1/2/3 für bestehende Faltbefehle aktivieren. Native Testseite allein ersetzt keine Produktabnahme. Keine automatische Commit-/Pushfreigabe.
+
 ## Return und Listenteilbaum — PO-Korrektur 2026-11-05
 
 Return fügt im Listenitem eine passend eingerückte Fortsetzungszeile desselben Items ein; Alt+Return erzeugt einen neuen Listenpunkt. Shift+Alt+Return bleibt Checkboxeinfügen. Nach physischem Zeilenverschieben darf Shift+Alt+Links nur das aktuelle Item und tatsächlich tiefer eingerückte Kinder ausrücken: ein nachfolgender geringer eingerückter Punkt gehört nicht dazu. Abnahme: konkretes PO-Beispiel, echte Kinder, Fortsetzungen, Cursor und atomare Undo/Redo sowie bestehende Schutz-/Tastaturtests. Nur gezielter Bugfix, unabhängige QA; keine Storageänderung, Abhängigkeit, weiterer Meilenstein oder Commit/Push.

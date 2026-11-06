@@ -1,0 +1,443 @@
+PLAN: C-c-Prefix, Emacs-Auswahl, Kill-Ring und unterer Arbeitsbereich
+=================================================================
+
+Dokument-ID: CC-KILL-RING-PLAN-2026-11-05
+Revision: 3
+Stand: 2026-11-06
+Projekt: Markdown-Workspace, Edge unter Windows, CodeMirror 6
+Status: Umsetzung AP-00 bis AP-07 vom PO beauftragt, Gates bleiben bestehen.
+Basis: lokaler Commit 568db60; Anwendungscode unverändert.
+
+Dieses Dokument kann vollständig in einen späteren Chat kopiert werden.
+Die Arbeitspaket-IDs bleiben dabei die eindeutigen Bezugspunkte.
+Eine Freigabe einzelner Pakete gibt spätere Pakete nicht automatisch frei.
+
+NACHTRAG REVISION 3: PO bestätigt funktionierendes Copy/Paste über den
+Ersatzweg und gibt die C-c-Umstellung ausdrücklich frei. Copy-Umschalt-Gate
+erfüllt; AP-06 mit C-c 1/2/3 und anschließende unabhängige QA umsetzen.
+Final umgesetzt: Developer/QA jeweils 195/195 Tests, Build, Syntax/Diff grün;
+zwei QA-Befunde korrigiert und unabhängig geschlossen. Native Produktprobe
+und Langzeitbelege aus AP-07 bleiben offen, siehe PROJECT_STATUS.md.
+Frühere offene Gatehinweise unten sind historischer Stand. Keine neue
+Commit-/Push-, Storage- oder Fachfunktionsfreigabe.
+
+NACHTRAG REVISION 2: AP-00 wurde vom PO bestätigt. C-y fügt am Cursor ein,
+ohne aktive Auswahl zu löschen. Ring: 120 Einträge / 8 MiB Text, RAM pro
+Workspace/Tab, bei Vaultwechsel/Reload leeren. Klarer interner Fallback bei
+nicht lesbarem Clipboard; expliziten externen Paste ohne veralteten Ersatz
+abbrechen. Tatsächlich extern eingefügten Text ohne Duplikate übernehmen.
+Jeder M-y-Austausch einzeln Undo. C-c 1/2/3 für bestehende Faltbefehle.
+Regeln und Module müssen später ohne Gesamtumbau anpassbar sein.
+Abschnitt 6 ist damit entschieden und bleibt als Entscheidungsverlauf stehen.
+Nach CUA-Abbruch wegen unbestimmbarer Browser-URL unterstützt PO die lokale
+manuelle AP-01-Testseite. Produkt-C-c bleibt bis Copy-Ersatz-Abnahme erhalten.
+
+UMSETZUNGSSTAND: AP-01 vom PO positiv berichtet; AP-02 bis05 implementiert
+und unabhängig geprüft (174/174 Tests und Build, 52 weitere QA-Fälle).
+Produkt-Handprobe siehe docs/EMACS_COPY_ACCEPTANCE.txt. C-c ist weiterhin
+Copy, AP-06 wartet auf diese konkrete Abnahme; kein Prefix vorgezogen.
+Panelhülle als getrennte untere DOM-Hülle umgesetzt, statt dokumentgebundener
+CM-Panel-Stateerweiterung; Ring/Policy/Clipboard/Editor bleiben eigene Module.
+
+
+1. ERGEBNIS UND BEREITS GETROFFENE ENTSCHEIDUNGEN
+------------------------------------------------
+
+Grundsätzlich umsetzbar:
+- C-c als mehrstufiger Befehlsprefix im fokussierten Editor.
+- Markierung mit C-SPC und anschließender Cursorbewegung.
+- Interner Kill-Ring mit Kopieren, Ausschneiden, Yank und Yank-Pop.
+- Ausklappbarer Bereich unter dem Editor für Prefixhilfe und Ringauswahl.
+- Spätere Wiederverwendung dieses Bereichs für andere Ansichten.
+
+Vom Product Owner bereits für die Planung entschieden:
+- Möglichst genau der Emacs-Bedienung folgen.
+- C-y fügt ein; M-y greift auf ältere Ring-Einträge zu.
+- M-w kopiert. C-x schneidet aus, als bewusste Browserabweichung von C-w.
+- Jetzt NICHT implementieren, sondern recherchieren und Arbeitsschritte planen.
+- Bei entscheidungsbedürftigen Fragen pausieren und PO-Antwort abwarten.
+
+Schreibweise: C = Strg, M = Alt, SPC = Leertaste, RET = Enter.
+Beispiel C-c C-a: erst Strg+C, dann Strg+A, nicht alle Tasten gleichzeitig.
+
+Wichtig: Die Kernfunktionen stammen aus Emacs. Org benutzt sie mit.
+Ein eigener Ring benötigt keine Windows-Clipboard-Leseberechtigung.
+Die Kopplung mit anderen Windows-Anwendungen benötigt dagegen die vom
+Browser erlaubten Clipboard-Wege. Vollständige Emacs-Gleichheit ist dort
+nicht zugesichert. Noch keine native Edge-Tastenprobe durchgeführt.
+
+
+2. WAS EMACS UND ORG TATSÄCHLICH MACHEN
+--------------------------------------
+
+2.1 Prefix und Hilfe [Q1, Q2, Q3]
+
+Eine Prefix-Taste wartet auf weitere Tasten. C-c ist insbesondere ein
+Ausgangspunkt für modusspezifische Befehle. Ein Prefix ist kein einzelner
+ausführbarer Fachbefehl und auch kein numerisches Präfixargument wie C-u.
+
+Emacs kann nach einem Prefix über die Hilfe dessen Folgebefehle anzeigen.
+Die automatische Anzeige möglicher Folgetasten entspricht dem which-key-
+Prinzip. Sie ist von der eigentlichen Prefixauswertung zu unterscheiden.
+Org-Agenda ist eine eigene Ansicht; Minibuffer, Hilfe und Ergebnisansichten
+sind in Emacs unterschiedliche Aufgaben, nicht einfach dieselbe Liste.
+
+Für uns sinnvoll: gemeinsame untere Fläche, aber getrennte Zustände für
+Prefixhilfe, Texteingabe/Auswahl und spätere Ergebnisansichten.
+
+2.2 Markierung, Kopieren und Ausschneiden [Q4, Q5]
+
+C-SPC setzt und aktiviert die Marke am Cursor. Anschließende Bewegung
+spannt die Region zwischen Marke und Cursor auf. C-g deaktiviert sie.
+M-w kopiert die Region in den Kill-Ring, ohne den Text zu entfernen.
+C-w entfernt in Emacs die Region und legt sie im Ring ab.
+Bei uns übernimmt C-x diese Ausschneidefunktion.
+
+Mark-Ring und Kill-Ring sind verschieden:
+- Mark-Ring: frühere Cursor-/Markenpositionen.
+- Kill-Ring: kopierte beziehungsweise ausgeschnittene Textstücke.
+Ein vollständiger Mark-Ring ist für unseren ersten Umfang nicht nötig.
+
+2.3 Kill-Ring und Einfügen [Q6, Q7, Q8]
+
+Der Ring ist zwischen Emacs-Buffern geteilt und besitzt ein Größenlimit.
+Kopierter Text bleibt unverändert erhalten, wenn eingefügter Text später
+bearbeitet wird. Aufeinanderfolgende Kill-Befehle können Text zu einem
+Eintrag sammeln; gewöhnliches Löschen ist davon zu unterscheiden.
+
+C-y fügt am Cursor den vom Yank-Zeiger bestimmten Eintrag ein.
+Ein neuer Kill setzt diesen Zeiger auf den neuen Eintrag.
+Direktes M-y ersetzt nur den zuletzt eingefügten Bereich durch den nächsten
+älteren Ringtext; am Ende wird zyklisch weitergeschaltet. Die Reihenfolge
+der Ringeinträge ändert sich dadurch nicht. Späteres C-y kann den zuletzt
+gewählten älteren Eintrag erneut einfügen.
+
+Nach einem anderen Befehl öffnet M-y laut aktuellem Emacs-Handbuch eine
+Auswahl früherer Einträge. Unsere untere Ringauswahl passt dazu.
+Numerische Argumente und das Bearbeiten eines Kandidaten im Minibuffer
+gehören nicht zum vorgeschlagenen ersten Umfang.
+
+2.4 Windows-Clipboard [Q9]
+
+Grafisches Emacs verbindet Kopieren/Kill mit dem Systemclipboard und
+berücksichtigt extern neu kopierten Text beim Yank. M-y verändert das
+Systemclipboard normalerweise nicht. Diese Unterscheidung ist sinnvoll:
+Das Durchsehen alter Einträge soll die Windows-Zwischenablage nicht
+ständig überschreiben.
+
+
+3. MACHBARKEIT IM BESTEHENDEN PROJEKT
+------------------------------------
+
+3.1 Tastatur und C-c [Q10, Q11]
+
+Bei an den Editor gelieferten, abbrechbaren Ereignissen kann preventDefault
+die Standardaktion verhindern. Damit ist C-c als Prefix technisch plausibel.
+Es handelt sich nicht um eine globale Windows-Umbelegung: außerhalb des
+Editors soll Strg+C normal kopieren. Native Kontextmenü-Kopie bleibt ein
+separater Bedienweg. Kein pauschales Unterdrücken sämtlicher copy-Events.
+
+Nicht jede Browser-/OS-Tastenkombination ist zuverlässig abfangbar.
+C-w ist in Edge bereits Tab-Schließen und wird deshalb nicht benutzt.
+Für C-SPC müssen Eingabemethoden/IME und für M-w/M-y Alt-Menüs geprüft
+werden. Eine installierte PWA garantiert keine Lösung solcher Konflikte.
+
+3.2 Bereits vorhandene Bausteine
+
+Im Repository gelesen:
+- editor/structure-keymap.mjs: Editor-Tastenrouter mit hoher Priorität,
+  AltGr-/IME-Schutz und Escape-Fokusausstieg.
+- editor/app.mjs: CodeMirror-State, Selection und History;
+  C-y ist derzeit ausdrücklich Redo. Diese Bindung muss gezielt weichen.
+- editor/command-registry.mjs und editor/commands.mjs: gemeinsame Befehle,
+  Kontextprüfung und erneute Prüfung beim Ausführen.
+- editor/command-surfaces.mjs: bestehende Palette und Kontextmenü.
+- Installiertes @codemirror/view 6.43.15: showPanel, panels,
+  bottomContainer sowie Panel-Lifecycle bereits vorhanden.
+- Installiertes @codemirror/commands 6.11.1: History und Emacs-artige
+  Bewegungskürzel, aber kein fertig nutzbarer vollständiger Kill-Ring.
+
+Folgerung: kein neues Framework oder Paket erforderlich. Ring, aktive
+Marke und Prefixzustand brauchen eigene, kleine Module. Die vorhandenen
+History- und Auswahlmodelle weiterverwenden, keinen zweiten Editor bauen.
+
+3.3 Clipboard ist die eigentliche Grenze [Q10, Q12]
+
+Asynchrones Lesen/Schreiben benötigt einen sicheren Kontext und unterliegt
+Aktivierungs-, Fokus-, Berechtigungs- und gegebenenfalls Richtlinienregeln.
+Native Paste-Ereignisse können dagegen den vom Nutzer eingefügten Text
+liefern. Ein künstliches Ereignis erzeugt keinen echten Clipboard-Zugriff.
+
+Unsere Web-App kann nicht zuverlässig feststellen, wer wann das Windows-
+Clipboard geändert hat. Sie erhält auch keinen allgemeinen Zugriff auf
+die gesamte Windows-Clipboard-Historie. Ein eigener Ring enthält zunächst
+nur Text, den die Anwendung durch Nutzeraktionen tatsächlich erhalten hat.
+
+Kein Hintergrund-Polling. Externes Clipboard nur auf explizite Nutzeraktion
+lesen. Asynchrone Ergebnisse vor Anwendung auf Dokumentidentität, Version,
+Fokus und Auswahl prüfen; alte Antworten dürfen keinen anderen Text treffen.
+
+Bei verweigertem Zugriff:
+- internen Ring weiter benutzen, Status klar anzeigen;
+- Windows-Paste über Strg+V/native Bedienung anbieten;
+- kein stilles Einfügen veralteten Ringtexts, wenn ausdrücklich externer
+  Clipboard-Text angefordert wurde;
+- kein Textverlust beim Ausschneiden: Text vor Löschen sicher intern halten;
+  scheitert das, unverändert abbrechen. Fehlende OS-Kopie gesondert melden.
+
+
+4. VORGESCHLAGENES ZIELVERHALTEN
+-------------------------------
+
+Die folgenden Details sind Vorschläge, keine bereits freigegebene Umsetzung.
+
+Tasten und Bedienwege:
+  C-SPC         Marke aktivieren; Bewegung erweitert Region.
+  M-w           Region kopieren, intern sichern und OS-Kopie versuchen.
+  C-x           Region ausschneiden, intern sichern und OS-Kopie versuchen.
+  C-y           Yank; vorhandene C-y-Redo-Bindung entfällt im Editor.
+  M-y           Direkt nach Yank: ersetzen; sonst Ringauswahl öffnen.
+  C-c           Prefix beginnen, mögliche Folgebefehle unten zeigen.
+  C-g / Escape  Laufenden Dialog/Prefix beziehungsweise aktive Marke lösen.
+  C-S-z         Redo bleibt erreichbar; Palette und Maus ebenfalls.
+  C-v           Nativer Windows-Paste bleibt als externer Bedienweg erhalten.
+
+Kein vollständiges Emacs-Tastaturlayout: insbesondere C-x ist dadurch kein
+Emacs-Prefix; C-x C-s, C-x C-x usw. gehören nicht zu diesem Vorschlag.
+Gewöhnliches Tippen, Mausauswahl und bestehende Shift-Auswahl erhalten.
+Keine pauschale Änderung aller Löschbefehle zu Kill-Befehlen.
+
+Aktive Region beim Yank:
+Emacs-Modi können hier unterschiedliches Verhalten konfigurieren. Vor AP-03
+festlegen: Einfügen am Cursor gemäß Emacs-Grundidee oder Ersetzen der
+markierten Region gemäß bisheriger Editorbedienung. Nicht still umdeuten.
+
+Ringvorschlag:
+- Ein Ring pro geöffnetem Workspace in einem Browser-Tab, geteilt zwischen
+  dessen Dateien; keine automatische tab-/browserweite Synchronisierung.
+- Nur im Arbeitsspeicher; Reload/Tabende leert ihn, Vaultwechsel ebenso.
+- Nur Klartext, keine Bilder/HTML-Ausführung, keine Speicherung in Markdown,
+  localStorage oder Backup-Dateien. Expliziter Befehl zum Leeren.
+- Konkrete Anzahl-/Speichergrenzen vor Implementierung vereinbaren.
+  Übergröße klar behandeln; niemals still kürzen und dann Original löschen.
+- Reines Öffnen der Liste ändert weder Dokument noch Ring-Reihenfolge.
+
+Unterer Bereich:
+- Ein-/ausklappbar, begrenzte Höhe, scrollbar, auf vier Themes abgestimmt.
+- Prefixhilfe zeigt aktive Folge und gültige nächste Tasten mit Sperrgründen.
+- Hilfe allein lässt den Fokus im Editor, damit die Folge weiter eingegeben
+  werden kann. Ringauswahl hat dagegen eigene Navigation und optional Suche.
+- In der Auswahl: Pfeile, Enter und Maus wählen; Escape bricht ohne Einfügen
+  ab. Editorposition/Auswahl für Rückkehr merken und erneut validieren.
+- Textvorschau begrenzen, vollständigen Eintrag beim Einfügen erhalten.
+- Später können Agenda und TODO dort eigene Ansichten erhalten. Das plant
+  nur den Platz und Lebenszyklus, keine Agenda-/TODO-Funktionen.
+
+Prefixvorschlag:
+- C-c wird erst umbelegt, wenn Ersatzkopieren und Einfügen abgenommen sind.
+- Prefix gilt nur in ausdrücklich erlaubtem Editorfokus, nicht in Suchfeldern.
+- Kein Ausführen durch Timer. Ungültige Folge meldet Fehler und beendet den
+  Prefix; keine automatische Wiederholung als normale Texteingabe.
+- Kein automatisches Kopieren nach Prefix-Abbruch.
+- Fokus-/Dateiwechsel, IME-Komposition und Escape/C-g beenden den Prefix.
+- C-g ist außerdem ein Browserkürzel: native Zustellung eigens prüfen;
+  Escape bleibt zwingender Abbruchweg und Fokusausstieg bleibt erreichbar.
+- Im ersten Paket nur zwei Tastenereignisse und vorhandene Registry-Befehle.
+  Welche C-c-Folgen fachlich sinnvoll sind, vor AP-06 gemeinsam bestimmen.
+  Beispiele für Agenda/TODO geben keine Implementierungsfreigabe.
+
+
+5. ARBEITSPAKETE MIT ABNAHME UND GRENZEN
+---------------------------------------
+
+AP-00: Entscheidungen und Kürzelvertrag
+Ziel: Die offenen Punkte aus Abschnitt 6 verbindlich festhalten.
+Ergebnis: kurze Belegungstabelle, Clipboard-Regeln, Auswahl-/Undo-Vertrag,
+Ringgrenzen und zwei oder drei erste Prefixfolgen.
+Abnahme: PO bestätigt diese Regeln; Widersprüche zum Gamebook aufgelöst.
+Grenze: nur Planung, kein Anwendungscode. Dieses Dokument ist Vorbereitung.
+
+AP-01: Native Edge-Machbarkeit prüfen
+Ziel: Browsergrenzen früh nachweisen, bevor Copy umbelegt wird.
+Vorschlag nach separater Freigabe: kleine synthetische Testseite oder eng
+begrenzter Testmodus ohne Vaultzugriff; keine produktive Tastenänderung.
+Prüfen: C-c, C-SPC, M-w, C-x, C-y, M-y, C-g/Escape, Redo-Alternative;
+DE/QWERTZ, AltGr/IME, Fokus innerhalb/außerhalb, Menü und Wiederholung;
+Clipboard lesen/schreiben, verweigerte Rechte, externer Copy und C-v.
+Abnahme: echte Edge-Ereignisse und Ergebnisse dokumentiert; automatisierte
+Events allein genügen nicht. Für nicht gelieferte Tasten PO-Alternative
+vereinbaren. Kein stiller Wechsel von Kürzeln oder zu einem Framework.
+Grenze: Untersuchung/Testartefakt, noch kein C-c-Prefix im Produkt.
+
+AP-02: Markierungsmodus und Ersatzkopieren/-ausschneiden
+Ziel: Bedienbare Auswahl ohne gehaltene Shift-Taste sowie sichere Kopie.
+Technik: aktive Marke im Editorzustand, Auswahl mit Transaktionen mappen;
+vorhandene Navigation erweitern; Befehle über Registry zugänglich machen.
+M-w/C-x über einen kleinen internen Textspeicher und Clipboard-Adapter.
+Abnahme: Vor-/Rückwärtsmarkierung, Unicode, Zeilenwechsel, Maus, vorhandene
+Shift-Auswahl, Escape/C-g, Datei-/Fokuswechsel; Cut als atomarer Undo-Schritt.
+Bei leerer Auswahl kein unbeabsichtigtes Ausschneiden einer ganzen Zeile.
+Clipboardfehler ohne Textverlust; Code und Markdown als normalen Klartext
+kopieren, keine fachlichen Strukturaktionen auf Auswahl erzwingen.
+Grenze: C-c bleibt normales Kopieren; kein vollständiger Mark-Ring.
+
+AP-03: Kill-Ring, Yank und Yank-Pop als ein zusammenhängender Kern
+Ziel: Vor Umbelegung von C-c vollständig nutzbare Textübernahme.
+Technik: begrenzter Ring, stabiler Eintrag/Zeiger, gültiger letzter Yank-
+Bereich; Änderungs-/Datei-/Auswahlwechsel beenden dessen Ersetzungskette.
+C-y-Bindung gezielt von Redo lösen, Redo-Alternative gleichzeitig erhalten.
+Consecutive-Kill-Sammeln gemäß vereinbartem Umfang separat im Ringmodell
+abbilden; normales Delete/Backspace bleiben außerhalb des Rings.
+Abnahme: drei unterschiedliche Texte kopieren, C-y, mehrfach M-y bis zum
+Umlauf, danach C-y mit gewähltem Eintrag; fremder Text außerhalb des Yank-
+Bereichs bytegleich. Keine Ersetzung nach zwischenzeitlicher Bearbeitung.
+Ringlimit, Übergröße, leeres Clipboard, Rechtefehler und verspätete Antworten
+prüfen; Undo/Redo-Verhalten für Yank und jeden Austausch explizit abnehmen.
+Grenze: keine persistente Historie, kein globaler Windows-Kill-Ring.
+
+AP-04: Gemeinsamer unterer Bereich und Ringauswahl
+Ziel: M-y außerhalb einer Yank-Kette bietet die ältere-Text-Auswahl.
+Technik: CodeMirror-Panel mit klaren Zuständen, getrenntem Ringmodell und
+Registry-Aktionen; keine zweite Dokumentkopie oder eigener Rich-Text-Editor.
+Abnahme: öffnen/schließen, Suche, Pfeile/Enter/Maus, unveränderte Vorschau,
+Abbruch, Fokus-/Cursorwiederherstellung, alle Themes, Tastaturzugänglichkeit
+und kleine Fenster. Ausgewählter Text landet ausschließlich im geprüften
+Zieldokument. Keine versteckten Timer/Listener nach Schließen/Editorabbau.
+Grenze: nur Hülle und Ringansicht; keine Agenda oder TODO-Logik.
+
+AP-05: Clipboard-Anbindung fertigstellen und Copy-Ersatz abnehmen
+Ziel: Zuverlässiger Austausch mit Windows-Anwendungen im erlaubten Rahmen.
+Native Copy/Cut/Paste und eigene Befehle auf denselben Ringvertrag abbilden,
+ohne doppelte Einträge durch parallel ausgelöste Handler. Externes C-v und
+Kontextmenü-Paste erhalten; Herkunft/Importregel aus AP-00 umsetzen.
+Abnahme: Text aus externer App einfügen und zurückkopieren; Clipboardzugriff
+verweigern; danach weiterarbeiten, ohne veraltete Antworten/Textverlust.
+Kennzeichnen, welche Emacs-Clipboard-Eigenschaften nicht exakt möglich sind.
+Gate: Erst nach PO-Abnahme dieses Pakets darf C-c normales Copy ersetzen.
+Grenze: kein Polling, keine Windows-Historie, keine automatische Medienablage.
+
+AP-06: C-c-Prefix und Folgehilfe
+Ziel: Mehrstufige vorhandene Befehle ohne Copy-/Fokusverlust aufrufen.
+Technik: zentraler Sequenzzustand auf Registry-IDs, keine Befehlsstrings
+aus Notizen und keine ausführbare Gamebook-Konfiguration. Unteres Panel
+zeigt nur die gültigen nächsten Schritte. Kontext vor Ausführung neu prüfen.
+Abnahme: Auswahl bleibt beim Prefixstart erhalten; Copy wird im Editor nicht
+zusätzlich ausgelöst; zwei C-c-Tasten müssen als zwei Ereignisse erkennbar
+sein, gehaltene Wiederholung darf nicht versehentlich abschließen.
+Ungültige Folge, Abbruch, Modifiers, IME, Fokus-/Dateiwechsel, Busy/read-only
+und Escape-Fokusausstieg prüfen. Außerhalb des Editors normales C-c-Copy.
+Grenze: nur vorher bestätigte Folgen vorhandener Befehle; kein neuer
+Fachumfang, keine Agenda/TODO, kein allgemeiner Shortcuteditor.
+
+AP-07: Unabhängige Gesamt-QA und dokumentierter Abschluss
+Ziel: Bedienung, Ressourcen und Datenerhalt zusammen prüfen.
+Abnahme: gesamte bestehende Suite (aktuell 141 Tests), Build, neue gezielte
+Tests und echte Edge-Handprobe; Undo/Redo, Listen-/Heading-/Tab-/Alt-Grundlage,
+Palette, Fokusnavigation und Storage-Regressionsprüfung weiter grün.
+Ringgrenzen mit großer synthetischer Last prüfen; Panel wiederholt öffnen/
+schließen, Listener und Speicherentwicklung messen. Messdauer angeben;
+ein kurzer Lauf ist kein Langzeitnachweis. Dokumentation/Gamebook abgleichen.
+Grenze: ausschließlich synthetische Daten. Nach Bericht stoppen.
+
+Reihenfolge: AP-00 -> AP-01 -> AP-02 -> AP-03 -> AP-04 -> AP-05
+            -> gesondertes Copy-Umschalt-Gate -> AP-06 -> AP-07.
+Developer implementiert nur freigegebene Pakete, QA prüft unabhängig.
+Keine Installation, Storageänderung, Veröffentlichung, Commit oder Push
+aus diesem Plan ableiten. Kein automatischer Start des nächsten Pakets.
+
+
+6. OFFENE ENTSCHEIDUNGEN FÜR AP-00
+---------------------------------
+
+Diese Punkte blockieren die spätere Implementierung, nicht die Recherche:
+1. C-y bei aktiver Auswahl: am Cursor einfügen oder Auswahl ersetzen?
+2. Ringgröße: Anzahl und gesamte Textmenge; vorgeschlagen nur RAM,
+   pro Workspace/Tab, bei Vaultwechsel leeren. Grenzwerte gemeinsam wählen.
+3. Clipboard-Vertrag: Wie soll C-y bei nicht lesbarem OS-Clipboard reagieren?
+   Vorschlag: internen Ringmodus klar kennzeichnen, externes C-v anbieten.
+   Ausdrücklich angeforderten externen Paste bei Lesefehler abbrechen.
+4. Externe Paste-Texte ebenfalls in den Ring übernehmen? Vorschlag: ja,
+   beim tatsächlichen Paste, ohne Hintergrundlesen und ohne Doppeleinträge.
+5. Undo für M-y: jeder Austausch einzeln oder gesamte Yank-Kette gemeinsam?
+6. Welche vorhandenen Befehle erhalten die ersten C-c-Folgen?
+
+Vor einem späteren Implementierungsauftrag diese Punkte mit dem PO klären;
+bereits entschiedene Tasten aus Abschnitt 1 nicht erneut zur Wahl stellen.
+
+
+7. FALLBACK OHNE KILL-RING
+------------------------
+
+Der Ring selbst ist gut umsetzbar; ein Komplettverzicht ist technisch
+derzeit nicht begründet. Problematisch kann die native Tasten-/Clipboard-
+Integration sein, nicht die Speicherung einer begrenzten Textliste im RAM.
+
+Falls der PO nach AP-01/AP-05 trotzdem die einfachere Variante bevorzugt:
+- M-w kopiert, C-x schneidet aus, C-y fügt OS-Clipboardtext ein, soweit
+  Berechtigung und native Zustellung dies erlauben.
+- Bei verweigertem Lesen: Strg+V beziehungsweise native Paste-Bedienung.
+- M-y hat ohne Ring keine Emacs-Zyklusfunktion; nicht irreführend simulieren.
+- Unterer Bereich und Prefixhilfe können unabhängig davon bestehen bleiben.
+- C-c erst umstellen, wenn der Ersatzkopierweg praktisch abgenommen ist.
+- Sollte auch der Ersatzweg scheitern: C-c behält Copy; anderen Prefix
+  gemeinsam auswählen. Nicht per stiller Umbelegung weiterarbeiten.
+
+
+8. QUELLEN UND NACHWEISGRENZEN
+-----------------------------
+
+Online geprüft am 2026-11-05; ausschließlich offizielle Dokumentation.
+Die Angaben oben sind Zusammenfassungen, keine wörtlichen Übernahmen.
+
+Q1  GNU Emacs: Keys
+https://www.gnu.org/software/emacs/manual/html_node/emacs/Keys.html
+
+Q2  GNU Emacs: Prefix Keymaps
+https://www.gnu.org/s/emacs/manual/html_node/emacs/Prefix-Keymaps.html
+
+Q3  GNU ELPA: which-key, automatische Anzeige von Folgetasten
+https://elpa.gnu.org/packages/which-key.html
+
+Q4  GNU Emacs: Setting Mark
+https://www.gnu.org/s/emacs/manual/html_node/emacs/Setting-Mark.html
+
+Q5  GNU Emacs: Guided Tour, Killing/Yanking
+https://www.gnu.org/software/emacs/tour/index.html
+
+Q6  GNU Emacs: The Kill Ring
+https://www.gnu.org/s/emacs/manual/html_node/emacs/Kill-Ring.html
+
+Q7  GNU Emacs: Yanking Earlier Kills (inklusive M-y ohne vorheriges Yank)
+https://www.gnu.org/software/emacs/manual/html_node/emacs/Earlier-Kills
+
+Q8  GNU Emacs Lisp Reference: Kill Ring Concepts
+https://www.gnu.org/software/emacs/manual/html_node/elisp/Kill-Ring-Concepts.html
+
+Q9  GNU Emacs: Using the Clipboard
+https://www.gnu.org/s/emacs/manual/html_node/emacs/Clipboard.html
+
+Q10 MDN: Clipboard API und Sicherheitsbedingungen
+https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API
+
+Q11 MDN: preventDefault und copy-Event
+https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault
+https://developer.mozilla.org/en-US/docs/Web/API/Element/copy_event
+
+Q12 Microsoft: Edge-Tastenkürzel
+https://support.microsoft.com/en-us/edge/keyboard-shortcuts-in-microsoft-edge
+
+Q13 Org Manual: Activation, beispielsweise globale Org-Agenda-Folge
+https://orgmode.org/manual/Activation.html
+
+CodeMirror-Bausteine anhand der lokal installierten Deklarationen/Module
+geprüft: node_modules/@codemirror/view/dist/index.d.ts sowie
+node_modules/@codemirror/commands/dist/index.js. Referenzadresse:
+https://codemirror.net/docs/ref/#view.showPanel
+Die Online-CodeMirror-Referenz lieferte beim Abruf HTTP 403; lokale
+Paketdeklarationen waren lesbar. Einzelne GNU-Direktabrufe scheiterten;
+betroffene Inhalte waren über offizielle Suchindex-Auszüge zugänglich.
+
+Nicht durchgeführt: Anwendungscodeänderung, neuer Testmodus, Browserprobe,
+Clipboardzugriff, neue Performance-/Langzeitmessung, Commit oder Push.
+
+ENDE DES PLANUNGSDOKUMENTS

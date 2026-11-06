@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="de">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AP-01 – synthetische Edge-Tastaturprobe</title>
+<style>
+  :root {font:16px system-ui;color:#e8edf6;background:#142032;color-scheme:dark}
+  body {max-width:1100px;margin:24px auto;padding:0 20px}
+  h1 {font-size:1.5rem} textarea {box-sizing:border-box;width:100%;min-height:90px;font:18px monospace;padding:12px}
+  textarea:focus {outline:3px solid #88c8ff} button {margin:6px 8px 6px 0;padding:9px 12px}
+  pre {white-space:pre-wrap;background:#0c1523;padding:12px;min-height:90px}
+  label {display:block;margin:18px 0 6px} #status {min-height:3em} .note {color:#bdd2e8}
+  #report {min-height:290px;font-size:14px} li {margin:7px 0}
+</style>
+<h1>AP-01: Native Edge-Tastaturprobe</h1>
+<p>Nur synthetischer Text. Keine Vaults, Speicherung oder externen Verbindungen.
+  Die Anwendung bleibt unverändert. Clipboard-Schreiben überschreibt die Windows-Zwischenablage mit einem festen Testtext.</p>
+<p class="note">In der Testfläche werden C-c, C-SPC, M-w, C-x, C-y, M-y,
+  C-g, Escape und C-Shift-z abgefangen. C-v bleibt nativ. AltGr, IME und sonstige Tasten bleiben unangetastet.
+  Kopieren per Kontextmenü wird nicht blockiert. Außerhalb der Testfläche bleiben Tastenkürzel nativ.</p>
+<p><strong>Dies ist nur eine Prüfung der Abfangbarkeit.</strong> Markierung, Ausschneiden,
+  Yank und Kill-Ring sind hier noch nicht implementiert. Daher sollen diese Kürzel in der
+  Testfläche den Text gerade nicht verändern.</p>
+<h2>Kurzer Testablauf</h2>
+<ol>
+  <li>In die Testfläche klicken. Nacheinander Strg+C, Strg+Leertaste, Alt+W,
+    Strg+X, Strg+Y, Alt+Y, Strg+G, Escape und Strg+Umschalt+Z drücken.
+    Jede Taste sollte unten als angekommen und verhindert erscheinen.</li>
+  <li>In der Testfläche mit der Maus Text markieren und Strg+C drücken:
+    Der Zähler „copy Testfläche“ soll dabei nicht steigen. Zum Vergleich in der
+    Vergleichsfläche Text markieren, Strg+C und Strg+V nutzen: Dort sollen
+    die nativen Ereigniszähler steigen. Kontextmenü-Kopieren bleibt in beiden Flächen erlaubt.</li>
+  <li>Optional zuerst den festen Testtext ins Clipboard schreiben, dann den
+    Vergleichsbutton drücken. Lesen geschieht nur beim Klick. Berechtigungen selbst
+    beurteilen; bei Abbruch/Verweigerung die angezeigte Fehlermeldung mitmelden.</li>
+  <li>Sichtbare Browserreaktionen zusätzlich notieren: Menü, Suchleiste,
+    Eingabemethodenwechsel oder Fokusverlust? Eine als verhindert protokollierte
+    Taste beweist allein noch nicht, dass jede Browser-/OS-Reaktion ausgeblieben ist.</li>
+  <li>Den Bericht unten markieren und über das normale Maus-Kontextmenü kopieren.
+    Im Chat zusammen mit den sichtbaren Reaktionen und nicht getesteten Punkten senden.
+    Mit AltGr/IME nur dann prüfen, wenn diese Eingabe tatsächlich verfügbar ist.</li>
+</ol>
+<label for="probe">Testfläche (hier klicken, dann Tastenkombination drücken)</label>
+<textarea id="probe" spellcheck="false">CC-PROBE-2026
+Alpha Beta Gamma</textarea>
+<label for="outside">Vergleichsfläche (keine Kürzelumleitung; hier Strg+C/Strg+V vergleichen)</label>
+<textarea id="outside" spellcheck="false">CC-PROBE-2026</textarea>
+<div>
+  <button id="write" type="button">Testtext ins Windows-Clipboard schreiben</button>
+  <button id="read" type="button">Clipboard mit Testtext vergleichen</button>
+  <button id="clear" type="button">Nur Zähler und Protokoll zurücksetzen</button>
+</div>
+<p id="status" role="status" aria-live="polite">Bereit. Noch kein Clipboard-Zugriff.</p>
+<h2>Ereigniszähler</h2>
+<pre id="counts"></pre>
+<h2>Gewünschte Kürzel: native Zustellung</h2>
+<pre id="shortcuts"></pre>
+<h2>Letzte Ereignisse (neueste oben)</h2>
+<pre id="events" aria-live="polite"></pre>
+<label for="report">Kopierbarer Bericht (keine Clipboard-Inhalte oder eingegebenen Texte)</label>
+<textarea id="report" readonly spellcheck="false" aria-label="AP-01 Prüfbericht"></textarea>
+<script type="module" src="/keyboard-probe.mjs"></script>
+</html>
