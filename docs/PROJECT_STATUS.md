@@ -1,7 +1,75 @@
 # Projektstatus
 
-**Phase:** 2 — AP-06/C-c-Präfix implementiert und unabhängig geprüft; native Produktprobe offen
-**Stand:** 2026-11-06
+## TODO-Leerzustand-Zyklus abgeschlossen — 2026-11-07
+
+Shift+Links/Rechts setzt den Zyklus nun über Kein Status hinweg fort: Rechts zum ersten, Links zum letzten geladenen Zustand. Fortsetzung nur auf derselben gerade per Zyklus entmarkierten Heading im gültigen Bedienkontext, ohne Markdown-/Storage-Marker. Normale unmarkierte Überschriften, Panelentfernung und vorhandene Textauswahl behalten ihre bisherige Markierungssemantik. Vorherige Stopregel unten überholt.
+
+Developer und unabhängige QA jeweils **253/253 Tests**, Build und Diffcheck erfolgreich; Developer vier, QA fünf Syntaxchecks. QA 403 eigene Prüfgruppen, darunter 348 Titelwortfälle mit je vier vollständigen textgenauen Umläufen. Zwei P2-Befunde korrigiert und unabhängig geschlossen: Prefix-Abbruch muss die Fortsetzung beenden; bekannte Statusnamen als ursprünglicher Titelbeginn dürfen im transienten Leerzustand weder gelöscht noch als Status dekoriert werden. Berichte: [Developer](../_Communication_Pipeline/developer_todo_cycle.md), [QA](../_Communication_Pipeline/qa_todo_cycle.md).
+
+**Nächste Aktion:** stoppen für native PO-Probe nach Strg+F5: auf einer Aufgabe wiederholt Shift+Rechts und Shift+Links über Kein Status hinweg prüfen; Text/Titel erhalten, nichtleere Auswahl bleibt Markierung. Kontext-/Fokuswechsel/Abbruch beendet den flüchtigen Zyklus. Kein bewiesener verbleibender Blocker im geprüften Umfang; native und Langzeitbelege offen. Keine Agenda/Storage/Dependencies/Commit/Push.
+
+
+## TODO-Zyklus über Kein Status — Korrektur beauftragt 2026-11-07
+
+PO meldet, dass Shift-Pfeile nach Erreichen des leeren Zustands markieren statt weiterzuschalten. Vorherige Stop-bei-unmarkiert-Regel wird gezielt korrigiert: unmittelbar im TODO-Zyklus entmarkierte Überschrift bleibt im gültigen Bedienkontext zyklisierbar. Normale unmarkierte Überschriften und nichtleere Auswahl behalten Markierung. Nächste Aktion: Developer setzt kleinen sitzungslokalen Fortsetzungszustand um, QA unabhängig. Keine Agenda/Storage/Dependencies/Commit/Push.
+
+
+## TODO-Farbfix abgeschlossen — 2026-11-07
+
+Die vom PO gemeldete fehlende Grün-/Rotdarstellung wurde auf explizite Farben innerer Syntaxspans zurückgeführt. Gezielte Nachfahrenselektoren setzen dort die vorhandenen Theme-Tokens durch, ausschließlich innerhalb des Statusworts. Titel behalten ihre H1–H6-Farbe; Text, Statuslogik und History unverändert.
+
+Developer und unabhängige QA jeweils **244/244 Tests**, Build und Diffcheck grün; Developer vier, QA fünf Syntaxchecks. QA zusätzlich 225 eigene Checks einschließlich 144 Kaskadenfällen und 80 Theme-Compartmentwechseln mit Text-/Auswahl-/Undoerhalt. Tatsächliche Parser-/Highlightklassen, Markbereiche und erzeugtes CSS geprüft; kein nativer Computed-Style-/Sichtnachweis. Berichte: [Developer](../_Communication_Pipeline/developer_todo_colors.md), [QA](../_Communication_Pipeline/qa_todo_colors.md).
+
+**Nächste Aktion:** stoppen für PO-Sichtprobe nach Strg+F5: offenes Statuswort grün, abgeschlossenes rot, in allen vier Themes; Titel behält Überschriftenfarbe. Keine bewiesenen verbleibenden Blocker im getesteten Umfang. Keine Agenda/Storage/Dependencies/Commit/Push; übrige native und Langzeitbelege bleiben offen.
+
+
+## TODO-Farben — PO-Bugmeldung 2026-11-07
+
+PO meldet fehlende Farbcodierung trotz vorheriger Modell-/Kontrasttests. Darstellungsabnahme daher offen; Developer untersucht gezielt Dekoration und Syntaxhighlighting/CSS, QA folgt unabhängig. Erwartung: offenes Statuswort grün, abgeschlossen rot mit Theme-Tokens; Titel behält Headingfarbe. Keine semantische TODO-/Storageänderung. Nächste Aktion: reproduzierbare Ursache korrigieren und unabhängig prüfen; keine Browserdarstellung aus reinen Kontrasttests ableiten.
+
+
+## TODO-Paket implementiert und unabhängig geprüft — 2026-11-07
+
+Developer und unabhängige QA jeweils **241/241 Tests**, Build und Diffcheck erfolgreich; Developer sieben, QA neun Syntaxchecks. QA zusätzlich 186 eigene Prüfgruppen und sechs große Parserproben. Beide P2-Befunde korrigiert und unabhängig geschlossen: aktive leere Emacs-Marke hatte Shift-Statuswechsel abgefangen; unvollständig veröffentlichter Parserbaum hatte Scheindefinitionen in großen Codeblöcken aktiviert. TODO-Keyboard vor Emacs-Marknavigation, nichtleere Auswahl bleibt priorisiert. Kontext/Reload verwenden nur vollständigen veröffentlichten Syntaxbaum; Availability startet keine Parsearbeit.
+
+Implementiert: dateilokale validierte SEQ_TODO-Zustände mit Fastkeys/Default/Reload/Fehlererhalt, C-c t, C-c C-c auf Definition, Shift-Statuswechsel auf ganzer Aufgabenüberschrift, vier Themefarben mit zusätzlicher textlicher/typografischer Unterscheidung, vorhandene Registry/Panelnavigation und atomare Undo/Redo. H1–H6 dürfen verschachtelt unabhängig eigene Zustände haben; Eltern-/Kindhierarchie bleibt erhalten, kein Vererben/Rollup. Nach Kein Status markieren Shift-Pfeile wieder Text; neue Aufgabe per Panel. Berichte: [Developer](../_Communication_Pipeline/developer_todo.md), [QA](../_Communication_Pipeline/qa_todo.md).
+
+**Nächste Aktion:** stoppen für native PO-Probe: Editor Strg+F5, synthetische Datei `test-vault/vault-structure/todo.md` öffnen, [TODO_ACCEPTANCE.md](TODO_ACCEPTANCE.md) folgen. Kein belegter verbleibender Blocker im getesteten Umfang; native Edge-Zustellung/AltGr/IME/kleines Fenster sowie Langzeit-/Idle-/Ressourcenbelege offen. Keine Agenda/Listenaufgaben/Storageänderung/Dependencies/Commit/Push; vorbestehende Refilearbeit erhalten. Unten stehende Umsetzungs- und Planungseinträge sind historischer Verlauf.
+
+
+## TODO-Paket freigegeben, Umsetzung läuft — 2026-11-07
+
+PO hat Randregeln bestätigt und ausdrücklich „Feuer Frei“ gegeben. Developer übernimmt editor/** und synthetische TODO-Fixture; Lead dokumentiert, unabhängige QA folgt nach Übergabe. H1–H6 können verschachtelt eigene Aufgaben sein und gehören strukturell zu Vorfahren; Zustände bleiben unabhängig. Keine automatische Eltern-/Kindänderung. Frühere Vertagung unten ist für dieses Paket aufgehoben.
+
+Nächste Aktion: modulare Umsetzung und gezielte Tests/Build, danach unabhängige QA und native PO-Probe. Noch keine neue Funktions- oder Browserabnahme. Agenda/Listen/Storageänderungen/Dependencies/Commit/Push ausgeschlossen; vorbestehende uncommittete Refilearbeit erhalten.
+
+
+**Phase:** 2 — TODO-Paket implementiert und unabhängig geprüft; native PO-Probe offen, Agenda weiterhin Planung
+**Stand:** 2026-11-07
+
+**Übergabe nächste Sitzung:** PO hat konkrete SEQ_TODO-/Farb-/Tastenregeln bestätigt und verschiebt Umsetzung wegen knappen Kontingents. Verbindlicher Nachtrag oben in [PLAN_TODO_AGENDA.md](PLAN_TODO_AGENDA.md); frühere Minimalempfehlungen darunter teilweise überholt. Kopierbarer [Fortsetzungsprompt](FORTSETZUNG_TODO.md). Keine Implementierung heute und keine automatische Arbeit morgen. Nächste Aktion: Nachtrag lesen, wenige offene Randentscheidungen/konkretes Paket besprechen, ausdrückliche Umsetzungsfreigabe abwarten. Nur Dokumentation aktualisiert; bestehende uncommittete Arbeit erhalten, kein Commit/Push.
+
+### Aktueller Auftrag: TODO-/Agenda-Gespräch vorbereiten
+
+PO berichtet C-c w als funktionierend; keine vollständige native Refile-/AltGr-/IME-/Langzeitabnahme daraus abgeleitet. Geplante Belegungen C-c t (Status ändern) und C-c a (Agenda-Dispatcher) dokumentiert und im Gamebook als **Geplant** reserviert, nicht in Policy/Registry aktiviert. [Gesprächsvorlage](PLAN_TODO_AGENDA.md) enthält Vorschlag für erstes Paket: Überschriftenstatus in aktueller Datei, Kein Status/TODO/DONE und explizite Panelauswahl; Format/Status/Bedienmodell noch PO-Entscheidung. Vorhandene illustrative Checkboxsyntax nicht stillschweigend ersetzt. Agenda/Index/Datum/Dateiumfang separat.
+
+Nur Lead-Dokumentation, kein Anwendungscode, keine Agenten, Dependencies/Storageänderung, Testvaultänderung, Commit oder Push in diesem Planungspaket; vorbestehende Refileänderungen erhalten. Bestehende Gamebook-/Registry-Konsistenzprüfung gezielt ausgeführt: **1/1 bestanden**, `git diff --check` bestanden. Keine neue Funktions-/Browser-/Buildabnahme. Nächste Aktion: mit PO die drei Fragen Format, Startzustände und Auswahl versus Zyklus besprechen; danach erst explizite begrenzte Implementierungsfreigabe. Frühere Refile-Gates historisch.
+
+### Aktuelle gezielte Korrektur: C-c w statt C-c C-w
+
+PO meldet Tab-Schließen durch bisherige Folge C-c C-w und autorisiert C-c w (C/Strg loslassen, W ohne Modifier). Begrenzte Policy-/Hint-/Doku-/Testkorrektur durch Developer, unabhängige QA danach. Alt+W bleibt Copy; kein Refile-/History-/Storageumbau, keine Dependencies/Commit/Push. Frühere C-c C-w-Nachweise unten betreffen den historischen Modellstand, keine erfolgreiche native Browserabnahme. Nächste Aktion: finalen Mappingfix prüfen und PO neue Folge testen lassen.
+
+**Mappingfix final geprüft:** Developer und unabhängige QA jeweils **222/222 Tests**, Build, vier Paket-Syntaxprüfungen und Diffcheck bestanden. QA zusätzlich **20/20 unabhängige Fälle** mit aufgelöster CM-Handlerreihenfolge: C-c loslassen, unmodifiziert w öffnet Zielpanel; Ctrl+w nicht als Refilefolge, normales w außerhalb wird eingefügt, Alt+w bleibt Copy, Modifier-/Release-/Repeat-/Busy-/State-/Fokusguards erhalten. Nur Policy/Hint/Tests/Bedienungsdoku geändert; vorhandener Router, Refileplaner und Historyadapter unverändert. [Developerbericht](../_Communication_Pipeline/developer_refile_binding.md), [QA-Bericht](../_Communication_Pipeline/qa_refile_binding.md). Lead bestätigt HTTP200 und neuen w-Hinweis im ausgelieferten Build. Kein belegter verbleibender Blocker im automatisiert geprüften Mappingumfang. **Nächste Aktion:** Strg+F5, Strg+C, C und Strg loslassen, W ohne Modifier; native PO-Probe gemäß [REFILE_H1.md](REFILE_H1.md), danach Rückmeldung abwarten. Native AltGr/IME/Layout und Langzeit bleiben offen; kein Commit/Push.
+
+### Aktueller Auftrag: Refile unter H1 derselben Datei
+
+PO autorisiert C-c C-w zum Verschieben des aktuellen Teilbaums unter eine H1 derselben Datei als letztes Kind, relative Ebenenanpassung und atomare Undo/Redo. Vorhandenes Panel mit Suche/Tab/Navigation wiederverwenden. H2–H6-Ziele und dateiübergreifendes Refile ausdrücklich separat; keine Regionsfunktion, Dependencies/Storageänderung oder Commit/Push. Developer implementiert, QA unabhängig. Nächste Aktion: begrenzte Umsetzung/Prüfung, danach native PO-Handprobe und stoppen. Offizielle Org-Referenz vor Freigabe vom Lead abgeglichen; Browserzustellung der neuen Folge bleibt ungetestet.
+
+**Finaler Abschluss:** Developer und unabhängige QA jeweils **222/222 Tests** und Build bestanden; finale Developer-Syntaxchecks 5/5, QA 14/14 einschließlich Paket-/QA-Skripten, Diffcheck grün. Neue modulare `refile.mjs` und `refile-history.mjs`; bestehende Registry/Präfixpolicy/Panelnavigation/Suche/Completion wiederverwendet. Nur H1-Ziele derselben Datei, Quellstufe H1–H6, Ebenenüberlauf und unsichere Setext-/Container-/Parserfälle verweigert. Ein isolierter Text-Undo-Schritt mit wiederhergestellter Original-/Zielcursorposition über mehrere Zyklen; lokale Quelllöschung/Zieleinfügung, unberührte Codec-EOL/BOM erhalten. Eingefügter Bereich folgt vorhandener Codec-EOL-Policy. Keine Storagecodeänderung/Dependencies/Commit/Push.
+
+QA fand Redo-Cursorverlust und falsche Ablehnung größerer einfacher Dokumente. Developer korrigierte vollständigen Prüfbaum und ergänzte gekapselte invertierbare Refile-Auswahlmetadaten mit Historyadapter; beide P2 unabhängig reproduzierend geschlossen. QA final zusätzlich **352/352 Fälle**, **416 UI-Prüfschritte** mit 200 Modellzyklen, wiederholte Registry-/beforeinput-Historyzyklen und Codecprüfungen. Lastfall 2.000 Überschriften/31.670 Zeichen: 100/100 Pläne erfolgreich, 1.133,69 ms Gesamtlauf; kein Browser-/Langzeitbudget daraus. Kein belegter verbleibender Implementierungsblocker im getesteten Umfang. [Developerbericht](../_Communication_Pipeline/developer_refile.md), [QA-Bericht](../_Communication_Pipeline/qa_refile.md).
+
+**Nächste Aktion:** PO lädt [Editor](http://127.0.0.1:8766/) mit Strg+F5 neu und folgt [REFILE_H1.md](REFILE_H1.md) mit `test-vault/vault-structure/refile.md`: Cursor im Quelltext/Codebody, C-c, C loslassen, C-w; Ziel suchen/Tab/Pfeile/Enter, Abbruch, Undo/Redo und kleine Fenster prüfen. Lead bestätigt HTTP200 mit Refile und finalem Historyadapter im ausgelieferten Build. Native Edge-Tastenzustellung einschließlich Browser-Ctrl+w, AltGr/IME/Layout sowie Langzeit-/Idle-/Ressourcen bleiben offen. Nach Bericht stoppen; H2–H6-Ziele/dateiübergreifendes Refile und nächster Commit/Push benötigen gesonderte Freigabe.
 
 **PO-Rückmeldung / Commitfreigabe:** PO meldet die Ergänzung positiv („wunderbar“) und autorisiert ausdrücklich den lokalen Git-Commit des abgeschlossenen Copy-/Kill-Ring-/Präfix-/Panelpakets. Bestehender Teststand 200/200 plus unabhängige QA unverändert; keine neue Funktionsänderung. Keine vollständige native Testmatrix oder Langzeitabnahme daraus ableiten. Nächste Aktion nach Commit: auf nächsten begrenzten PO-Auftrag warten; kein Push.
 

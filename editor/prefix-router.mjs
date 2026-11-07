@@ -55,7 +55,8 @@ export function createPrefixRouter({registry,getContext=()=>({}),showHelp=()=>{}
     if(event.key==='Shift'){cancel();return false;}
     event.preventDefault();
     if(event.repeat)return true;
-    if(!released||event.ctrlKey||event.shiftKey){cancel();notify('Prefix verworfen: Tasten erst loslassen.');return true;}
+    const binding=PREFIX_BINDINGS.find(b=>b.key===key);
+    if(!released||!!event.ctrlKey!==!!binding?.ctrl||event.shiftKey){cancel();notify('Prefix verworfen: Tasten erst loslassen.');return true;}
     if(event.key==='Enter'){
       if(target!==view.state||!ready(view)){cancel();return true;}
       activateHelp();return true;

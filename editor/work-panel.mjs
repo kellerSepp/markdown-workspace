@@ -22,7 +22,7 @@ export function completeRingSearch(query,entries,maxCharacters=EMACS_POLICY.comp
   }
   if(first===null)return {value:query,message:'Keine Zeile beginnt mit diesem Suchtext; Teilworttreffer bleiben sichtbar.'};
   if(unique){
-    if(overLimit(first))return {value:query,message:'Eindeutige Zeile ist zu lang für das Suchfeld; vollständig per Enter einfügen.'};
+    if(overLimit(first))return {value:query,message:'Eindeutige Zeile ist zu lang für das Suchfeld; vollständig per Enter auswählen.'};
     return {value:first,message:first===query?'Suchtext ist bereits vollständig.':'Suchtext zur eindeutigen Zeile vervollständigt.'};
   }
   if(overLimit(common))return {value:query,message:'Gemeinsamer Präfix überschreitet die Completiongrenze; Suchtext bleibt unverändert.'};
@@ -55,7 +55,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
   const results=doc.createElement('div');results.className='work-panel-results';results.id='kill-ring-results';results.setAttribute('role','listbox');results.setAttribute('aria-label','Gespeicherte Ringtexte');
   const message=doc.createElement('p');message.className='hint';message.setAttribute('role','status');
   root.append(search,hint,results,message);
-  let target=null,rows=[],index=0,destroyed=false,prefixCancel=null;
+  let target=null,rows=[],index=0,destroyed=false,prefixCancel=null,choiceMode=null;
   const disposers=[],rowDisposers=[];
   function clearRows(){
     for(const dispose of rowDisposers.splice(0))dispose();
@@ -66,7 +66,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
   function ready(){const c=getContext();return !c.busy&&c.hasDocument!==false&&!view.state.readOnly;}
   function valid(){return target&&target.state===view.state&&ready();}
   function close({restore=true}={}){
-    const cancel=prefixCancel;prefixCancel=null;cancel?.();
+    const cancel=prefixCancel;prefixCancel=null;choiceMode=null;cancel?.();
     const focus=restore&&valid();target=null;
     layout.setOpen(false,()=>{
       shell.hide();root.removeAttribute('data-prefix-help');search.setAttribute('aria-expanded','false');clearRows();search.value='';message.textContent='';
@@ -91,35 +91,46 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
   }
   function activateSelection(){if(!root.hidden&&prefixCancel&&!rows[index]?.disabled)rows[index]?.click();}
   function choose(id){
-    if(!valid()){message.textContent='Ziel hat sich geändert. Kill-Ring am gewünschten Cursor erneut öffnen.';notify(message.textContent);return false;}
+    if(!valid()){message.textContent='Ziel hat sich geändert. Auswahl am gewünschten Cursor erneut öffnen.';notify(message.textContent);return false;}
     const saved=target;
-    if(insert(id,saved)){close({restore:false});view.focus();return true;}
-    message.textContent='Einfügen wurde verworfen; Text und Ring bleiben erhalten.';return false;
+    if((choiceMode?.choose??insert)(id,saved)){close({restore:false});view.focus();return true;}
+    message.textContent='Aktion wurde verworfen; Dokument bleibt unverändert.';return false;
   }
   function render(){
     if(destroyed||root.hidden||prefixCancel)return;
     return layout.preserve(()=>{
     clearRows();
     const query=search.value.toLocaleLowerCase('de');
-    for(const entry of ring.list().filter(e=>e.text.toLocaleLowerCase('de').includes(query))){
+    for(const entry of (choiceMode?.entries??ring.list()).filter(e=>e.text.toLocaleLowerCase('de').includes(query))){
       const row=doc.createElement('button');row.type='button';row.className='work-panel-row';row.setAttribute('role','option');row.tabIndex=-1;
-      row.id='kill-ring-entry-'+entry.id;row.textContent=ringPreview(entry.text,previewLength)+' ('+entry.bytes+' UTF-8-Byte)';
+      row.id='kill-ring-entry-'+entry.id;row.textContent=choiceMode?entry.text:ringPreview(entry.text,previewLength)+' ('+entry.bytes+' UTF-8-Byte)';
       const entryId=entry.id,click=()=>choose(entryId),hover=()=>select(rows.indexOf(row));
       row.addEventListener('click',click);row.addEventListener('mouseenter',hover);
       rowDisposers.push(()=>{row.removeEventListener('click',click);row.removeEventListener('mouseenter',hover);});
       rows.push(row);results.append(row);
     }
-    if(!rows.length){const empty=doc.createElement('p');empty.textContent=ring.size?'Keine passenden Einträge.':'Kill-Ring ist leer.';results.append(empty);}
-    message.textContent=ring.size+' Einträge · '+ring.bytes+' UTF-8-Byte · nur Arbeitsspeicher';select(0);
+    if(!rows.length){const empty=doc.createElement('p');empty.textContent=choiceMode?(choiceMode.empty??'Keine passenden H1-Ziele.'):ring.size?'Keine passenden Einträge.':'Kill-Ring ist leer.';results.append(empty);}
+    message.textContent=choiceMode?(choiceMode.summary??'H1-Ziel wählen · aktuelle Datei'):ring.size+' Einträge · '+ring.bytes+' UTF-8-Byte · nur Arbeitsspeicher';select(0);
     });
+  }
+  function openChoices({title,entries,choose,label='H1-Ziele dieser Datei',hint:choiceHint,empty,summary,fastKeys=false}){
+    if(destroyed||!ready())return false;
+    close({restore:false});choiceMode={entries,choose,empty,summary,fastKeys};search.hidden=false;results.setAttribute('aria-label',label);search.placeholder=label+' suchen';search.setAttribute('aria-label',label+' durchsuchen');
+    hint.textContent=choiceHint??'↑ ↓ / Alt+↑ ↓ wählen · Tab ergänzen · Enter verschieben · Escape/Strg+G abbrechen';
+    target={state:view.state,head:view.state.selection.main.head};search.value='';
+    layout.setOpen(true,()=>{shell.show(title);search.setAttribute('aria-expanded','true');render();search.focus({preventScroll:true});});return true;
   }
   function openRing(){
     if(destroyed||!ready()){notify('Editor nicht bereit; Ringauswahl nicht geöffnet.');return false;}
-    close({restore:false});search.hidden=false;hint.textContent='↑ ↓ / Alt+↑ ↓ wählen · Tab: Zeilenpräfix ergänzen · Enter einfügen · Escape/Strg+G schließen';
+    close({restore:false});results.setAttribute('aria-label','Gespeicherte Ringtexte');search.placeholder='Ringtext suchen';search.setAttribute('aria-label','Kill-Ring durchsuchen');search.hidden=false;hint.textContent='↑ ↓ / Alt+↑ ↓ wählen · Tab: Zeilenpräfix ergänzen · Enter einfügen · Escape/Strg+G schließen';
     target={state:view.state,head:view.state.selection.main.head};search.value='';
     layout.setOpen(true,()=>{shell.show('Kill-Ring');search.setAttribute('aria-expanded','true');render();search.focus({preventScroll:true});});return true;
   }
   listen(search,'input',render);
+  listen(root,'compositionstart',()=>{if(choiceMode)close();});
+  const inside=element=>{for(let n=element;n;n=n.parentNode??n.parent)if(n===root)return true;return false;};
+  listen(root,'focusout',event=>{if(choiceMode&&!inside(event.relatedTarget))close({restore:false});});
+  if(doc.defaultView?.addEventListener)listen(doc.defaultView,'blur',()=>{if(choiceMode)close({restore:false});});
   // Prefix help leaves the editor focused, including pointer activation.
   listen(root,'mousedown',event=>{if(prefixCancel)event.preventDefault();});
   listen(closeButton,'click',()=>close());
@@ -133,12 +144,13 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
       event.preventDefault();event.stopPropagation();close();return;
     }
     if(event.ctrlKey)return;
+    if(choiceMode?.fastKeys&&!event.shiftKey){const entry=choiceMode.entries.find(e=>e.key===event.key.toLowerCase());if(entry){event.preventDefault();if(!event.repeat)choose(entry.id);return;}}
     if(event.key==='Tab'){
       if(event.shiftKey||event.target!==search)return;
-      event.preventDefault();const completion=completeRingSearch(search.value,ring.list(),completionMaxCharacters);
+      event.preventDefault();const completion=completeRingSearch(search.value,choiceMode?.entries??ring.list(),completionMaxCharacters);
       layout.preserve(()=>{search.value=completion.value;render();message.textContent=completion.message;});return;
     }
-    if(event.key==='Enter'&&event.target!==closeButton){event.preventDefault();rows[index]?.click();}
+    if(event.key==='Enter'&&event.target!==closeButton){event.preventDefault();if(!event.repeat&&!event.shiftKey)rows[index]?.click();}
   });
   function showPrefix(choices,choose,cancel){
     if(destroyed)return false;
@@ -146,12 +158,12 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     layout.setOpen(true,()=>{
       shell.show('C-c · Folgebefehl');search.hidden=true;
       root.setAttribute('data-prefix-help','');
-      hint.textContent='Tasten loslassen · 1 / 2 / 3 oder Alt+↑/↓ wählen · Enter ausführen · Escape/Strg+G abbrechen · Alt+W kopiert';
+      hint.textContent='C und Strg loslassen · 1 / 2 / 3 / w / t; Strg+C: Regeln laden · Alt+↑/↓ wählen · Enter ausführen · Escape/Strg+G abbrechen · Alt+W kopiert';
       message.textContent='';
       for(const choice of choices){
         const row=doc.createElement('button');row.type='button';row.className='work-panel-row';
         row.setAttribute('role','option');row.tabIndex=-1;
-        row.textContent=choice.key+' · '+choice.name+(choice.enabled?'':' · '+choice.reason);row.disabled=!choice.enabled;
+        row.textContent=(choice.label??choice.key)+' · '+choice.name+(choice.enabled?'':' · '+choice.reason);row.disabled=!choice.enabled;
         const click=()=>{if(!row.disabled)choose(choice.key);},hover=()=>{if(!row.disabled)select(rows.indexOf(row));};
         row.addEventListener('click',click);row.addEventListener('mouseenter',hover);
         rowDisposers.push(()=>{row.removeEventListener('click',click);row.removeEventListener('mouseenter',hover);});rows.push(row);results.append(row);
@@ -160,7 +172,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     });return true;
   }
   const unsubscribe=ring.subscribe(()=>{if(!prefixCancel)render();});
-  return {openRing,showPrefix,moveSelection,activateSelection,close,get isOpen(){return !root.hidden;},refresh:render,preserveViewport:layout.preserve,
+  return {invalidateStale(){if(choiceMode&&!valid())close({restore:false});},openChoices,openRing,showPrefix,moveSelection,activateSelection,close,get isOpen(){return !root.hidden;},refresh:render,preserveViewport:layout.preserve,
     destroy(){if(destroyed)return;close({restore:false});destroyed=true;unsubscribe();for(const dispose of disposers)dispose();clearRows();shell.destroy();layout.destroy();}
   };
 }

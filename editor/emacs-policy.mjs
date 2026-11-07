@@ -3,7 +3,10 @@ export const EMACS_POLICY=Object.freeze({maxEntries:120,maxBytes:8*1024*1024,byt
 export const PREFIX_BINDINGS=Object.freeze([
   Object.freeze({key:'1',id:'fold.collapse'}),
   Object.freeze({key:'2',id:'fold.reveal'}),
-  Object.freeze({key:'3',id:'fold.open'})
+  Object.freeze({key:'3',id:'fold.open'}),
+  Object.freeze({key:'w',label:'w',id:'structure.refile-h1'}),
+  Object.freeze({key:'t',id:'todo.status'}),
+  Object.freeze({key:'c',ctrl:true,label:'C-c',id:'todo.reload'})
 ]);
 export const EMACS_BINDINGS=Object.freeze([
   {id:'mark',key:' ',ctrl:true,label:'Strg+Leertaste'},

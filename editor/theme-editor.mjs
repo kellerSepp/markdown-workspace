@@ -23,6 +23,13 @@ function createEditorTheme(dark) {
     '&':{color:'var(--text)',backgroundColor:'var(--surface)'},
     '&.cm-focused':{outline:'2px solid var(--focus)'},
     '.cm-content':{caretColor:'var(--cursor)'},
+    '.cm-content .cm-todo-open':{color:'var(--todo-open)',fontWeight:'bold',textDecoration:'underline',textDecorationStyle:'dotted'},
+    '.cm-content .cm-todo-closed':{color:'var(--todo-closed)',fontWeight:'bold',textDecoration:'line-through'},
+    // Syntax highlighting may be nested INSIDE the task mark. Its explicit
+    // heading/inline color otherwise wins over the outer mark's inherited color.
+    // Limit this override to status descendants so the title keeps its H1–H6 color.
+    '.cm-content .cm-todo-open *':{color:'var(--todo-open)'},
+    '.cm-content .cm-todo-closed *':{color:'var(--todo-closed)'},
     '.cm-cursor, .cm-dropCursor':{borderLeftColor:'var(--cursor)'},
     '.cm-gutters':{backgroundColor:'var(--control)',color:'var(--muted)',borderRight:'1px solid var(--border)'},
     '.cm-structureGutter .cm-gutterElement':{color:'var(--muted)',fontSize:'0.85em',padding:'0 4px',maxWidth:'12ch',overflow:'hidden',textOverflow:'ellipsis'},

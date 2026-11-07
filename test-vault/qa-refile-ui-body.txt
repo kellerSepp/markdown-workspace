@@ -1,0 +1,39 @@
+// Independent checks appended to the existing DOM-model fixture (no native browser).
+const {markdown,markdownLanguage}=await import('@codemirror/lang-markdown');
+const {createRefileController}=await import('../editor/refile.mjs');
+const {refileHistory,undoRefile,redoRefile}=await import('../editor/refile-history.mjs');
+let passed=0;const latencies=[];global.gc?.();const heaps=[process.memoryUsage().heapUsed],started=performance.now();
+const f=fixture({docText:'# Source\nbody Ü\n# Duplicate\none\n# Duplicate\ntwo',selection:{anchor:3},extra:[markdown({base:markdownLanguage}),refileHistory(),EditorView.updateListener.of(()=>f.panel.invalidateStale())]});
+f.results.clientHeight=30;
+const refile=createRefileController({view:f.view,panel:f.panel,getContext:()=>f.context});
+const registry=createCommandRegistry(commandDefinitions({'structure.refile-h1':()=>refile.open(),'edit.undo':()=>{undoRefile(f.view);f.view.focus();},'edit.redo':()=>{redoRefile(f.view);f.view.focus();}}),()=>({...f.context,state:f.view.state}));
+const prefix=createPrefixRouter({registry,getContext:()=>f.context,showHelp:(...a)=>f.panel.showPrefix(...a),hideHelp:()=>f.panel.close({restore:false}),moveHelp:d=>f.panel.moveSelection(d),activateHelp:()=>f.panel.activateSelection()});
+// Resolve actual CodeMirror extension ordering, including existing Emacs handlers.
+const resolved=EditorState.create({extensions:[prefix.extension(),refileHistory(),f.controller.extension(()=>assert.fail('Unexpected ring command'))]}).facet(pluginFacet);
+const send=(type,key,patch={})=>{const e={type,key,ctrlKey:false,preventDefault(){this.defaultPrevented=true;},...patch};for(const {plugin} of resolved){if(plugin.domEventHandlers?.[type]?.call({},e,f.view)){e.preventDefault();break;}}return e;};
+const start=()=>{f.view.focus();assert.ok(send('keydown','c',{ctrlKey:true}).defaultPrevented);send('keyup','c',{ctrlKey:true});assert.ok(send('keydown','w',{ctrlKey:true}).defaultPrevented);assert.ok(f.panel.isOpen);assert.equal(f.search.hidden,false);passed++;};
+start();const original=f.view.state;
+f.search.value='Du';f.root.emit('keydown',{key:'Tab',target:f.search});assert.ok(f.search.value.startsWith('Duplicate'));passed++;
+f.search.value='';f.search.emit('input');f.root.emit('keydown',{key:'ArrowDown',target:f.search});assert.equal(f.results.children[1].attributes['aria-selected'],'true');assert.equal(f.results.scrollTop,30);passed++;
+f.root.emit('keydown',{key:'ArrowUp',altKey:true,target:f.search});assert.equal(f.results.children[0].attributes['aria-selected'],'true');passed++;
+f.root.emit('keydown',{key:'Enter',repeat:true,target:f.search});assert.equal(f.view.state,original);passed++;
+f.root.emit('keydown',{key:'Escape',target:f.search});assert.equal(f.panel.isOpen,false);assert.equal(f.view.state,original);passed++;
+f.controller.run(f.view,'mark');start();assert.equal(f.view.state.field(emacsMark).active,false);f.root.emit('keydown',{key:'g',ctrlKey:true,target:f.search});assert.equal(f.panel.isOpen,false);passed++;
+for(let i=0;i<200;i++){const t=performance.now();start();const old=[...f.results.children];
+ if(i%4===0){f.panel.openRing();f.panel.showPrefix([{key:'1',name:'synthetic',enabled:true}],()=>{},()=>{});f.panel.close();}
+ else if(i%4===1)f.root.emit('focusout',{relatedTarget:null});
+ else if(i%4===2)f.root.emit('compositionstart');
+ else f.root.emit('keydown',{key:'Escape',target:f.search});
+ assert.equal(f.panel.isOpen,false);assert.ok(old.every(r=>r.listeners.click.length===0&&r.listeners.mouseenter.length===0));assert.equal(f.results.children.length,0);assert.equal(undoDepth(f.view.state),0);latencies.push(performance.now()-t);passed++;
+ if(i===99||i===199){global.gc?.();heaps.push(process.memoryUsage().heapUsed);}
+}
+start();f.root.emit('keydown',{key:'Enter',target:f.search});assert.equal(f.panel.isOpen,false);assert.equal(undoDepth(f.view.state),1);assert.match(f.view.state.doc.toString(),/# Duplicate\none\n\n## Source/);passed++;
+const moved=f.view.state;
+for(let i=0;i<5;i++){
+ f.view.dispatch({selection:{anchor:0}});registry.execute('edit.undo');assert.ok(f.view.state.doc.eq(original.doc));assert.ok(f.view.state.selection.eq(original.selection));
+ assert.equal(send('beforeinput','',{inputType:'historyRedo'}).defaultPrevented,true);assert.ok(f.view.state.doc.eq(moved.doc));assert.ok(f.view.state.selection.eq(moved.selection));
+ assert.equal(send('beforeinput','',{inputType:'historyUndo'}).defaultPrevented,true);assert.ok(f.view.state.doc.eq(original.doc));assert.ok(f.view.state.selection.eq(original.selection));
+ registry.execute('edit.redo');assert.ok(f.view.state.doc.eq(moved.doc));assert.ok(f.view.state.selection.eq(moved.selection));passed++;
+}
+f.panel.destroy();prefix.cancel();assert.ok(Object.values(f.root.listeners).every(a=>a.length===0));passed++;
+latencies.sort((a,b)=>a-b);console.log(JSON.stringify({passed,cycles:200,durationMs:performance.now()-started,heapBytes:heaps,cycleMs:{median:latencies[99],p95sample:latencies[189],max:latencies.at(-1)}}));

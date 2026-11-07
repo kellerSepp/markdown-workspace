@@ -1,5 +1,20 @@
 # Anforderungen (Stand 2026-11-03)
 
+## TODO-Paket freigegeben — 2026-11-07
+
+Bestätigter Nachtrag in PLAN_TODO_AGENDA.md samt angenommenen Randregeln in DECISIONS.md ist zur Umsetzung freigegeben. Jede H1–H6 kann eine eigene Aufgabe sein; verschachtelte Aufgaben gehören strukturell zu ihren Vorfahren und behalten unabhängige Zustände. Keine implizite Statusvererbung oder Eltern-/Kindänderung. Spätere Agenda berücksichtigt diese Hierarchie, ist aber nicht Teil dieses Pakets. Statusänderung betrifft nur den Präfix genau einer Überschrift, atomar Undo/Redo. Auswahl-/Fokus-/Dateigrenzen schützen; native Browserprüfung separat.
+
+
+## TODO-/Agenda-Kürzel — Planung 2026-11-07
+
+PO bestätigt die Vorbereitung von C-c t für Statusänderung und C-c a für einen Agenda-Dispatcher. Als geplante Belegungen reservieren, nicht aktivieren. Nach Strg+C alle Tasten loslassen, dann t/a ohne Modifier; normale Eingabe außerhalb des Präfixes bleibt erhalten. Syntax, Statusliste, Auswahl/Zyklus und Agendaumfang noch offen. Konkrete Gesprächsvorlage mit kleinem Überschriftenstatus-Paket, Abnahmekriterien und Grenzen: [PLAN_TODO_AGENDA.md](PLAN_TODO_AGENDA.md). Keine TODO-/Agenda-/Index-/Konfigurationsimplementierung, Dependencies/Storageänderung oder Commit/Push freigegeben.
+
+## Refile innerhalb der Datei unter H1 — Freigabe 2026-11-06
+
+C-c w (Strg+C, C und Strg loslassen, dann W ohne Modifier) verschiebt den aktuellen Überschriftenteilbaum einschließlich Kindern unter eine H1-Zielüberschrift derselben Datei als letztes Kind. PO meldet Browser-Tabschließen bei bisherigem C-c C-w und autorisiert diese gezielte Abweichung vom Org-Original; Alt+W bleibt Copy. Der Cursor darf auf der Überschrift oder im zugehörigen Inhalt stehen; eine Unterüberschrift bezeichnet ihren eigenen Teilbaum, nicht automatisch den Vorfahren. Quellstufe H1–H6, neue Wurzel H2, relative Kinderstufen erhalten; Überlauf über H6 vollständig verweigern. Nur einzelner Cursor, keine Regionsverschiebung. Eigenen Teilbaum/Kinder als Ziele ausschließen; identische Position ohne unnötige Textänderung behandeln.
+
+Bestehendes unteres Panel für Suche, Tab-Vervollständigung, Pfeile/Alt+Oben/Unten und Enter sowie Escape/Strg+G wiederverwenden. Gleichnamige Ziele eindeutig anzeigen. Öffnen/Abbrechen ändert keinen Text; Ausführung atomar mit Undo/Redo und sinnvoller Cursorposition, vor Ausführung Zielzustand erneut prüfen. Frontmatter-/Code-/Markdown-/Unicode-/Dateigrenzen und bestehende Storage-Sicherheit erhalten, unsichere Markdown-Kontexte klar verweigern. Nur H1-Ziele derselben Datei; H2–H6-Ziele und dateiübergreifendes Refile separat. Developer implementiert modular, QA unabhängig, native PO-Probe folgt. Keine Dependencies/Storageänderungen/Agenda/TODO/Commit/Push.
+
 ## Präfixhilfe — Navigation bei kleinem Fenster, 2026-11-06
 
 Bei geviertelter Ansicht auf 1920×1080 sollen auch zunächst unsichtbare Folgebefehle erreichbar sein: Alt+Oben/Unten markiert die vorige/nächste Option, Enter führt aus, Ergebnisse scrollen ausschließlich lokal zur markierten Zeile. 1/2/3 bleiben direkte Auswahl, Escape/Strg+G bricht ab. Kill-Ring-Navigation wiederverwenden, Fokus im Editor und Textausschnitt erhalten; AltGr/IME/Modifier/Repeat, Kontext-/Dateiwechsel und bestehende Org-Alt-Aktionen schützen. Alt+W-Hinweis vorerst unverändert belassen. Nur diese Ergänzung, unabhängige QA und native kleine-Fenster-Probe; keine Dependencies/Storageänderung/Commit/Push.

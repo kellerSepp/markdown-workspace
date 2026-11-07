@@ -9,7 +9,7 @@ const headingColors = {
   paper:['#244181','#8a411f','#3d602e','#6f3f82','#8b3553','#176467']
 };
 const define = (id, name, scheme, colors) => Object.freeze({id,name,scheme,tokens:Object.freeze({
-  ...fonts,...colors,
+  ...fonts,...colors,todoOpen:scheme==='light'?'#326023':'#a0e0a0',todoClosed:scheme==='light'?'#a32b35':'#ffabb0',
   ...Object.fromEntries(headingColors[id].map((color,n)=>['syntaxHeading'+(n+1),color])),
   syntaxCode:colors.syntaxString,syntaxQuote:colors.muted,syntaxMarker:colors.syntaxMeta
 })});

@@ -22,11 +22,11 @@ function fixture(){
   return {view,router,context,calls,notices,down,start,release,get shown(){return shown;},get hidden(){return hidden;}};
 }
 
-test('Only the three approved sequences route to existing Registry IDs after keyup; start preserves exact state/history',()=>{
-  for(const binding of PREFIX_BINDINGS){const f=fixture(),before=f.view.state;
+test('Approved plain and modifier sequences route to existing Registry IDs after keyup; start preserves exact state/history',()=>{
+  for(const binding of PREFIX_BINDINGS){const f=fixture();if(binding.id==='structure.refile-h1'||binding.id==='todo.status')f.view.state=EditorState.create({doc:'# Source\nBody\n# Target',selection:{anchor:3},extensions:[history(),markdown()]});if(binding.id==='todo.reload')f.view.state=EditorState.create({doc:'#+SEQ_TODO: TODO(t) | DONE(d)\n# TODO Task',selection:{anchor:3},extensions:[history(),markdown()]});const before=f.view.state;
     assert.equal(f.start().defaultPrevented,true);assert.equal(f.view.state,before);assert.equal(undoDepth(f.view.state),0);
     assert.deepEqual(f.shown.choices.map(c=>c.id),PREFIX_BINDINGS.map(c=>c.id));
-    f.release();assert.equal(f.down(binding.key).handled,true);assert.deepEqual(f.calls,[binding.id]);assert.equal(f.router.active,false);assert.equal(f.hidden,1);
+    f.release();assert.equal(f.down(binding.key,{ctrlKey:!!binding.ctrl}).handled,true);assert.deepEqual(f.calls,[binding.id]);assert.equal(f.router.active,false);assert.equal(f.hidden,1);
   }
 });
 test('Plain typing and outside-editor Copy stay native; modifiers/IME/AltGr never start a prefix',()=>{
@@ -34,7 +34,7 @@ test('Plain typing and outside-editor Copy stay native; modifiers/IME/AltGr neve
     const f=fixture();assert.equal(f.down('c',{ctrlKey:true,...patch}).handled,false);assert.equal(f.router.active,false);
   }
   const f=fixture();f.view.hasFocus=false;assert.equal(f.start().defaultPrevented,undefined);
-  for(const key of ['1','2','3','g','j','a'])assert.equal(f.down(key).handled,false);
+  for(const key of ['1','2','3','g','j','a','w'])assert.equal(f.down(key).handled,false);
 });
 test('Repeat cannot start/complete; key release is mandatory; second C-c is invalid and never copies',()=>{
   const f=fixture();assert.equal(f.down('c',{ctrlKey:true,repeat:true}).handled,true);assert.equal(f.router.active,false);
@@ -163,4 +163,25 @@ test('Resolved precedence preserves left Alt keyup, protects right Alt and keeps
     dispatch('keydown','c',{ctrlKey:true});dispatch('keyup','c');
     assert.equal(dispatch('keydown','Alt',{altKey:true,...patch}).defaultPrevented,undefined);assert.equal(router.active,false);
   }
+});
+
+test('C-c w requires unmodified w after release; Ctrl+w, modifiers, early/repeated follow key refuse Refile',()=>{
+ for(const patch of [{ctrlKey:true},{shiftKey:true},{altKey:true},{metaKey:true},{getModifierState:()=>true},{isComposing:true},{keyCode:229},{repeat:true}]){
+  const f=fixture();f.view.state=EditorState.create({doc:'# Source\nbody\n# Target',selection:{anchor:3},extensions:markdown()});f.start();f.release();f.down('w',patch);assert.deepEqual(f.calls,[]);
+ }
+ const f=fixture();f.view.state=EditorState.create({doc:'# Source\nbody\n# Target',selection:{anchor:3},extensions:markdown()});
+ f.start();f.down('w');assert.deepEqual(f.calls,[]);
+ f.start();f.release();f.down('Control',{ctrlKey:true});assert.equal(f.router.active,true);f.router.keyUp({key:'Control'});f.down('w');assert.deepEqual(f.calls,['structure.refile-h1']);
+});
+
+test('Resolved CodeMirror prefix pipeline consumes unmodified w; outside prefix w types and Alt+w remains Copy',()=>{
+ const pluginFacet=ViewPlugin.define(()=>({})).extension.at(-1).facet,calls=[],edits=[];let state,typed=0;
+ const view={hasFocus:true,get state(){return state;}};
+ const registry=createCommandRegistry(commandDefinitions({'structure.refile-h1':()=>{calls.push('refile');return true;}}),()=>({state,hasDocument:true}));
+ const router=createPrefixRouter({registry}),emacs=createEmacsEditing();
+ state=EditorState.create({doc:'# Source\nbody\n# Target',selection:{anchor:3},extensions:[markdown(),router.extension(),emacs.extension(id=>{edits.push(id);return true;}),keymap.of([{key:'w',run:()=>{typed++;return false;}}])]});
+ const send=(key,patch={})=>{const e={key,type:'keydown',ctrlKey:true,preventDefault(){this.defaultPrevented=true;},...patch};for(const {plugin} of state.facet(pluginFacet)){if(plugin.domEventHandlers?.[e.type]?.call({},e,view)){e.preventDefault();break;}}return e;};
+ assert.equal(send('w',{ctrlKey:false}).defaultPrevented,undefined);assert.equal(typed,1);
+ send('w',{ctrlKey:false,altKey:true});assert.deepEqual(edits,['edit.emacs-copy']);assert.deepEqual(calls,[]);
+ send('c');send('c',{type:'keyup'});send('Control',{type:'keyup',ctrlKey:false});assert.equal(send('w',{ctrlKey:false}).defaultPrevented,true);assert.deepEqual(calls,['refile']);assert.equal(typed,1);
 });

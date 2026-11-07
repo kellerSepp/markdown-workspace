@@ -1,5 +1,44 @@
 # Architekturvorschlag – zur Freigabe
 
+## TODO-Zyklusfortsetzung — 2026-11-07
+
+QA-Randfälle: Ein gebundener leerer Zustand wird in Kontext/Planer und Dekoration als leer behandelt, auch wenn das ursprüngliche erste Titelwort einem geladenen Status entspricht. So bleibt etwa `TODO DONE Titel` über alle Zyklusschritte textgetreu erhalten. Ein separater nichtkonsumierender Abbruchadapter vor dem Prefixrouter löscht die Fortsetzung bei Escape/C-g; der eigentliche Shift-Handler bleibt hinter dem Prefixrouter. Dadurch kann der Prefixabbruch den Cleanup nicht überholen.
+
+Ein flüchtiges `cycleFrom` im bestehenden TODO-StateField merkt ausschließlich die Headingzeile, die gerade durch den Statuszyklus entmarkiert wurde. `todoCycleContext` ist gemeinsames Gate von Keyboard und Registry. Leere Cursorbewegung auf derselben Zeile und Parserupdates erhalten den Zyklus; andere Textänderungen, Region/Mehrfachcursor, Kontext-/Fokuswechsel, Reload/Undo/Redo/Rekonfiguration/Dateiwechsel sowie Abbruch invalidieren. Panelentfernung setzt keine Fortsetzung. Vorteil: zyklischer Übergang über Kein Status ohne allgemeine Übernahme von Shift-Pfeilen auf normalen Überschriften und ohne Markdown-/Storage-Marker. Grenze: keine dauerhafte Aufgabenidentität nach Verlassen des Bedienkontexts. Frühere Stop-bei-unmarkiert-Regel unten ist hierfür überholt.
+
+
+## TODO-Farbkorrektur — 2026-11-07
+
+Syntaxhighlighting kann innerhalb einer TODO-Dekoration eigene explizite Headingfarben setzen. Eine Farbe am äußeren Markierungsspan wird dann nicht geerbt. Gezielte Nachfahrenselektoren `.cm-content .cm-todo-open *` und entsprechend closed weisen den inneren Syntaxspans die vorhandenen Theme-Tokens zu. Der Titel liegt außerhalb des Statusbereichs und behält seine H1–H6-Farbe. Keine Status-/Storage-/Historyänderung. Regression mit tatsächlichen Parser-/Highlightklassen und generiertem CSS; native Darstellung separat bestätigen.
+
+
+## TODO-Paket — freigegebene Modulgrenzen 2026-11-07
+
+Implementierungsdetails: `editor/todo.mjs` kapselt Regeln/StateField, reinen Planer, Controller, Keyboardadapter und sichtbereichsbezogene Marks. Statusnamen ohne Whitespace/`()|`, keine reinen Hash-Namen; ASCII-Buchstaben als Fastkeys, Namen exakt und Tasten ohne Groß-/Kleinschreibungsunterscheidung. Definition exakt `#+SEQ_TODO:`. Vollständigen Parserbaum für Regeln nutzen, Statusänderungen bei unvollständiger Analyse sicher verweigern. Geladene Regeln ändern sich nur beim neuen Editorzustand oder expliziten Reload; keine automatische Textmigration. Offen zusätzlich gepunktet unterstrichen, abgeschlossen durchgestrichen. Nach Entfernen des Status sind Shift-Pfeile wieder normale Textmarkierung.
+
+Dateilokale Regelvalidierung und reinen Statusplaner von Editorcontroller, Theme-Dekoration und Paneladapter trennen. Bestehenden Markdown-Strukturindex und Registry/Panelnavigation verwenden. Regeln beim Öffnen laden, während Texteingabe letzte geladene Regeln halten; explizites Reload auf Definitionszeile übernimmt Änderungen. Kein Vaultscan oder Polling. Vorteil: spätere Agenda nutzt dasselbe aus Markdown rekonstruierbare Modell; Aufwand: geladene Regeln und bearbeitete Definition müssen unterscheidbar und an Datei-/Editorzustand gebunden bleiben.
+
+Verschachtelte H1–H6-Aufgaben behalten unabhängige Zustände und die vorhandene Abschnittshierarchie. Keine zweite Elternliste oder automatische Abschlusslogik. Abnahme: nur eine Überschrift ändern, Fehler erhalten gültige Regeln, Undo/Redo und Guards funktionieren; unabhängige QA und separate native Probe. Keine Agenda-/Listen-/Storageimplementierung.
+
+
+## TODO und Agenda — Gesprächsvorschlag 2026-11-07
+
+[PLAN_TODO_AGENDA.md](PLAN_TODO_AGENDA.md) trennt geplante Belegung von Datenmodell-/Implementierungsfreigabe. Empfehlung für den ersten Schritt: Statuswort an normaler ATX-Überschrift, reiner lokaler Statusplaner plus Registry-/Paneladapter und anpassbare Policy; aktueller Abschnitt aus vorhandenem Syntaxindex, kein neues Parserpaket. Vorteil: bestehende Struktur-/Refilebedienung und lokale atomare History wiederverwendbar, kein Vaultindex nötig. Nachteil: Listenaufgaben und ihre Checkbox-/Workflowkonsistenz bleiben separat. Früheres Checkbox-/DOING-Beispiel im Datenmodell ist illustrativ, keine beschlossene Syntax. Auswahl versus Zyklus und Statuskonvention vor Umsetzung mit PO entscheiden.
+
+Spätere Agenda verwendet dasselbe bestätigte Aufgabenmodell und rekonstruiert Daten aus Markdown. C-c a reserviert nur Dispatcherzugang, keine Festlegung der Kalenderdarstellung. Vaultumfang, Termin/Deadline, Indexierung und Ressourcenbudgets gesondert planen; noch keine Dateiscans, Indexspeicherung, persistente Statuskonfiguration oder neue ausführbare Prefixeinträge. Nur Dokumentation.
+
+## Refile-Tastenfolge — native Korrektur 2026-11-06
+
+PO meldet Browser-Tabschließen mit C-c C-w. Statt zusätzlicher Browserinterzeption nur zentralen Policyeintrag auf unmodifiziertes w nach C-c ändern; vorhandener Router prüft bereits exakte Modifier und C-keyup. Hint/Registry/Gamebook/Handprobe abgleichen. Refileplaner und Historyadapter bleiben unverändert. Org-Original und Workspacefolge C-c w ausdrücklich unterscheiden; native neue Folge gesondert prüfen.
+
+## Refile H1 — begrenzter Ansatz 2026-11-06
+
+Separater Refileplaner nutzt den vorhandenen Markdown-Syntaxbaum und Abschnittsindex für Quellteilbaum und H1-Ziele. Plan erst auf unverändertem Editorzustand anwenden, Ebenen H1–H6 und Markdown-Struktur vor/nach Verschieben prüfen; keine zweite Parserbibliothek. Ein zusammenhängender atomarer History-Schritt, Rohtext außerhalb nötiger Marker-/Trennzeilen unverändert; Codeinhalt und Frontmatter nicht neu formatieren. Unsichere Container-/Setextfälle klar verweigern statt stiller Umdeutung.
+
+Registry führt C-c C-w sowie Palette über denselben Controller aus; Präfixpolicy unterscheidet modifierhaltige Folgetaste von bisherigen Ziffern. Bestehende Panelhülle um getrennten Zielauswahlmodus ergänzen, gemeinsame Suchvervollständigung/Navigation/Scrollschutz/Listenercleanup verwenden. Auswahlmodus fokussiert Suche mit preventScroll, Quelle bleibt an ihren State gebunden. Vorteil: keine Storage-/Dateitransaktion oder zweite UI. Aufwand: Moduswechsel, stale Ziele, Folding/EOF und atomare Cursor-/Historyabbildung müssen unabhängig getestet werden. Nur aktuelle Datei und H1-Ziele; fremde Dateien/H2–H6-Ziele gesondertes Design. Abnahme: synthetische Refile-/Undo-/Syntax-/Guardfälle, bestehende Suite/Build und unabhängige QA; native PO-Probe nach Bericht.
+
+Implementierungsdetail aus unabhängiger QA: Den von `ensureSyntaxTree` zurückgegebenen vollständigen Prüfbaum explizit verwenden, nicht den ursprünglichen temporären Zustandsbaum. CodeMirror kann die Cursorposition eines ausgeschnittenen und anderswo eingefügten Teilbaums bei Redo nicht allein durch monotones Positionsmapping wiederherstellen. Deshalb `refile-history.mjs`: invertierbare Refile-Auswahlmetadaten, öffentlicher Undo-/Redo-Adapter und beforeinput-Anbindung. Originale CodeMirror-Historytransaktion unverändert lassen; nur bei Refile-Metadaten eine nicht historisierte Auswahlkorrektur im selben View-Update bündeln. Andere Historyereignisse unverändert weiterreichen, keine privaten Historystrukturen verändern. Ein Text-Undo-Schritt bleibt erhalten; wiederholte Zyklen und spätere Cursorbewegung/Edits separat prüfen.
+
 ## Gemeinsame Panelnavigation — Ergänzung 2026-11-06
 
 Kill-Ring und Präfixhilfe sollen dieselbe Zeilenauswahl und lokale Sichtbarkeit über `revealPanelRow` verwenden. Ein gemeinsamer Tastaturresolver beziehungsweise Paneladapter übersetzt Alt+Oben/Unten und Enter; Präfixrouter delegiert nur im aktiven Modus, während der Fokus im Editor bleibt. Kein zweiter Scroll- oder Auswahlalgorithmus. Reale Alt-Tastendrücke vor den Pfeilen müssen die Hilfe erhalten; außerhalb des Präfixes gelten bestehende Org-Alt-Befehle. Kontext-/Keyup-/Repeat-/IME-/AltGr-/Abbruchschutz und Cleanup erhalten. Abnahme: kleines Ergebnisviewport mit nur einer sichtbaren Zeile, Navigation/Enter und 1/2/3, gesperrte Zeilen, Ringregression und unabhängige QA; native Fensterprobe bleibt gesondert.

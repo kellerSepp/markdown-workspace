@@ -1,0 +1,93 @@
+warning: in the working copy of 'AGENTS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/ARCHITECTURE.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/COMMAND_GAMEBOOK.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/DECISIONS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/PROJECT_STATUS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'docs/REQUIREMENTS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'editor/theme-editor.mjs', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'editor/themes.mjs', LF will be replaced by CRLF the next time Git touches it
+[1mdiff --git a/AGENTS.md b/AGENTS.md[m
+[1mindex 3332813..00e46bb 100644[m
+[1m--- a/AGENTS.md[m
+[1m+++ b/AGENTS.md[m
+[36m@@ -3,7 +3,38 @@[m
+ ## Purpose[m
+ Build a lightweight, local-first Markdown workspace. The product owner wants to work iteratively and review each architectural decision.[m
+ [m
+[31m-## Current gate: C-c / KILL-RING IMPLEMENTATION AUTHORIZED — 2026-11-05[m
+[32m+[m[32m## Current gate: TODO EMPTY-STATE CYCLE IMPLEMENTED — NATIVE PO PROBE — 2026-11-07[m
+[32m+[m[32m- Developer/QA jeweils 253/253 Tests, Build, Syntax und Diffcheck grün; QA 403 eigene Prüfgruppen inkl. 348 Titelwortfällen mit vier vollen textgenauen Umläufen. Zyklus setzt über null im selben gültigen Headingkontext fort; normale Headings/Textauswahl unverändert. Prefix-Abbruch-Cleanup und Titelwort-Statusverwechslung korrigiert und unabhängig geschlossen. Stoppen für native PO-Probe nach Strg+F5; keine nächste Phase/Agenda/Storage/Dependencies/Commit/Push, native/Langzeit offen.[m
+[32m+[m
+[32m+[m[32m## Freigegebener Zykluskorrekturumfang — 2026-11-07[m
+[32m+[m[32m- PO meldet Zyklusabbruch bei Kein Status und autorisiert gezielte Fortsetzung über den leeren Zustand. Bisherige Stop-bei-unmarkiert-Regel ist für die gerade im TODO-Zyklus entmarkierte Überschrift aufgehoben. Fortsetzung nur im selben gültigen Bedienkontext, keine generelle Shift-Übernahme auf normalen Überschriften; nichtleere Auswahl bleibt priorisiert. Developer korrigiert, QA unabhängig; keine Agenda/Storage/Dependencies/Commit/Push.[m
+[32m+[m
+[32m+[m[32m## Vorheriger Abschlussstand: TODO COLOR FIX IMPLEMENTED — NATIVE PO PROBE — 2026-11-07[m
+[32m+[m[32m- Farbfix final Developer/QA jeweils 244/244 Tests, Build, Syntax und Diffcheck grün; QA 225 eigene Checks einschließlich 144 Kaskadenfällen und 80 Themewechseln. Innere Syntaxfarben durch begrenzte Status-Nachfahrenselektoren überschrieben; Titel/Statuslogik/History erhalten. Kein nativer Sicht-/Computed-Style-Nachweis. Stoppen für PO-Probe nach Strg+F5; keine weitere Phase/Agenda/Storage/Dependencies/Commit/Push.[m
+[32m+[m
+[32m+[m[32m## Freigegebener Farbfixumfang — 2026-11-07[m
+[32m+[m[32m- PO meldet fehlende grün/rote Statusdarstellung; gezielte Korrektur der TODO-Darstellung in bestehenden Theme-/Dekorationsmodulen autorisiert. Developer korrigiert mit Regression, QA prüft unabhängig. Statuswort offen grün/closed rot themeabhängig, Headingtitel und Text/Undo unverändert. Keine Dependencies/Storage/Agenda/Listen/Commit/Push; native Darstellung nur als geprüft melden, wenn tatsächlich belegt.[m
+[32m+[m
+[32m+[m[32m## Vorheriger Abschlussstand — 2026-11-07[m
+[32m+[m[32m- Developer/QA final jeweils 241/241 Tests, Build, Syntax und Diffcheck grün; QA 186 unabhängige Prüfgruppen plus sechs große Parserproben. Leere-Mark-Präzedenz und unvollständiger Parser-Gate-Befund korrigiert und unabhängig geschlossen. Kein belegter verbleibender Blocker im getesteten Umfang. Stoppen für native Probe docs/TODO_ACCEPTANCE.md mit test-vault/vault-structure/todo.md. Keine nächste Phase/Agenda/Listen/Storageänderung/Dependencies/Commit/Push ableiten; native und Langzeitbelege offen.[m
+[32m+[m
+[32m+[m[32m## Freigegebener und umgesetzter TODO-Umfang — 2026-11-07[m
+[32m+[m[32m- PO bestätigt den konkreten Lead-Vorschlag und gibt das begrenzte TODO-Paket ausdrücklich frei („Feuer Frei“). Dieser Auftrag ersetzt widersprechende Planungssperren unten ausschließlich für TODO in der aktuellen Datei. Developer implementiert begrenzt, QA unabhängig; keine Agenda/Listenaufgaben/Storageänderung/Dependencies/Commit/Push.[m
+[32m+[m[32m- H1–H6 dürfen jeweils eigene Aufgaben sein, auch H2/H3 unter einer H1-Aufgabe. Strukturelle Zugehörigkeit bleibt erhalten; keine automatische Statusvererbung, Abschlussfortschreibung oder Eltern-/Kindänderung. Spätere Agenda muss diese Hierarchie berücksichtigen, wird jetzt nicht implementiert.[m
+[32m+[m[32m- Bestätigte Randregeln: nichtleere Auswahl hat Vorrang vor Shift-Statuswechsel; Panel „Kein Status“ mit Leertaste; Zyklus unmarkiert → definierte Zustände → unmarkiert, rückwärts entsprechend. Shift-Pfeile nur auf bereits erkannter Aufgabenüberschrift; unmarkierte Überschrift per Panel zur Aufgabe machen. Genau eine Definition außerhalb Code/Frontmatter, eindeutige Namen ohne Leerzeichen und Buchstaben-Schnelltasten, genau ein | mit mindestens einem Zustand auf jeder Seite; ungültige/mehrere Definitionen behalten letzte gültige Regeln. Unbekannte Titelwörter erhalten.[m
+[32m+[m[32m- Vorbestehende uncommittete Refile-/Planungsarbeit erhalten. Nach Umsetzung/QA stoppen für native PO-Probe; Modelltests sind kein Browsernachweis.[m
+[32m+[m
+[32m+[m[32m## Vorheriges Planungsgate — 2026-11-07[m
+[32m+[m[32m- PO defers implementation to next session due to low quota. Confirmed TODO decisions are preserved in the top addendum of docs/PLAN_TODO_AGENDA.md; restart prompt docs/FORTSETZUNG_TODO.md. H1-H6 tasks, file-local SEQ_TODO keywords/fast keys, open-left green/closed-right red, load on open, C-c C-c on definition line reload with error retaining last valid rules, default TODO(t)|DONE(d), C-c t panel, Shift-Left/Right anywhere on task heading (not only status word); lists/agenda deferred. Nonempty-selection priority/grammar/cycle edge cases remain to settle. No implementation authorization yet, no scheduled automatic work/commit/push. This confirmed addendum supersedes earlier minimal hardcoded-state proposal.[m
+[32m+[m[32m- PO reports C-c w seems functional and authorizes preparation for discussion: reserve planned C-c t for task status and C-c a for agenda dispatcher in documentation/Gamebook only. No runtime binding, placeholder command, TODO/Agenda/index/configuration implementation, dependencies, Storage change, commit or push. Proposed heading-task syntax/states/selection behavior in docs/PLAN_TODO_AGENDA.md require PO decision before implementation; previous illustrative checkbox syntax is not approved format. Lead prepares bounded proposal with acceptance criteria; discuss next step, do not start milestone autonomously. Refile native/full/long-term acceptance is not implied by brief positive report.[m
+[32m+[m
+[32m+[m[32m## Previous gate: SAME-FILE H1 REFILE AUTHORIZED — 2026-11-06[m
+[32m+[m[32m- Mapping correction final: Refile is now C-c w (unmodified w after releasing C/Ctrl). Developer/QA each passed 222/222 tests, build, four package syntax checks and diffcheck; QA 20 independent handler/guard cases. Policy/hint/docs/tests only, no router/algorithm/history/Storage change. Await native PO replacement-sequence test; no universal browser-interception claim, no commit/push or further scope.[m
+[32m+[m[32m- PO native report: C-c C-w triggers browser tab close. PO authorizes only mapping correction to C-c w (release Ctrl before unmodified w), retain Alt+W Copy and all refile/panel/history guards. Developer changes centralized binding/hint/docs/tests, QA independently verifies; no algorithm/Storage/dependencies/commit/push. Original Org binding remains reference only; do not claim native interception universally impossible. Earlier C-c C-w implementation reports describe historical binding.[m
+[32m+[m[32m- Final implemented and independently verified: Developer/QA each 222/222 tests and build passed, syntax/diff checks green. QA additionally 352 independent cases, 416 UI checks incl. 200 model cycles and 100/100 successful larger-document plans. Redo-caret and incomplete validation-tree defects corrected and independently closed; isolated refile-history adapter preserves ordinary CM history. No proven remaining implementation blocker in tested scope. Await PO native probe docs/REFILE_H1.md with synthetic test-vault/vault-structure/refile.md; native Edge/AltGr/IME/layout and long-term resources open. Stop after report; no H2-H6 targets, other-file refile, further milestone, commit or push.[m
+[32m+[m[32m- PO authorizes C-c C-w refile of the current heading subtree from heading/body within current file, to H1 destinations only, appended as last child with relative level adjustment and atomic Undo/Redo. Other-file refile and H2-H6 destinations explicitly deferred. Reuse Registry, Markdown structure/parser and existing lower panel search/completion/navigation/cleanup. Exclude source/descendant targets; refuse unsafe level overflow or unsupported Markdown cases clearly. Preserve text, Storage, existing commands and guards. Developer implements bounded modular package, QA independently checks; no dependencies/Storage/Agenda/TODO/commit/push. Earlier refile prohibitions superseded only for this scope. Stop after report for native PO probe.[m
+[32m+[m
+[32m+[m[32m## Previous gate: C-c / KILL-RING IMPLEMENTATION AUTHORIZED — 2026-11-05[m
+ - PO 2026-11-06 positively reports prefix navigation and explicitly authorizes a local Git commit of the completed Copy/Kill-Ring/prefix/panel package. No push or subsequent milestone authorized. Native AltGr/IME and long-term/resource acceptance remain open; positive report is not a full matrix acceptance.[m
+ - Prefix-navigation correction final 2026-11-06: Developer/QA each passed 200/200 tests, build, seven syntax checks and diff check; QA additionally 119 independent model cases incl. 100 lifecycle cycles and one-row result viewport. Shared panelMove/moveSelection/select/revealPanelRow reused for Kill-Ring and prefix help; left Alt handling reused, Enter activation guarded, disabled choices skipped. No proven remaining blocker in tested scope. Await PO native quarter-window navigation/scroll probe; native/long-term acceptance remains open. Stop after report; no further scope/commit/push.[m
+ - PO 2026-11-06 authorizes bounded prefix-help navigation correction for quarter-screen use at 1920x1080: reuse Kill-Ring navigation for Alt-Up/Down selection, Enter activation and local selected-row scrolling; retain 1/2/3, Escape/C-g, editor focus/viewport and existing guards. Keep Alt+W hint for now. Developer implements, QA independently verifies; no layout redesign/dependencies/Storage/Agenda/TODO/commit/push.[m
+[1mdiff --git a/docs/ARCHITECTURE.md b/docs/ARCHITECTURE.md[m
+[1mindex af0d67b..0d6b408 100644[m
+[1m--- a/docs/ARCHITECTURE.md[m
+[1m+++ b/docs/ARCHITECTURE.md[m
+[36m@@ -1,5 +1,44 @@[m
+ # Architekturvorschlag – zur Freigabe[m
+ [m
+[32m+[m[32m## TODO-Zyklusfortsetzung — 2026-11-07[m
+[32m+[m
+[32m+[m[32mQA-Randfälle: Ein gebundener leerer Zustand wird in Kontext/Planer und Dekoration als leer behandelt, auch wenn das ursprüngliche erste Titelwort einem geladenen Status entspricht. So bleibt etwa `TODO DONE Titel` über alle Zyklusschritte textgetreu erhalten. Ein separater nichtkonsumierender Abbruchadapter vor dem Prefixrouter löscht die Fortsetzung bei Escape/C-g; der eigentliche Shift-Handler bleibt hinter dem Prefixrouter. Dadurch kann der Prefixabbruch den Cleanup nicht überholen.[m
+[32m+[m
+[32m+[m[32mEin flüchtiges `cycleFrom` im bestehenden TODO-StateField merkt ausschließlich die Headingzeile, die gerade durch den Statuszyklus entmarkiert wurde. `todoCycleContext` ist gemeinsames Gate von Keyboard und Registry. Leere Cursorbewegung auf derselben Zeile und Parserupdates erhalten den Zyklus; andere Textänderungen, Region/Mehrfachcursor, Kontext-/Fokuswechsel, Reload/Undo/Redo/Rekonfiguration/Dateiwechsel sowie Abbruch invalidieren. Panelentfernung setzt keine Fortsetzung. Vorteil: zyklischer Übergang über Kein Status ohne allgemeine Übernahme von Shift-Pfeilen auf normalen Überschriften und ohne Markdown-/Storage-Marker. Grenze: keine dauerhafte Aufgabenidentität nach Verlassen des Bedienkontexts. Frühere Stop-bei-unmarkiert-Regel unten ist hierfür überholt.[m
+[32m+[m
+[32m+[m
+[32m+[m[32m## TODO-Farbkorrektur — 2026-11-07[m
+[32m+[m
+[32m+[m[32mSyntaxhighlighting kann innerhalb einer TODO-Dekoration eigene explizite Headingfarben setzen. Eine Farbe am äußeren Markierungsspan wird dann nicht geerbt. Gezielte Nachfahrenselektoren `.cm-content .cm-todo-open *` und entsprechend closed weisen den inneren Syntaxspans die vorhandenen Theme-Tokens zu. Der Titel liegt außerhalb des Statusbereichs und behält seine H1–H6-Farbe. Keine Status-/Storage-/Historyänderung. Regression mit tatsächlichen Parser-/Highlightklassen und generiertem CSS; native Darstellung separat bestätigen.[m
+[32m+[m
+[32m+[m
+[32m+[m[32m## TODO-Paket — freigegebene Modulgrenzen 2026-11-07[m
+[32m+[m
+[32m+[m[32mImplementierungsdetails: `editor/todo.mjs` kapselt Regeln/StateField, reinen Planer, Controller, Keyboardadapter und sichtbereichsbezogene Marks. Statusnamen ohne Whitespace/`()|`, keine reinen Hash-Namen; ASCII-Buchstaben als Fastkeys, Namen exakt und Tasten ohne Groß-/Kleinschreibungsunterscheidung. Definition exakt `#+SEQ_TODO:`. Vollständigen Parserbaum für Regeln nutzen, Statusänderungen bei unvollständiger Analyse sicher verweigern. Geladene Regeln ändern sich nur beim neuen Editorzustand oder expliziten Reload; keine automatische Textmigration. Offen zusätzlich gepunktet unterstrichen, abgeschlossen durchgestrichen. Nach Entfernen des Status sind Shift-Pfeile wieder normale Textmarkierung.[m
+[32m+[m
+[32m+[m[32mDateilokale Regelvalidierung und reinen Statusplaner von Editorcontroller, Theme-Dekoration und Paneladapter trennen. Bestehenden Markdown-Strukturindex und Registry/Panelnavigation verwenden. Regeln beim Öffnen laden, während Texteingabe letzte geladene Regeln halten; explizites Reload auf Definitionszeile übernimmt Änderungen. Kein Vaultscan oder Polling. Vorteil: spätere Agenda nutzt dasselbe aus Markdown rekonstruierbare Modell; Aufwand: geladene Regeln und bearbeitete Definition müssen unterscheidbar und an Datei-/Editorzustand gebunden bleiben.[m
+[32m+[m
+[32m+[m[32mVerschachtelte H1–H6-Aufgaben behalten unabhängige Zustände und die vorhandene Abschnittshierarchie. Keine zweite Elternliste oder automatische Abschlusslogik. Abnahme: nur eine Überschrift ändern, Fehler erhalten gültige Regeln, Undo/Redo und Guards funktionieren; unabhängige QA und separate native Probe. Keine Agenda-/Listen-/Storageimplementierung.[m
+[32m+[m
+[32m+[m
+[32m+[m[32m## TODO und Agenda — Gesprächsvorschlag 2026-11-07[m
+[32m+[m
+[32m+[m[32m[PLAN_TODO_AGENDA.md](PLAN_TODO_AGENDA.md) trennt geplante Belegung von Datenmodell-/Implementierungsfreigabe. Empfehlung für den ersten Schritt: Statuswort an normaler ATX-Überschrift, reiner lokaler Statusplaner plus Registry-/Paneladapter und anpassbare Policy; aktueller Abschnitt aus vorhandenem Syntaxindex, kein neues Parserpaket. Vorteil: bestehende Struktur-/Refilebedienung und lokale atomare History wiederverwendbar, kein Vaultindex nötig. Nachteil: Listenaufgaben und ihre Checkbox-/Workflowkonsistenz bleiben separat. Früheres Checkbox-/DOING-Beispiel im Datenmodell ist illustrativ, keine beschlossene Syntax. Auswahl versus Zyklus und Statuskonvention vor Umsetzung mit PO entscheiden.[m
+[32m+[m
+[32m+[m[32mSpätere Agenda verwendet dasselbe bestätigte Aufgabenmodell und rekonstruiert Daten aus Markdown. C-c a reserviert nur Dispatcherzugang, keine Festlegung der Kalenderdarstellung. Vaultumfang, Termin/Deadline, Indexierung und Ressourcenbudgets gesondert planen; noch keine Dateiscans, Indexspeicherung, persistente Statuskonfiguration oder neue ausführbare Prefixeinträge. Nur Dokumentation.[m
+[32m+[m
+[32m+[m[32m## Refile-Tastenfolge — native Korrektur 2026-11-06[m
+[32m+[m
+[32m+[m[32mPO meldet Browser-Tabschließen mit C-c C-w. Statt zusätzlicher Browserinterzeption nur zentralen Policyeintrag auf unmodifiziertes w nach C-c ändern; vorhandener Router prüft bereits exakte Modifier und C-keyup. Hint/Registry/Gamebook/Handprobe abgleichen. Refileplaner und Historyadapter bleiben unverändert. Org-Original und Workspacefolge C-c w ausdrücklich unterscheiden; native neue Folge gesondert prüfen.[m
+[32m+[m
+[32m+[m[32m## Refile H1 — begrenzter Ansatz 2026-11-06[m
+[32m+[m
+[32m+[m[32mSeparater Refileplaner nutzt den vorhandenen Markdown-Syntaxbaum und Abschnittsindex für Quellteilbaum und H1-Ziele. Plan erst auf unverändertem Editorzustand anwenden, Ebenen H1–H6

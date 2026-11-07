@@ -1,3 +1,5 @@
+import {refileContext} from './refile.mjs';
+import {todoContext,todoDefinitionLine,todoCycleContext} from './todo.mjs';
 import {LIST_COMMANDS,planListInteraction} from './list-interaction.mjs';
 import {planStructure} from './structure.mjs';
 import {planFormat} from './formatting.mjs';
@@ -53,7 +55,11 @@ for(const [id,name,down,shortcut,orgShortcut] of [['line-up','Zeile nach oben',f
   add('edit.'+id,name,'Bearbeiten','Aktuelle physische Zeile tauschen, unabhängig von Hierarchie und Unterstrukturwahl. Marker werden nicht geändert. Code/Fences/Frontmatter sind geschützt.','editor',c=>documentReason(c)||planLineMove(c.state,down).message||'',shortcut);
   Object.assign(catalog.at(-1),{orgShortcut,compatibility:'Org/Emacs-Zeilenbewegung bei einzelnem Cursor; Code-/Frontmatter-Grenzen zusätzlich geschützt, keine Regionen.'});
 }
-for(const {id,key} of PREFIX_BINDINGS){const command=catalog.find(c=>c.id===id);command.shortcut=[command.shortcut,'C-c '+key+' (Editor)'].filter(Boolean).join(' / ');}
+add('structure.refile-h1','Teilbaum unter H1 verschieben','Überschriften','Aktuellen Teilbaum als letztes Kind unter H1 dieser Datei verschieben; keine Regionen.','editor',c=>documentReason(c)||refileContext(c.state).message||'');
+add('todo.status','Aufgabenstatus wählen','Aufgaben','Status dieser H1–H6-Überschrift wählen; Kinder und Eltern behalten ihren eigenen Status.','editor',c=>documentReason(c)||todoContext(c.state).message||'');
+add('todo.reload','TODO-Regeln neu laden','Aufgaben','Dateilokale SEQ_TODO-Definition laden; Fehler behalten letzte gültige Regeln.','editor',c=>documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':c.state.selection.ranges.length!==1||!c.state.selection.main.empty?'Nur ein Cursor ohne Auswahl.':!todoDefinitionLine(c.state)?'Cursor muss auf der SEQ_TODO-Zeile stehen.':''));
+for(const [id,name,shortcut] of [['previous','Vorheriger Aufgabenstatus','Umschalt+Links'],['next','Nächster Aufgabenstatus','Umschalt+Rechts']])add('todo.'+id,name,'Aufgaben','Status auf der Aufgabenüberschrift wechseln; Textauswahl hat Vorrang.','editor',c=>documentReason(c)||todoCycleContext(c.state).message||'',shortcut);
+for(const {id,key,label} of PREFIX_BINDINGS){const command=catalog.find(c=>c.id===id);command.shortcut=[command.shortcut,'C-c '+(label??key)+' (Editor)'].filter(Boolean).join(' / ');}
 for(const id of ['heading-up','heading-down']) Object.assign(catalog.find(c=>c.id==='structure.'+id),{shortcut:id==='heading-up'?'Alt+Oben':'Alt+Unten',orgShortcut:id==='heading-up'?'M-UP':'M-DOWN',compatibility:'Org-Unterbaumtausch nur mit gleichrangigem Geschwister innerhalb derselben Elterngrenze.'});
 export const COMMAND_METADATA=Object.freeze(catalog.map(c=>Object.freeze(c)));
 export function commandDefinitions(handlers) {

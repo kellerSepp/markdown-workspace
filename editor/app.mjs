@@ -1,6 +1,6 @@
 import {EditorState, Compartment} from '@codemirror/state';
 import {EditorView, keymap, lineNumbers, drawSelection} from '@codemirror/view';
-import {history, historyKeymap, defaultKeymap, undo, redo} from '@codemirror/commands';
+import {history, historyKeymap, defaultKeymap} from '@codemirror/commands';
 import {markdown,markdownLanguage} from '@codemirror/lang-markdown';
 import {createSession, createBrowserStore} from './storage-session.mjs';
 import {THEMES,readThemeChoice,saveThemeChoice,applyTheme} from './themes.mjs';
@@ -20,7 +20,10 @@ import {runLineMove} from './line-move.mjs';
 import {createEmacsEditing,emacsMark} from './emacs-editing.mjs';
 import {EMACS_COMMANDS,withoutYankRedo} from './emacs-policy.mjs';
 import {createWorkPanel} from './work-panel.mjs';
+import {refileHistory,undoRefile,redoRefile} from './refile-history.mjs';
+import {createRefileController} from './refile.mjs';
 import {createPrefixRouter} from './prefix-router.mjs';
+import {todoRules,todoHighlight,todoKeyboard,todoCycleAbortCleanup,createTodoController} from './todo.mjs';
 
 const $ = id => document.getElementById(id);
 const editable = new Compartment();
@@ -40,9 +43,14 @@ const prefix=createPrefixRouter({registry:{get:id=>registry.get(id),availability
   showHelp:(...args)=>workPanel.showPrefix(...args),moveHelp:delta=>workPanel.moveSelection(delta),activateHelp:()=>workPanel.activateSelection(),hideHelp:()=>workPanel?.close({restore:false}),notify:status});
 const emacs=createEmacsEditing({getContext:editingContext,notify:status,openChooser:()=>workPanel?.openRing()??false});
 const extensions = () => [
-  prefix.extension(),
+  todoCycleAbortCleanup(),
+  prefix.extension(),refileHistory(),
+  EditorView.updateListener.of(()=>workPanel?.invalidateStale()),
+  // TASK Shift arrows outrank empty active-mark navigation; nonempty selections
+  // and every non-task context still pass through to Emacs/ordinary selection.
+  todoKeyboard(id=>registry.execute(id),editingContext),
   emacs.extension(id=>registry.execute(id)),
-  lineNumbers(), history(), drawSelection(), markdown({base:markdownLanguage}), markdownFolding(status,id=>registry.execute(id)), structureKeyboard(()=>$('structureChildren').checked,status,id=>registry.execute(id),()=>$('orgTab').checked), visualAppearance.of(visualStructure(visualOptions)), appearance.of(editorTheme(activeTheme)),
+  lineNumbers(), history(), drawSelection(), markdown({base:markdownLanguage}), todoRules,todoHighlight, markdownFolding(status,id=>registry.execute(id)), structureKeyboard(()=>$('structureChildren').checked,status,id=>registry.execute(id),()=>$('orgTab').checked), visualAppearance.of(visualStructure(visualOptions)), appearance.of(editorTheme(activeTheme)),
   keymap.of([{key:'Mod-z',run:()=>{registry.execute('edit.undo');return true;}},{key:'Mod-Shift-z',run:()=>{registry.execute('edit.redo');return true;}}]),
   // Remove CM's competing line move/copy shortcuts. Outside a recognized Org
   // context the browser receives Alt arrows; Shift+Alt up/down stays unbound.
@@ -79,6 +87,11 @@ const handlers={};
 const registry=createCommandRegistry(commandDefinitions(handlers),()=>({busy,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
 const surfaces=createCommandSurfaces({registry,view,notify:status});
 workPanel=createWorkPanel({host:$('workPanel'),workspace:$('editorWorkspace'),view,ring:emacs.ring,getContext:editingContext,insert:(id,target)=>emacs.insertRingEntry(view,id,target),notify:status});
+const refile=createRefileController({view,panel:workPanel,getContext:editingContext,notify:status});
+handlers['structure.refile-h1']=()=>refile.open();
+const todo=createTodoController({view,panel:workPanel,getContext:editingContext,notify:status});
+handlers['todo.status']=()=>todo.open();handlers['todo.reload']=()=>todo.reload();
+handlers['todo.previous']=()=>todo.cycle(-1);handlers['todo.next']=()=>todo.cycle(1);
 for(const {id} of EMACS_COMMANDS)handlers['edit.emacs-'+id]=()=>{
   if(id==='show-ring'||id==='yank-pop')workPanel.preserveViewport(()=>view.focus());else view.focus();
   return emacs.run(view,id);
@@ -112,7 +125,7 @@ for (const action of ['heading-up','heading-down','heading-promote','heading-dem
   runStructure(view,action,{children:$('structureChildren').checked,prefix:$('listPrefix').value},status);
   view.focus();
 };
-for(const [id,action] of [['undo',undo],['redo',redo]]) handlers['edit.'+id]=()=>{
+for(const [id,action] of [['undo',undoRefile],['redo',redoRefile]]) handlers['edit.'+id]=()=>{
   if(!action(view)) status('Keine weitere Undo-/Redo-Aktion verfügbar.');
   view.focus();
 };
@@ -151,6 +164,7 @@ function syncEditor() {
   try {
     // New state prevents undo history from crossing file or draft boundaries.
     view.setState(EditorState.create({doc:session.text,extensions:extensions()}));
+    const error=view.state.field(todoRules).error;if(error)queueMicrotask(()=>status(error));
   } finally {syncing = false;}
   render();
 }

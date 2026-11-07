@@ -1,5 +1,33 @@
 # Architekturentscheidungen
 
+## TODO-Zyklus am leeren Zustand fortsetzen — PO-Korrektur 2026-11-07
+
+PO meldet den Wechsel zur Textmarkierung nach Erreichen von Kein Status als unerwünscht. Shift+Links/Rechts soll auf der soeben im TODO-Zyklus entmarkierten Überschrift den Zyklus fortsetzen: rechts zum ersten, links zum letzten definierten Zustand. Diese Korrektur ersetzt die ältere Stopregel. Normale statuslose Überschriften und bereits markierter Text behalten bisherige Markierungsbedienung. Fortsetzung gilt nur im gültigen aktuellen Bedienkontext; kein gespeicherter Task-Marker im Markdown, keine Agenda-/Storageänderung.
+
+
+## TODO-Paket freigegeben — 2026-11-07
+
+PO bestätigt den konkreten Lead-Vorschlag mit „klingt gut“ und „Feuer Frei“. Dateilokale SEQ_TODO-Regeln, Standard TODO(t) | DONE(d), C-c t, Reload C-c C-c und Shift-Pfeil-Zyklus werden im abgegrenzten Paket umgesetzt. Genau eine Definition außerhalb Code/Frontmatter; Namen ohne Leerzeichen, eindeutige Buchstaben-Schnelltasten, genau ein |, mindestens ein Zustand je Seite. Doppelte Namen/Tasten oder mehrere Definitionen sind Fehler; letzte gültige Regeln behalten. Nichtleere Auswahl behält Textmarkierung. „Kein Status“ per Panel/Leertaste; Zyklus unmarkiert → definierte Reihenfolge → unmarkiert, rückwärts entsprechend. Unbekannte Titelwörter nicht entfernen.
+
+PO betont verschachtelte Aufgaben: H1, H2, H3 bis H6 dürfen jeweils eigene Zustände haben und strukturell zur übergeordneten Aufgabe gehören. Keine automatische Statusvererbung oder Änderung anderer Aufgaben; Hierarchie als Grundlage späterer Agenda erhalten. Developer implementiert, QA prüft unabhängig, native Probe danach. Keine Agenda, Listenaufgaben, Storageänderungen, Dependencies, Commit oder Push. Frühere Vertagung ist für diesen Umfang aufgehoben.
+
+
+## TODO-Regeln bestätigt, Umsetzung vertagt — 2026-11-07
+
+PO bestätigt Aufgaben an H1–H6, dateilokale SEQ_TODO-Zeile mit benannten Zuständen/Schnellwahltasten und | als Offen-/Abgeschlossen-Trenner. Offen grün, abgeschlossen rot. Automatisch beim Öffnen laden, nach Bearbeitung C-c C-c auf der Definitionszeile, Fehler behalten letzte gültige Regeln; ohne Definition TODO(t) | DONE(d). C-c t öffnet Statuspanel. Shift+Links/Rechts auf der gesamten Aufgabenüberschrift, nicht nur im Statuswort; Listen und zusätzliche Shift-Auswahlmodi später. Einzelheiten zu Grammatik/mehreren Definitionen/Markierungspriorität/Zyklusgrenzen noch offen. Bestätigter Nachtrag in [PLAN_TODO_AGENDA.md](PLAN_TODO_AGENDA.md) hat Vorrang vor früheren Minimalvorschlägen. Wegen knappen Kontingents verschiebt PO die Umsetzung auf nächste Sitzung; keine heutige Implementierungsfreigabe, keine automatische spätere Ausführung. [Fortsetzungsprompt](FORTSETZUNG_TODO.md), kein Commit/Push.
+
+## TODO und Agenda vorbereiten — PO-Planungsfreigabe 2026-11-07
+
+PO bestätigt geplante Folgen C-c t für Statusänderung und C-c a für den Agenda-Dispatcher und beauftragt Vorbereitung für die nächste Besprechung. Nur dokumentieren/reservieren, keine Anwendungskürzel oder Platzhalter aktivieren. C-c a a/t sind Ausbauvorschläge, Statusformat/Startzustände/Bedienmodell noch nicht entschieden. Gesprächsvorlage [PLAN_TODO_AGENDA.md](PLAN_TODO_AGENDA.md); keine TODO-/Agenda-/Storageimplementierung und kein Commit/Push freigegeben. PO berichtet C-c w als funktionierend; daraus keine vollständige Refile-/Langzeitabnahme ableiten.
+
+## Refile-Folge C-c w wegen nativem Browserkonflikt — 2026-11-06
+
+PO meldet Tab-Schließaktion bei C-c C-w und bestätigt stattdessen C-c w: Strg+C, beide Tasten loslassen, W ohne Modifier. Alt+W bleibt normales Kopieren; C-c M-w bleibt für eine mögliche spätere Kopier-Refilefunktion frei, keine Implementierungsfreigabe dafür. Org-Original C-c C-w als Referenz beibehalten, Workspaceabweichung sichtbar dokumentieren. Nur Policy/Hint/Doku/gezielte Tests ändern, Algorithmus/History/Storage unverändert. Entwickler und unabhängige QA; native Ersatzfolge anschließend vom PO prüfen. Keine universelle Unmöglichkeit der Strg+W-Unterdrückung aus einem Browserbericht ableiten. Kein Commit/Push.
+
+## Refile unter H1 derselben Datei — PO-Freigabe 2026-11-06
+
+PO bestätigt den vorgeschlagenen nächsten Schritt mit ausdrücklicher Begrenzung: C-c C-w, aktueller Teilbaum, H1-Ziel derselben Datei, als letztes Kind, passende relative Ebenen, ein Undo. Bestehende Panelnavigation, Suche und Vervollständigung nutzen. Dateigrenzen und H2–H6-Ziele bleiben separat. Referenz: [Org Refile and Copy](https://orgmode.org/manual/Refile-and-Copy.html), vom Lead vor Freigabe geprüft; Org bietet standardmäßig H1-Ziele der aktuellen Datei, Eintrag am Cursor und Zielvervollständigung. Keine Regions-/Kopier-/Archivierungsfunktion, neuen Pakete, Storageänderung oder automatische Commit-/Pushfreigabe.
+
 ## Lokaler Abschlusscommit — PO-Freigabe 2026-11-06
 
 Nach positiver Rückmeldung zur Präfixnavigation gibt der PO den lokalen Git-Commit des abgeschlossenen Copy-/Kill-Ring-/Präfix-/Panelpakets frei. Kein Push und kein weiterer Meilenstein freigegeben. Native AltGr-/IME-/Langzeitnachweise bleiben offen.

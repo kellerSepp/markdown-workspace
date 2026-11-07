@@ -12,6 +12,8 @@ import {THEMES} from './themes.mjs';
 import {createPrefixRouter} from './prefix-router.mjs';
 import {createCommandRegistry} from './command-registry.mjs';
 import {commandDefinitions} from './commands.mjs';
+import {todoRules,createTodoController} from './todo.mjs';
+import {markdown} from '@codemirror/lang-markdown';
 const pluginFacet=ViewPlugin.define(()=>({})).extension.at(-1).facet;
 class Element{
   constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.listeners={};this.attributes={};this.value='';this.scrollTop=0;this.scrollLeft=0;this.clientHeight=90;this.offsetHeight=30;this.classList={toggle:()=>{}};}
@@ -74,7 +76,7 @@ test('Public refresh preserves active prefix rows/listeners/router and viewport,
   const rows=[...f.results.children],text=rows.map(row=>row.textContent),hint=f.root.children[2].textContent;
   for(let i=0;i<3;i++)f.panel.refresh();
   assert.equal(router.active,true);assert.deepEqual(f.results.children,rows);assert.deepEqual(rows.map(row=>row.textContent),text);
-  assert.equal(f.root.children[2].textContent,hint);assert.equal(f.search.hidden,true);assert.equal(f.root.attributes['data-prefix-help'],'');
+  assert.equal(f.root.children[2].textContent,hint);assert.match(hint,/C und Strg loslassen/);assert.match(hint,/1 \/ 2 \/ 3 \/ w/);assert.doesNotMatch(hint,/C-w/);assert.match(hint,/Alt\+W kopiert/);assert.match(rows[3].textContent,/w/);assert.equal(f.search.hidden,true);assert.equal(f.root.attributes['data-prefix-help'],'');
   assert.equal(f.message.textContent,'');assert.ok(rows.every(row=>row.listeners.click.length===1));
   assert.equal(f.view.state,state);assert.equal(undoDepth(state),0);assert.equal(f.view.hasFocus,true);
   assert.equal(f.view.scrollDOM.scrollTop,2400);assert.equal(f.view.scrollDOM.scrollLeft,130);
@@ -91,7 +93,7 @@ test('Gamebook assigns approved prefix shortcuts to folding commands only, never
   const book=await readFile(new URL('../docs/COMMAND_GAMEBOOK.md',import.meta.url),'utf8');
   const shortcut=id=>book.split('\n').find(line=>line.startsWith('| `'+id+'` |')).split('|')[7].trim();
   for(const [id,key] of [['fold.collapse','1'],['fold.reveal','2'],['fold.open','3']])assert.ok(shortcut(id).includes('C-c '+key),id);
-  assert.equal(shortcut('workspace.choose'),'offen');
+  assert.equal(shortcut('workspace.choose'),'offen');assert.equal(shortcut('structure.refile-h1'),'C-c w (Editor)');
 });
 
 test('Ring panel opens after intentional mark blur without invalidating its own target; reverse selection is preserved until insertion',()=>{
@@ -203,7 +205,7 @@ test('Toolbar opening guards focus before layout capture with offscreen caret, p
 
 test('Prefix uses ring selection/reveal for tiny result viewport, skips disabled rows and keeps editor unchanged',()=>{
   const f=fixture(),state=f.view.state,calls=[];f.results.clientHeight=30;
-  const router=createPrefixRouter({registry:{get:id=>({name:id}),availability:id=>({enabled:id!=='fold.reveal',reason:'Blocked'}),execute:id=>{calls.push(id);return true;}},
+  const router=createPrefixRouter({registry:{get:id=>({name:id}),availability:id=>({enabled:['fold.collapse','fold.open'].includes(id),reason:'Blocked'}),execute:id=>{calls.push(id);return true;}},
     showHelp:(...args)=>f.panel.showPrefix(...args),hideHelp:()=>f.panel.close({restore:false}),moveHelp:d=>f.panel.moveSelection(d),activateHelp:()=>f.panel.activateSelection()});
   const down=(key,patch={})=>router.keyDown({type:'keydown',key,preventDefault(){},...patch},f.view);
   down('c',{ctrlKey:true});router.keyUp({key:'c'});down('Alt',{altKey:true,code:'AltLeft'});down('ArrowDown',{altKey:true,repeat:true});
@@ -214,4 +216,65 @@ test('Prefix uses ring selection/reveal for tiny result viewport, skips disabled
   assert.equal(f.view.scrollDOM.scrollTop,2400);assert.equal(f.view.scrollDOM.scrollLeft,130);assert.equal(f.doc.defaultView.scrollY,500);
   f.panel.showPrefix([{key:'1',name:'Blocked',enabled:false,reason:'No context'}],()=>assert.fail('disabled'),()=>{});
   assert.equal(f.panel.moveSelection(1),false);f.panel.activateSelection();f.panel.destroy();
+});
+
+test('Refile reuses panel search/completion/navigation, distinguishes duplicate H1, guards repeats, restores focus and drops rows',async()=>{
+ const {createRefileController}=await import('./refile.mjs');const {markdown}=await import('@codemirror/lang-markdown');
+ const text='# Source\nbody\n# Dup\none\n# Dup\ntwo',f=fixture({docText:text,selection:{anchor:3},extra:markdown()});
+ const refile=createRefileController({view:f.view,panel:f.panel,getContext:()=>f.context,notify:m=>f.notices.push(m)}),before=f.view.state;
+ assert.equal(refile.open(),true);assert.equal(f.view.state,before);assert.equal(undoDepth(f.view.state),0);assert.equal(f.view.scrollDOM.scrollTop,2400);
+ assert.equal(f.results.attributes['aria-label'],'H1-Ziele dieser Datei');assert.match(f.results.children[0].textContent,/Zeile 3/);assert.match(f.results.children[1].textContent,/Zeile 5/);
+ f.search.value='No match';f.search.emit('input');assert.equal(f.results.children[0].textContent,'Keine passenden H1-Ziele.');
+ f.search.value='D';f.root.emit('keydown',{key:'Tab',target:f.search});assert.match(f.search.value,/^Dup/);assert.equal(f.view.state,before);
+ f.search.value='';f.search.emit('input');f.root.emit('keydown',{key:'ArrowDown',target:f.search});assert.equal(f.results.children[1].attributes['aria-selected'],'true');
+ f.root.emit('keydown',{key:'Enter',repeat:true,target:f.search});assert.equal(f.view.state,before);
+ f.root.emit('keydown',{key:'Enter',target:f.search});assert.equal(f.panel.isOpen,false);assert.equal(f.results.children.length,0);assert.equal(undoDepth(f.view.state),1);
+ assert.match(f.view.state.doc.toString(),/# Dup\ntwo\n\n## Source\nbody/);assert.equal(f.view.hasFocus,true);f.panel.destroy();
+});
+
+test('TODO shared panel fast keys, none/Space, navigation, stale cleanup and empty active mark preserve target and history',()=>{
+ const original='# TODO Parent\n## TODO Child\n### DONE Grandchild',f=fixture({docText:original,selection:{anchor:23},extra:[markdown(),todoRules]});
+ const todo=createTodoController({view:f.view,panel:f.panel,getContext:()=>f.context,notify:m=>f.notices.push(m)});
+ f.controller.run(f.view,'mark');assert.equal(f.view.state.field(emacsMark).active,true);
+ assert.equal(todo.open(),true);assert.equal(f.view.state.field(emacsMark).active,false);const before=f.view.state;
+ assert.equal(f.panel.isOpen,true);assert.match(f.results.children[1].textContent,/aktuell/);assert.match(f.hint?.textContent??f.root.children[2].textContent,/Leertaste/);
+ f.root.emit('keydown',{key:'d',repeat:true,target:f.search});assert.equal(f.view.state,before);
+ f.root.emit('keydown',{key:'d',getModifierState:()=>true,target:f.search});assert.equal(f.view.state,before);
+ f.root.emit('keydown',{key:'d',target:f.search});assert.equal(f.panel.isOpen,false);assert.equal(f.view.state.doc.toString(),'# TODO Parent\n## DONE Child\n### DONE Grandchild');assert.equal(undoDepth(f.view.state),1);
+ assert.equal(f.view.scrollDOM.scrollTop,2400);assert.equal(f.view.scrollDOM.scrollLeft,130);assert.equal(f.doc.defaultView.scrollY,500);
+ todo.open();f.root.emit('keydown',{key:' ',target:f.search});assert.equal(f.view.state.doc.toString(),'# TODO Parent\n## Child\n### DONE Grandchild');assert.equal(undoDepth(f.view.state),2);
+ todo.open();f.root.emit('keydown',{key:'ArrowDown',target:f.search});f.root.emit('keydown',{key:'Enter',target:f.search});assert.equal(f.view.state.doc.toString(),original);assert.equal(undoDepth(f.view.state),3);
+ for(let i=0;i<100;i++){todo.open();const rows=[...f.results.children];f.root.emit('keydown',{key:'Escape',target:f.search});assert.equal(f.panel.isOpen,false);for(const row of rows)assert.equal(row.listeners.click.length,0);}
+ todo.open();f.view.dispatch({selection:{anchor:0}});f.panel.invalidateStale();assert.equal(f.panel.isOpen,false);f.panel.destroy();
+});
+
+test('TODO real Registry plus prefix router opens status panel and C-c C-c reloads only declaration',()=>{
+ const text='#+SEQ_TODO: NEXT(n) | DONE(d)\n# NEXT Parent\n## DONE Child',f=fixture({docText:text,selection:{anchor:33},extra:[markdown(),todoRules]});
+ const todo=createTodoController({view:f.view,panel:f.panel,getContext:()=>f.context});
+ const registry=createCommandRegistry(commandDefinitions({'todo.status':()=>todo.open(),'todo.reload':()=>todo.reload()}),()=>({...f.context,state:f.view.state}));
+ const prefix=createPrefixRouter({registry,showHelp:(...args)=>f.panel.showPrefix(...args),hideHelp:()=>f.panel.close({restore:false})});
+ const down=(key,patch={})=>prefix.keyDown({key,preventDefault(){},...patch},f.view);
+ down('c',{ctrlKey:true});prefix.keyUp({key:'c'});down('t');assert.equal(f.panel.isOpen,true);assert.match(f.results.children[1].textContent,/NEXT/);f.root.emit('keydown',{key:'d',target:f.search});assert.match(f.view.state.doc.toString(),/# DONE Parent\n## DONE Child/);
+ f.view.dispatch({selection:{anchor:3}});f.view.dispatch({changes:{from:12,to:16,insert:'WAIT'}});assert.equal(f.view.state.field(todoRules).rules[0].name,'NEXT');
+ down('c',{ctrlKey:true});prefix.keyUp({key:'c'});down('c',{ctrlKey:true});assert.equal(f.view.state.field(todoRules).rules[0].name,'WAIT');assert.equal(f.panel.isOpen,false);
+ f.panel.destroy();
+});
+
+test('Refile clears empty active mark before intentional blur; cancel leaves text/selection/history intact and reopening can execute',async()=>{
+ const {createRefileController}=await import('./refile.mjs');const {markdown}=await import('@codemirror/lang-markdown');
+ const text='# Source\nbody\n# Target',f=fixture({docText:text,selection:{anchor:3},extra:markdown()});
+ const refile=createRefileController({view:f.view,panel:f.panel,getContext:()=>f.context});
+ f.controller.run(f.view,'mark');assert.equal(f.view.state.field(emacsMark).active,true);const selection=f.view.state.selection;
+ assert.equal(refile.open(),true);assert.equal(f.view.state.field(emacsMark).active,false);assert.ok(f.view.state.selection.eq(selection));
+ f.root.emit('keydown',{key:'Escape',target:f.search});assert.equal(f.view.state.doc.toString(),text);assert.equal(undoDepth(f.view.state),0);assert.equal(f.view.hasFocus,true);
+ f.controller.run(f.view,'mark');refile.open();f.results.children[0].click();assert.equal(f.panel.isOpen,false);assert.equal(undoDepth(f.view.state),1);
+});
+
+test('Refile rejects stale changes and busy, cancels focus exit/composition and cleans rows across 100 cycles',async()=>{
+ const {createRefileController}=await import('./refile.mjs');const {markdown}=await import('@codemirror/lang-markdown');
+ const f=fixture({docText:'# Source\nbody\n# Target',selection:{anchor:3},extra:markdown()}),refile=createRefileController({view:f.view,panel:f.panel,getContext:()=>f.context});
+ refile.open();f.view.dispatch({selection:{anchor:4}});f.results.children[0].click();assert.equal(undoDepth(f.view.state),0);f.panel.invalidateStale();assert.equal(f.panel.isOpen,false);
+ refile.open();f.context.busy=true;f.results.children[0].click();assert.equal(undoDepth(f.view.state),0);f.context.busy=false;f.panel.close();
+ for(let i=0;i<100;i++){refile.open();const rows=[...f.results.children];f.root.emit('focusout',{relatedTarget:null});assert.equal(f.panel.isOpen,false);assert.ok(rows.every(row=>row.listeners.click.length===0));}
+ refile.open();f.root.emit('compositionstart');assert.equal(f.panel.isOpen,false);assert.equal(undoDepth(f.view.state),0);f.panel.destroy();
 });
