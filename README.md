@@ -1,26 +1,79 @@
-# Markdown Workspace (Arbeitstitel)
+# Markdown Workspace · Alpha
 
 Minimalistischer, lokaler Markdown-Workspace, inspiriert von Org-mode, Obsidian, Taskwarrior und Logseq.
 
-## Status
+## Aktueller Stand
 
-**Aktuell: private Alpha für praktische Erfahrung.** Lokaler Markdown-Editor mit Org-artiger Struktursteuerung, TODO-Workflows, SCHEDULED/DEADLINE, vaultweitem Agenda-Index und Wochen-/TODO-Ansicht. **C-c f** öffnet die Pfadeingabe zum Öffnen vorhandener oder leeren Anlegen neuer Markdown-Dateien; Tab vervollständigt. Tastensequenz: Strg+C, C und Strg loslassen, dann f.
+**Private Alpha für erste praktische Erfahrung.** Der Workspace läuft im Browser und arbeitet mit Markdown-Dateien in einem ausdrücklich gewählten lokalen Vault. Ein separater privater Arbeitsvault ist freigegeben; die Anwendung ist noch kein abschließend abgesichertes Produkt.
 
-Ein separater privater Vault ist für den bewusst bestätigten Pilotbetrieb freigegeben: ein Editor pro Vault und unabhängiges Backup. Das bekannte externe Schreibfenster bleibt; Tests und Entwicklungsagenten verwenden weiterhin ausschließlich synthetische Daten. [Alpha-Einstieg und Grenzen](docs/ALPHA.md), [Command Gamebook](docs/COMMAND_GAMEBOOK.md), [aktueller Prüfstand](docs/PROJECT_STATUS.md). Lokal: `npm start`, in Edge `http://127.0.0.1:8766`. Die bestehende Pages-Pipeline veröffentlicht nur den Anwendungsbuild; private Vaults außerhalb des öffentlichen Repositories halten.
+Bereits verfügbar:
 
-### Historische Abschlüsse
+- Markdown-Editor mit H1–H6, Folding, Org-artiger Überschriften-/Listensteuerung und Undo/Redo
+- Textformatierung und die Themes Midnight, Terminal, Nord und Paper
+- Command Registry, durchsuchbare Palette, Kontextmenü und Emacs-artige Tastensequenzen
+- Dateiöffnung und leere Markdown-Dateianlage über eine Pfadeingabe mit Tab-Vervollständigung
+- Dateilokale TODO-Workflows mit offenen und abgeschlossenen Zuständen
+- SCHEDULED und DEADLINE mit Datum, optionalen Uhrzeiten und Zeitfenstern
+- Vaultweiter Agenda-Index, deutsche ISO-Wochenagenda und TODO-Liste mit Quellnavigation
+- Explizites Speichern, Konfliktprüfung, Sicherungen im Vault und Browser-Entwürfe
 
-**M4b.1 einschließlich Alt-Tastaturkorrektur.** Gemeinsame Command Registry, Palette über Alt+X, Editor-Kontextmenü und Org-referenzierte Strukturkürzel. [Bedienung und Grenzen](docs/ORG_KEYBOARD_M4B1.md). Damals Developer/QA110/110 Tests und Build grün; damalige synthetisch-only Produktgrenze durch die begrenzte Alpha-Freigabe oben ersetzt. Frühere Freigabesperren darunter sind historisch, aktueller Stand in PROJECT_STATUS.md.
+## Starten
 
-**Aktuell: M3.2b — Textformatierung und kräftigere Überschriftenfarben.** Fünf Auswahlformatierungen, sichere Toggles und zentrale H1–H6-Paletten in vier Themes. [Anleitung, Tests und Grenzen](docs/FORMATTING_M32B.md). Start `npm start`, dann `http://127.0.0.1:8766`; synthetische Probe `test-vault/vault-structure/formatting.md`. Keine neue Einrückung, Sprachbibliothek oder Storageänderung.
+Die veröffentlichte **GitHub-Pages-Seite in Microsoft Edge** öffnen, den Alpha-Nutzungshinweis bestätigen und über **„Vault wählen“** den gewünschten Ordner freigeben. Für die Nutzung der veröffentlichten Seite ist kein lokaler Entwicklungsserver erforderlich.
 
-**Bereits vorhanden: M3.2a.1 — Struktur-Tab und visuelle Hierarchie.** Tab/Shift+Tab, Fokusausstieg über Escape, optionale Headingeinrückung, Gliederungsmarker/-nummern im Rand und Theme-Codeflächen. Synthetische Probe `test-vault/vault-structure/hierarchy.md`. [Anleitung, Tests und Grenzen](docs/HIERARCHY_M32A1.md). Textfarbe, Kontextmenü/Palette und weitere Produktbereiche bleiben gesperrt.
+Für einen lokalen Start aus diesem Repository wird Node.js benötigt; die vorhandene Pages-Pipeline verwendet Node.js 22:
 
-**Bereits vorhanden: M3.2a — Überschriften-/Listenstrukturverwaltung.** [Bedienung, Tests und Grenzen](docs/STRUCTURE_M32A.md). Formatierungsfunktionen aus M3.2b bleiben gesperrt; optionale visuelle Headingeinrückung ist nur im oben begrenzten M3.2a.1 freigegeben.
+```powershell
+npm ci
+npm start
+```
 
-**Bereits vorhanden: M3.1 — Kontextfaltung und Lesbarkeit.** Mehrstufige Sichtbarkeit und H1–H6-Farben, [Anleitung](docs/FOLDING_M31.md). Weitere Struktur-/Formatierungsplanung: [M3.2-Plan](docs/M3_2_STRUKTURPLAN.md); M3.2b noch nicht freigegeben.
+Anschließend in Edge **http://127.0.0.1:8766** öffnen. Strg+C im Terminal beendet den lokalen Server. Ein separater Build ist mit `npm run build` möglich.
 
-**Phase 2, Meilenstein 3: Markdown-Folding.** Überschriften per Maus oder Tastatur ein-/ausklappen; [Folding-Anleitung](docs/FOLDING_M3.md). Midnight (Standard), Terminal, Nord und Paper bleiben verfügbar; [Theme-Anleitung](docs/THEMES_M2.md). Nur synthetische Ordner unter `test-vault` verwenden, keine Produktanwendung. Start: `npm ci`, `npm start`; in Edge `http://127.0.0.1:8766` öffnen. [Editor-Anleitung und Grenzen](docs/EDITOR_M1.md). Der separate Phase-1-Spike bleibt unverändert verfügbar: [Anleitung](docs/STORAGE_SPIKE.md). Weitere Meilensteine und produktive Verwendung sind nicht freigegeben.
+Die Pages-Pipeline baut und veröffentlicht `dist`. Private Vaults außerhalb des öffentlichen Repositories halten und nicht in Git aufnehmen. Die Wahl eines lokalen Vaults in der Anwendung ist keine Git-Veröffentlichung.
+
+## Eigenen Vault wählen
+
+Der Vault muss **nicht** unter `test-vault/alpha-acceptance` liegen. Dieser Ordner enthält lediglich synthetische Beispiele für die Abnahme. Einen eigenen Ordner an beliebiger vom Browser zugelassener Stelle anlegen und über „Vault wählen“ öffnen, beispielsweise `D:\Notizen\MeinVault`.
+
+Auch ein lokal verfügbarer **OneDrive-Ordner** ist als privater Alpha-Vault vorgesehen, sofern Edge den Zugriff erlaubt. **OneDrive ist noch nicht praktisch geprüft.** Dateien lokal verfügbar halten, die Synchronisation während der Bearbeitung pausieren und ein unabhängiges Backup verwenden. Synchronisation und Sicherungen im selben Vault ersetzen kein unabhängiges Backup.
+
+Für den Alpha-Betrieb gilt: **ein Editor pro Vault**. Dieselben Dateien nicht parallel in anderen Tabs oder Programmen bearbeiten. Entwicklungsagenten und QA verwenden weiterhin ausschließlich synthetische Testdaten.
+
+## Wichtige Tastensequenzen
+
+Bei `C-c` zuerst **Strg+C** drücken, anschließend **C und Strg loslassen** und die Folgetaste ohne Modifier drücken. Die Präfixfolgen gelten im fokussierten Editor; Mausknöpfe und Palette bieten zusätzliche Einstiege.
+
+| Taste / Folge | Funktion |
+| --- | --- |
+| `C-c f` | Datei öffnen/anlegen; Tab vervollständigt den Vault-relativen Pfad |
+| `C-c a`, danach `a` | Wochenagenda öffnen |
+| `C-c a`, danach `t` | TODO-Liste öffnen |
+| `C-c t` | Status der aktuellen Aufgabenüberschrift wählen |
+| `C-c s` / `C-c d` | SCHEDULED / DEADLINE bearbeiten |
+| `Alt+X` | Command Palette öffnen |
+| `Strg+S` | Aktuelle Datei ausdrücklich speichern |
+
+In der Pfadeingabe zeigt die Vorschau **„Öffnen“** oder **„Neue Datei anlegen“**. Enter führt aus, Escape beziehungsweise Strg+G bricht vor der Ausführungsphase ab. Neue Dateien werden zunächst leer angelegt; Inhalte anschließend mit Strg+S speichern. Eine fehlende Endung wird als `.md` ergänzt. Unterordner müssen bereits existieren; automatische Ordneranlage gehört noch nicht zum Umfang.
+
+In der Wochenagenda wechseln `f`/`b` die Woche, `.` springt zur aktuellen Woche. Pfeile wählen Einträge, Enter/Klick öffnet die Quelle, `r` liest neu ein und `q`/Escape schließt die Ansicht. Vor einem Quellsprung oder der Ausführung im Dateidialog ungespeicherte Arbeit ausdrücklich speichern.
+
+## Prüfstand und bekannte Grenzen
+
+Letzter dokumentierter Stand: **324/324 Tests** bei Developer und unabhängiger QA, Build erfolgreich; zusätzlich **13 unabhängige QA-Prüfgruppen** für Alpha/Dateieinstieg. Das sind automatisierte Modell- und Integrationstests. Native Edge-/Permission-/Zoom-/AltGr-/IME- sowie mehrstündige Stabilitätsnachweise sind noch offen.
+
+Eine externe Änderung zwischen letzter Konfliktprüfung und Schreiben kann weiterhin überschrieben werden. Single-Editor-Betrieb reduziert dieses Risiko, beseitigt es aber nicht technisch. Browser-Entwürfe und `.storage-spike-backups` im Vault sind zusätzliche Sicherungen, kein unabhängiges Backup. Externe Änderungen werden über explizites erneutes Einlesen übernommen; die Agenda zeigt gespeicherte Dateien, keine ungespeicherten Editoränderungen.
+
+Die Dateifunktion unterstützt Markdown in vorhandenen sichtbaren Ordnern. Offline-Neustart/PWA, wiederkehrende Termine, Benachrichtigungen, Match-/Suchansichten und das visuelle Board sind noch nicht implementiert.
+
+## Dokumentation
+
+- [Alpha-Einstieg, Grenzen und konkrete Testanleitung](docs/ALPHA.md)
+- [Alle Befehle und Tastenkürzel](docs/COMMAND_GAMEBOOK.md)
+- [Agenda und manuelle Abnahme](docs/M7B_AGENDA.md)
+- [Dateiöffnung und Dateianlage](docs/PLAN_FIND_FILE.md)
+- [Aktueller Projektstatus und historische Abschlüsse](docs/PROJECT_STATUS.md)
+- [Anforderungen](docs/REQUIREMENTS.md)
 
 ## Prinzipien
 
@@ -31,7 +84,7 @@ Ein separater privater Vault ist für den bewusst bestätigten Pilotbetrieb frei
 - Markdown-Dateien bleiben maßgebliche Datenquelle
 - klassischer Editor mit einklappbaren Abschnitten und ausgewählten Blockfunktionen
 - Fokus auf geringer CPU/RAM-Last, schnelle Wiederaufnahme nach Inaktivität
-- nie mit produktiven Notizen testen
+- Entwicklung und QA ausschließlich mit synthetischen Daten; private Alpha-Erprobung bewusst getrennt davon
 
 ## Inspirationsgedanken
  - keine aufgedunsenen UIs. Das Produkt soll nicht für auf Schönheit fokusierte User gemacht sein. Bsp. keine Apple user, keine Tech Analphabeten wo die Usability auf "klicke auf neu"->"Schreibe Titel in extra Textfeld"->Beschreibung extra textfeld->Status extra feld und alles wird durch Klicks erstellt. Microsoft Planner ist ein gutes Beispiel für: "So nicht", OneNote ist ein gutes Beispiel für "So nicht"

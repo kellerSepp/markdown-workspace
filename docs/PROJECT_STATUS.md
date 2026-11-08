@@ -1,5 +1,9 @@
 # Projektstatus
 
+## README auf Alpha-Stand aktualisiert — 2026-11-08
+
+README beschreibt aktuellen Funktionsumfang, Pages-/lokalen Start, C-c f und Agenda-Tasten, freie Vault-Wahl außerhalb des Testordners sowie OneDrive als noch nicht praktisch geprüfte Option mit lokalen Dateien/pausierter Synchronisation/eigenem Backup. Widersprüchliche alte „Aktuell“-Abschnitte durch Links auf die Projekthistorie ersetzt; private Alpha-Nutzung klar von synthetischer Entwicklungs-QA getrennt. Nur Dokumentation geändert. Nächste Aktion bleibt praktische PO-Erprobung; keine Appänderung/Commit/Push/Veröffentlichung.
+
 ## Alpha / C-c f implementiert — private PO-Probe, 2026-11-08
 
 Implementiert: C-c f und sichtbarer Knopf/Tooltip, kleiner themekonformer Pfaddialog mit Tab-/Kandidatensteuerung, vorhandene Markdown-Dateien öffnen oder fehlende leer anlegen. Alpha-Kennzeichnung und bestätigte Pilotbedingungen erlauben den vom PO gewählten separaten privaten Vault ohne parallele/doppelte Bearbeitung; Agenten/QA bleiben ausschließlich synthetisch. Storageadapter `vault-files.mjs` (Rollenrevision ALPHA-FILES-2026-11-08 bestätigt), UI `file-picker.mjs`, bestehende Registry/Prefix/Session-/Index-/Selectpfade wiederverwendet. Kein Eingriff in vorhandene Speicher-/Backup-/Konfliktimplementierung oder Pages-Pipeline. Details [PLAN_FIND_FILE.md](PLAN_FIND_FILE.md), Einstieg/Grenzen/native Testanleitung [ALPHA.md](ALPHA.md).
