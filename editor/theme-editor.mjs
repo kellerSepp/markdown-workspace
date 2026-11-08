@@ -30,6 +30,10 @@ function createEditorTheme(dark) {
     // Limit this override to status descendants so the title keeps its H1–H6 color.
     '.cm-content .cm-todo-open *':{color:'var(--todo-open)'},
     '.cm-content .cm-todo-closed *':{color:'var(--todo-closed)'},
+    '.cm-content .cm-planning-keyword':{color:'var(--planning-keyword)',fontWeight:'600'},
+    '.cm-content .cm-planning-keyword *':{color:'var(--planning-keyword)'},
+    '.cm-content .cm-planning-timestamp':{color:'var(--planning-timestamp)',textDecoration:'underline',textUnderlineOffset:'2px'},
+    '.cm-content .cm-planning-timestamp *':{color:'var(--planning-timestamp)'},
     '.cm-cursor, .cm-dropCursor':{borderLeftColor:'var(--cursor)'},
     '.cm-gutters':{backgroundColor:'var(--control)',color:'var(--muted)',borderRight:'1px solid var(--border)'},
     '.cm-structureGutter .cm-gutterElement':{color:'var(--muted)',fontSize:'0.85em',padding:'0 4px',maxWidth:'12ch',overflow:'hidden',textOverflow:'ellipsis'},

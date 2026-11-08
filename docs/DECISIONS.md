@@ -1,5 +1,25 @@
 # Architekturentscheidungen
 
+## M7b — PO-Freigabe 2026-11-08
+
+Freigegeben: Org-artige Agendaoberfläche und Quellnavigation auf M7a, Dispatcher C-c a mit a Woche/t TODO, deutsche ISO-Woche Montag–Sonntag, lokale Tastatur-/Mausnavigation, offener TODO-Filter mit optional abgeschlossenen Zuständen, Refresh und Diagnose. Referenzbilder images/agenda_menue.png, agenda-week-example.png und Agenda_todo_examples.png. Keine zweite TODO-Verwaltung, Indexsystem, neue Formate oder Storage-Sicherheitsänderung. Match/Suche nur sichtbar geplant, kein Follow Mode/Wiederholungen/Drag-drop/Benachrichtigungen/Dependencies/Commit/Push. Nach Bericht stoppen; keine Folgefreigabe ableiten.
+
+## M7a — PO-Freigabe 2026-11-08
+
+Freigegeben sind Agenda-Datenmodell, lesender rekonstruierbarer Vault-Index, Aktualisierung nach erfolgreichem Speichern, expliziter Neuaufbau und unabhängige QA mit synthetischen Daten. Markdown bleibt einzige maßgebliche Datenquelle. Keine Listencheckbox-Aufgaben, Agendaoberfläche, Dispatcher, C-c a, Repeater, Benachrichtigungen, Storage-Sicherheitsänderungen, Dependencies oder Git-Commit/Push. Nach Abschluss auf M7b-Freigabe warten. Die Empfehlung zur automatischen Einbeziehung aller Vault-Markdown-Dateien steht in ARCHITECTURE.md; eine gesonderte PO-Entscheidung zur späteren Dateiauswahl liegt noch nicht vor.
+
+## M6a Datum direkt übernehmen — PO-Korrektur 2026-11-08
+
+Tagklick setzt sofort das Datum und schließt den Kalender. Zusätzliche Übernehmen-Aktion und Zeitfelder entfallen; Uhrzeit wird direkt im gespeicherten Zeitstempel bearbeitet. Bestehende Uhrzeiten bei Datumwahl erhalten, neue Angaben ohne Uhrzeit. Pfeil-/Monatsnavigation bleibt ohne Dokumentänderung, Enter/Space aktiviert den Tag; Datumtext per Enter. Entfernen/Abbruch direkt erreichbar. PO bestätigt: Bei freier Datum-/Zeit-Rohtexteingabe Wochentag aus dem gültigen Datum korrigieren, wenn erforderlich. Temporär ungültige Eingabe nicht umschreiben; Änderung und Wochentagkorrektur gemeinsam undo-fähig, keine Migration unberührter Angaben.
+
+## M6a native Rückmeldung und Darstellung — 2026-11-07
+
+PO meldet C-c C-s als nicht funktionierend und bestätigt C-c s / C-c d mit unmodifizierter Folgetaste. Kompakte Dreimonatsansicht nach images/kalender.png; Planungswörter und Datum-/Uhrzeitbereiche optisch von Überschriften/Fließtext unterscheiden, Themefarben nach images/schedule_deadline_marks.png. Zeitstempel soll später per Klick Tagesagenda im Zusatzpanel öffnen; M7 bleibt separat. Bis dahin keine funktionslose Klickaktion. Developer korrigiert, QA unabhängig; keine Storageänderung/Dependencies/Commit/Push.
+
+## M6a freigegeben — 2026-11-07
+
+PO bestätigt automatische Berechnung/Korrektur des deutschen Wochentags und autorisiert M6a mit „Engage“ nach besprochenem Vorschlag. SCHEDULED und DEADLINE unabhängig vom TODO-Status, neue Angaben unmittelbar nach Heading, vorhandene Position erhalten; Datum/optionale Einzelzeit/Zeitfenster desselben Tages. Keine Wiederholungen, Übernachtintervalle, Agenda oder Storageänderung. Developer/QA getrennt, Details und Grenzen in M6A_SCHEDULING.md. Commit/Push übernimmt PO.
+
 ## TODO-Zyklus am leeren Zustand fortsetzen — PO-Korrektur 2026-11-07
 
 PO meldet den Wechsel zur Textmarkierung nach Erreichen von Kein Status als unerwünscht. Shift+Links/Rechts soll auf der soeben im TODO-Zyklus entmarkierten Überschrift den Zyklus fortsetzen: rechts zum ersten, links zum letzten definierten Zustand. Diese Korrektur ersetzt die ältere Stopregel. Normale statuslose Überschriften und bereits markierter Text behalten bisherige Markierungsbedienung. Fortsetzung gilt nur im gültigen aktuellen Bedienkontext; kein gespeicherter Task-Marker im Markdown, keine Agenda-/Storageänderung.

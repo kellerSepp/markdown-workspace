@@ -1,6 +1,8 @@
 # Command Gamebook
 
-Aktueller Nachtrag 2026-11-07: TODO-Befehle implementiert und unabhängig geprüft (241/241 Tests, Build). H1–H6 können verschachtelt unabhängige Aufgaben sein. Native Probe offen; C-c a bleibt geplant. Frühere Statusangaben darunter sind historisch.
+M7b-Nachtrag 2026-11-08: Agendaoberfläche implementiert und unabhängig geprüft, Developer/QA jeweils308/308 Tests, Build grün. `agenda.dispatch`, `agenda.week`, `agenda.todo` verwenden M7a; C-c a ist im Editor aktiviert. Dispatcher a/t, lokale f/b/./q/Escape/Pfeile/Enter/r und Maus; m/s nur geplant/inaktiv. Frühere Agenda-Planungssperren unten sind historisch. Native Probe offen. Abnahme und Grenzen: [M7B_AGENDA.md](M7B_AGENDA.md).
+
+Historischer TODO-Nachtrag 2026-11-07: TODO-Befehle implementiert und unabhängig geprüft (241/241 Tests, Build). H1–H6 können verschachtelt unabhängige Aufgaben sein. Der spätere Agenda-Stand steht im M7b-Nachtrag oben.
 
 Stand: AP-06, 2026-11-06; Copy-Ersatz vom PO akzeptiert, C-c-Prefix im Editor aktiviert; unabhängige QA und native Produktprobe offen. Diese Datei ist manuell bearbeitbare Entwicklungs- und Planungsreferenz, keine ausführbare Konfiguration. Neue Einträge sind **keine Implementierungsfreigabe**. Spätere Entwicklungsaufträge sollen diese Referenz lesen und die konkrete PO-Freigabe beachten.
 
@@ -26,10 +28,20 @@ Normale Texteingabe, Auswahl, Copy/Paste und native CodeMirror-Bearbeitung bleib
 
 ## Verfügbare Befehle
 
+Direktwahl 2026-11-08: Im Scheduling-/Deadline-Kalender setzt Tagesaktivierung das Datum sofort und schließt; Datuminput per Enter. Vorhandene Uhrzeiten bleiben erhalten und werden direkt im Markdown-Zeitstempel bearbeitet. Bei gültiger direkter Datum-/Zeitbearbeitung wird der Wochentag automatisch korrigiert. Keine Übernehmen-Aktion mehr nötig.
+
+M6a implementiert und unabhängig geprüft (265/265 Tests, Build): `planning.scheduled` und `planning.deadline`; native Zustellung offen. Zeitangaben auch ohne TODO. Agenda-Navigation/C-c a folgen dem M7b-Stand oben; historische M6a-Grenzen siehe M6A_SCHEDULING.md.
+
 Kontext und Aktivierung werden vor jeder Ausführung erneut geprüft. Palette und Menü zeigen konkrete Verweigerungsgründe; unverfügbare Einträge sind mit Pfeiltasten erreichbar, damit ihre Gründe lesbar bleiben. „Gewünschte Kürzel“ ist zunächst die bestehende Bindung oder „offen“; eigene Wünsche dürfen hier ergänzt werden. M4b-Konfiguration ist noch nicht verfügbar.
 
 | Command-ID | Name | Kategorie | Beschreibung / erwartetes Verhalten | Gültiger Kontext | Aktuelle Bedienwege | Gewünschte Tastenkürzel | Status | Offene Fragen / Ideen |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `agenda.dispatch` | Agenda öffnen | Agenda | Kompakten zweispaltigen Agenda-Dispatcher öffnen; a Woche, t TODO-Liste, m/s geplant inaktiv | Gewählter synthetischer Vault, kein laufender globaler Vorgang | Palette; Agendaknopf; Editorpräfix | C-c a | Implementiert | Eigener Dialogfokus; native Zustellung getrennt prüfen. |
+| `agenda.week` | Wochenagenda öffnen | Agenda | Deutsche Mo–So-Woche mit ISO-KW, Terminzeiten und offenen Rückständen anzeigen | Gewählter synthetischer Vault, kein laufender globaler Vorgang | Palette; Dispatcher a | C-c a, dann a | Implementiert | Lokale Navigation f/b/./q/Escape/Pfeile/Enter; Klick öffnet geprüfte Quelle. |
+| `agenda.todo` | TODO-Liste öffnen | Agenda | Offene Überschriftenaufgaben anzeigen, abgeschlossene Zustände optional einblenden | Gewählter synthetischer Vault, kein laufender globaler Vorgang | Palette; Dispatcher t | C-c a, dann t | Implementiert | Keine neue Statusverwaltung; keine Checklistenaufgaben. |
+| `agenda.refresh` | Agenda-Index neu einlesen | Datei | Alle Markdown-Dateien des gewählten Vaults rein lesend neu indizieren; externe Änderungen und TODO-Definitionen neu auswerten, Editorentwurf erhalten | Gewählter synthetischer Test-Vault, kein laufender globaler Vorgang | Palette; Diagnosebereich Agenda-Index | offen, kein C-c a | Implementiert | Indexdiagnose, keine Agendaansicht oder Dispatcher; Quellenkennungen nur je Indexstand gültig. |
+| `planning.scheduled` | Scheduling bearbeiten | Planung | Geplanten Arbeitsbeginn mit Datum/optionaler Zeit setzen, bearbeiten oder entfernen | Einzelcursor in sicherem H1–H6-Abschnitt, mit oder ohne TODO | Palette; Kontextmenü; C-c s | C-c s | Implementiert | PO meldet alte Strg-Folge nicht funktionierend; s ohne Modifier. Native Ersatzfolge prüfen. |
+| `planning.deadline` | Deadline bearbeiten | Planung | Abschlussfrist mit Datum/optionaler Zeit setzen, bearbeiten oder entfernen | Einzelcursor in sicherem H1–H6-Abschnitt, mit oder ohne TODO | Palette; Kontextmenü; C-c d | C-c d | Implementiert | d ohne Modifier; neue Angaben direkt nach Heading, mehrdeutige Angaben erhalten/verweigert. |
 | `workspace.choose` | Test-Vault wählen / wechseln | Datei | Synthetischen lokalen Ordner wählen; bisherigen Entwurf sichern. | Global (bei laufendem Vorgang gesperrt) | Palette; Dateileiste | offen | Implementiert | Kürzelwünsche können ergänzt werden. |
 | `workspace.grant` | Ordnerrechte anfordern | Entwicklung | Bestehende Ordnerfreigabe erneut anfordern. | Gewählter Test-Vault | Palette; Entwicklungsbereich | offen | Implementiert | Kürzelwünsche können ergänzt werden. |
 | `workspace.scan` | Dateiliste aktualisieren | Datei | Markdown-Dateien im gewählten Test-Vault suchen. | Gewählter Test-Vault | Palette; Entwicklungsbereich | offen | Implementiert | Kürzelwünsche können ergänzt werden. |
@@ -144,7 +156,7 @@ Details, Quellen, Listen-Sonderfälle, Konflikte und manuelle Edge-Abnahme: [ORG
 | `todo.reload` | TODO-Regeln neu laden | Aufgaben | Definition prüfen und geladene Regeln ersetzen; bei Fehlern letzte gültige Regeln behalten | Cursor auf Definitionszeile außerhalb Code/Frontmatter | Palette; Kontextmenü; C-c C-c | C-c C-c | Implementiert | Native Tastenzustellung separat prüfen. |
 | `todo.previous` | Vorheriger Aufgabenstatus | Aufgaben | Vorherigen Status inklusive Kein Status wählen; gerade entmarkierte Aufgabe im aktuellen Zyklus weiterführen | Leere Auswahl auf Aufgabenüberschrift H1–H6 oder derselben gerade im Zyklus entmarkierten Überschrift | Palette; Kontextmenü; Umschalt+Links | Umschalt+Links | Implementiert | Nichtleere Auswahl behält Textmarkierung. |
 | `todo.next` | Nächster Aufgabenstatus | Aufgaben | Nächsten Status inklusive Kein Status wählen; gerade entmarkierte Aufgabe im aktuellen Zyklus weiterführen | Leere Auswahl auf Aufgabenüberschrift H1–H6 oder derselben gerade im Zyklus entmarkierten Überschrift | Palette; Kontextmenü; Umschalt+Rechts | Umschalt+Rechts | Implementiert | Verschachtelte Aufgaben behalten unabhängige Zustände. |
-| `future.agenda-dispatcher` | Agenda-Auswahl öffnen | Agenda | Dispatcher für spätere Kalenderagenda und Aufgabenliste | Zunächst Editorpräfix; spätere weitere Zugänge offen | Keine | C-c a | Geplant | Kein Kalender/Index implementiert; Folgeauswahl a/t nur Vorschlag, Darstellung/Dateiumfang offen. |
+| `future.agenda-dispatcher` | Agenda-Auswahl erweitern | Agenda | Spätere Match-/Suchansichten ergänzen | Aktiver Agenda-Dispatcher | m/s sichtbar inaktiv | offen | Geplant | Dispatcher a/t in M7b implementiert; Match/Suche weiterhin separat freizugeben. |
 
 Eigene Wünsche: Eine Zeile in dieser Wunschliste ergänzen, eine eindeutige ID mit `future.` wählen, Status **Idee** oder **Geplant** setzen und Kontext, erwartetes Verhalten, Kürzelwunsch sowie offene Fragen beschreiben. Bei nur teilweise umgesetzten Wünschen **Teilweise implementiert** verwenden und exakt erläutern, welcher Teil verfügbar ist. Anschließend einen gesonderten Entwicklungsauftrag mit PO-Freigabe erteilen. Vorhandene IDs bitte stabil halten.
 

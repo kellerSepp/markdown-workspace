@@ -1,5 +1,63 @@
 # Projektstatus
 
+## M7b Dateiauswahl nach Agendasprung — gezielte Korrektur, 2026-11-08
+
+PO meldet positive erste Agenda-Sichtprobe, aber veraltete Dateiauswahl nach Quellöffnung. Gezielt korrigiert in `editor/app.mjs`: `#files` folgt der tatsächlich geladenen Sessiondatei nach erfolgreichem Öffnen beziehungsweise Sprung in derselben Datei. Fehlende Option als relativen Pfad ergänzen; Fehler/Dirty-Verweigerung ohne Dateiwechsel verändern die Auswahl nicht. Keine allgemeine Render-Synchronisierung, die bewusste Dateivorauswahl überschreiben könnte.
+
+Developer/QA jeweils **308/308 Tests**, Build, zwei/drei Syntaxchecks und Diffcheck grün. QA fünf gezielte unabhängige Gruppen mit tatsächlichem Appcallback/Helper und echter Session, gesamte angepasste QA-Probe21/21 grün. Kein belegter verbleibender Blocker im gezielten Umfang. Berichte: [Developer](../_Communication_Pipeline/developer_m7b_select.md), [QA](../_Communication_Pipeline/qa_m7b_select.md). **Nächste Aktion:** nach Strg+F5 Agenda-Quellsprung nach `team/project.md` testen; Dropdown muss denselben Pfad zeigen. Native Select-Probe offen. Keine andere Agenda-Funktion, Storageänderung, Dependency oder Commit/Push; danach stoppen.
+
+## M7b Agendaoberfläche abgeschlossen — native PO-Probe, 2026-11-08
+
+Implementiert sind kompakter zweispaltiger Dispatcher C-c a (a Woche/t TODO, m/s inaktiv), deutsche Mo–So-ISO-Wochenagenda, offene TODO-Liste mit abgeschlossenem Filter, Quellnavigation und Refresh auf dem bestehenden M7a-Index. Lokale f/b/./q/Escape/Pfeile/Enter/r und Maus; Status-/Zeitdarstellung in bestehenden Themes. Gleichdatige Terminarten pro Aufgabe/Tag vereinigt; offene Rückstände zusätzlich heute, abgeschlossene/statuslose Einträge ohne Rückstandsfortschreibung. [M7B_AGENDA.md](M7B_AGENDA.md) dokumentiert API-Nutzung, Grenzen und konkrete Edge-Testanleitung. Synthetischer Probevault `test-vault/m7b-agenda`: 3 Dateien/13 relevante Einträge, davon 9 offene und 3 abgeschlossene Aufgaben sowie ein statusloser Termin.
+
+Developer/QA jeweils **308/308 Tests**, Build, zehn/elf Syntaxchecks und Diffcheck grün; QA **16 eigene Prüfgruppen**. Kein bewiesener verbleibender Implementierungsblocker im geprüften Umfang. Fokus erst nach Modalclose, Token vor Rechteprüfung sowie gesperrte nicht abbrechbare Dateiöffnungsphase korrigiert und geprüft. Dirty-Quellsprünge verweigert; Editor/History bleiben erhalten. Tatsächliche Appcallbacks mit echter Session/Busy-/Read-only-Gate und gefaltetem Ziel geprüft. QA-Kurzlast: 500 Zeilen/30 Lifecycle-Zyklen ca.166,6 ms inkl.100 ms Idle; kein Browser-/Langzeitbeleg. Berichte: [Developer](../_Communication_Pipeline/developer_m7b.md), [QA](../_Communication_Pipeline/qa_m7b.md).
+
+**Nächste Aktion:** stoppen für native PO-Probe gemäß M7B_AGENDA.md, keine Folgephase ohne Freigabe. Native Sichtprobe wurde vor App-Interaktion beendet: Computer Use meldete beim Edge-Statecapture „Cannot call write after a stream was destroyed“, Wiederverbindung meldete physische Escape-Unterbrechung durch Nutzer. Keine native Sicht-/Tastenzustellbehauptung; Permission-/Zoom-/AltGr-/IME-/Langzeitbelege offen. Ungespeicherte Arbeit vor Quellsprung ausdrücklich selbst speichern; Schließen während eigentlicher Dateiöffnung kurz gesperrt. Große Listen ohne Virtualisierung, keine Mitternachts-/Hintergrundüberwachung. Keine zweite Indexierung/Storage-Sicherheitsänderung/Dependencies/Commit/Push.
+
+## M7a abgeschlossen — PO-Probe, 2026-11-08
+
+PO hat ausschließlich Agenda-Datenmodell/Vault-Index freigegeben. `editor/agenda-index.mjs` liest rekursiv gespeicherte Vault-Markdown-Dateien, verwendet TODO-/M6a-/Strukturparser und bietet unveränderliche Records, Hierarchie, Terminabfragen und revisionsgebundene Quellenzuordnung. Reset beim Vaultwechsel, Aktualisierung nach erfolgreichem Speichern/erneutem Öffnen, explizites `agenda.refresh` ohne Kürzel und Diagnosebereich mit Quelldateifehlern. Automatische Einbeziehung aller Vault-Dateien als Lead-Empfehlung statt zusätzlicher Org-Dateiregistrierung. Keine Agendaansicht/Dispatcher/C-c a/Storage-Sicherheitsänderung/Dependencies/Commit/Push.
+
+Developer und unabhängige QA jeweils **289/289 Tests**, Build, vier beziehungsweise fünf Syntaxchecks und Diffcheck grün; QA zusätzlich **14 eigene Prüfgruppen**. Ein P2 zu veraltetem Index nach erneutem Öffnen extern geänderter Dateien wurde korrigiert und unabhängig geschlossen. Kein bewiesener verbleibender Blocker im geprüften Umfang. Berichte: [Developer](../_Communication_Pipeline/developer_m7a.md), [QA](../_Communication_Pipeline/qa_m7a.md). QA-Modelllastprobe: 500 Dateien, 20 weitere Neuaufbauten, 19,3–34,6 ms je Neuaufbau; 1000 Überschriften/161890 Zeichen ca. 44 ms. Kein nativer Latenz-/Langzeitbeleg. Synthetische Handprobe `test-vault/m7a-probe` durch echten Parser bestätigt: 3 Dateien/6 Records/0 Diagnosen. Anleitung und API: [M7A_AGENDA_INDEX.md](M7A_AGENDA_INDEX.md).
+
+**Nächste Aktion:** stoppen für native PO-Probe mit `test-vault/m7a-probe`; M7b benötigt neue Freigabe. Native Edge-/Permission-/Zoom-/Idle-/Langzeitprüfungen bleiben offen; sehr große Einzeldateien und Snapshotpublikation enthalten synchrone Arbeit. Externe Änderungen verlangen erneutes Einlesen; ungespeicherte Editoränderungen werden nicht indiziert. Ungültige TODO-Definitionen nutzen diagnostiziert letzte gültige Regeln der Sitzung, nach Kaltstart ersatzweise Standard; Quellenkennungen sind nicht dauerhaft. Offene Produktentscheidung für später: optionale Dateiauswahl/Ausschlüsse statt automatischem ganzen Vault.
+
+## M6a Direktwahl abgeschlossen — 2026-11-08
+
+Tagklick/Enter/Leertaste setzt Datum unmittelbar und schließt den Kalender. Datuminput per Enter, reine Navigation/Tippen unverbindlich. Vorhandene Uhrzeiten bleiben erhalten; Zeitfelder/Übernehmen entfallen, Entfernen/Abbrechen oben. Direkte gültige Datum-/Zeiteingabe im Planungszeitstempel repariert automatisch den Wochentag im selben Undo-Schritt; ungültige Zwischenstände und unberührte Angaben bleiben erhalten.
+
+Developer/QA jeweils **276/276 Tests**, Build und Diffcheck grün; sechs bzw. sieben Syntaxchecks. QA79 eigene Prüfgruppen, unter anderem echte synchron zerstörende Panel-/Controllerintegration und H1–H6-Rohtext/Selection/History/Codec. Kein bewiesener verbleibender Blocker. [Developer](../_Communication_Pipeline/developer_m6a_flow.md), [QA](../_Communication_Pipeline/qa_m6a_flow.md).
+
+**Nächste Aktion:** stoppen für PO-Probe nach Strg+F5, Tagesklick ohne Übernehmen, alte Uhrzeit erhalten, Datum im Rohtext samt Wochentag und Undo/Redo prüfen. Anleitung M6A_SCHEDULING.md. Native/Zoom/kleinesFenster/AltGr/IME/Langzeitbelege offen; keine Agenda/Storage/Dependencies/Commit/Push. Frühere Umsetzungs-/Formularbeschreibungen unten sind historisch.
+
+## M6a Direktwahl-Korrektur — in Umsetzung 2026-11-08
+
+PO meldet kompakte Ansicht viel besser, verlangt Tagklick ohne Übernehmen und manuelle Uhrzeitbearbeitung im Zeitstempel. Developer korrigiert die Kalenderbedienung begrenzt; bestehende Zeiten bleiben erhalten. PO bestätigt zusätzlich automatische Wochentagkorrektur bei direkter gültiger Datum-/Zeitbearbeitung. Unabhängige QA folgt. Keine Agenda/Storage/Dependencies/Commit/Push.
+
+## M6a kompakt / Mapping / Zeitstempelmarkierung abgeschlossen — 2026-11-07
+
+C-c s und C-c d mit unmodifizierter Folgetaste ersetzen die vom PO als nicht funktionierend gemeldete Strg-Folge. Kalender zeigt drei kompakte angrenzende Monate mit gemeinsamer Auswahl/Tabstop, Feldern darunter und lokalem Scroll. Gültige SCHEDULED-/DEADLINE-Wörter sowie vollständige Datum-/Zeitbereiche sind themeabhängig violett markiert; Zeitstempel unterstrichen. Keine neue Klickaktion: Tagesagenda im Zusatzpanel bleibt M7.
+
+Developer/QA jeweils **271/271 Tests**, Build und Diffcheck erfolgreich; acht bzw. neun Syntaxchecks. QA177 eigene Prüfgruppen, darunter144 Highlightmatrixfälle und tatsächliche CM-Folgenpipeline. Schriftbezug der Monats-/Zellenbreiten vereinheitlicht. Keine bewiesenen verbleibenden Blocker im getesteten Umfang, kein nativer Sicht-/Pixel-/Keyzustellbeleg. [Developer](../_Communication_Pipeline/developer_m6a_compact.md), [QA](../_Communication_Pipeline/qa_m6a_compact.md).
+
+**Nächste Aktion:** stoppen für PO-Probe nach Strg+F5: C-c, C/Strg loslassen, s/d; drei kleine Monate und Editorfarben inklusive Uhrzeit in vier Themes prüfen. Anleitung in M6A_SCHEDULING.md. Native Fenster-/Zoom-/Assistenz-/AltGr-/IME-/Langzeitbelege offen. Keine Agenda/Storage/Dependencies/Commit/Push.
+
+## M6a Nachbesserung beauftragt — 2026-11-07
+
+PO meldet native Folge C-c C-s nicht funktionierend, Kalender zu groß. Freigegeben: C-c s/C-c d, kompakte drei Monate nebeneinander und eigene Editorfarben/Unterstreichung für Planungsangaben gemäß screenshots unter images/. Developer setzt begrenzt um; unabhängige QA folgt. Zeitstempel-Klick zur Tagesagenda ausschließlich für M7 dokumentiert, noch keine Agenda-/Linkaktion. Nächste Aktion: gezielte Umsetzung/Regression, danach native PO-Sichtprobe. Keine Dependencies/Storage/Commit/Push.
+
+## M6a implementiert und unabhängig geprüft — 2026-11-07
+
+SCHEDULED/DEADLINE setzen, bearbeiten und entfernen; H1–H6 mit/ohne TODO, beide Eigenschaften gemeinsam, Datum mit automatisch berechnetem deutschem Wochentag, optionale Einzelzeit/Zeitfenster. Kalenderformular in bestehendem Panel, Maus/Keyboard/Monate/Direkteingabe/Vorschau/Abbruch; Registry/Palette/Kontextmenü und C-c C-s/C-d. Gemeinsamer Parser/Records für spätere Agenda ohne Index oder UI.
+
+Developer/QA jeweils **265/265 Tests**, Build und Diffcheck erfolgreich; fünf bzw. sieben Syntaxchecks. QA zusätzlich 205 Prüfgruppen und 100 Kalender-Lifecycle. Zwei P2 korrigiert und unabhängig geschlossen: Header-Escape/C-g und TODO-Erkennung vor Whitespace in Records. Keine bewiesenen verbleibenden Blocker im geprüften Umfang. [Developerbericht](../_Communication_Pipeline/developer_m6a.md), [QA-Bericht](../_Communication_Pipeline/qa_m6a.md).
+
+**Nächste Aktion:** stoppen, native PO-Probe nach Strg+F5 mit `test-vault/vault-structure/scheduling.md` gemäß [M6A_SCHEDULING.md](M6A_SCHEDULING.md). Insbesondere Browser-Speicherdialog bei C-c C-s ausschließen. Computer-Use-Runtime scheitert vor UI-Input (fehlender Pfad, os error 3); keine native Edge-/Sicht-/kleines-Fenster-/AltGr-/IME-/Langzeit-/Idleabnahme. Grenzen: ATX, unmittelbarer Planungsblock, mehrdeutige/fehlerhafte Angaben verweigert; keine Repeater/Übernachtintervalle/Agenda/Storageänderung/Dependencies/Commit/Push. M6b/M7 bleiben gesperrt.
+
+## M6a freigegeben — Umsetzung läuft
+
+PO meldet TODO-Meilenstein funktionierend und hat Commit/Push selbst erledigt. M6a per „Engage“ freigegeben, Umfang/Abnahme und M7-Vormerkungen in [M6A_SCHEDULING.md](M6A_SCHEDULING.md). Developer übernimmt Module/Integration und Tests, Lead Dokumentation, unabhängige QA folgt. Nächste Aktion: begrenzte Umsetzung/Prüfung, danach native Edge-Probe. Keine M6b-/Agenda-/Storageimplementierung, Dependencies oder Commit/Push.
+
 ## TODO-Leerzustand-Zyklus abgeschlossen — 2026-11-07
 
 Shift+Links/Rechts setzt den Zyklus nun über Kein Status hinweg fort: Rechts zum ersten, Links zum letzten geladenen Zustand. Fortsetzung nur auf derselben gerade per Zyklus entmarkierten Heading im gültigen Bedienkontext, ohne Markdown-/Storage-Marker. Normale unmarkierte Überschriften, Panelentfernung und vorhandene Textauswahl behalten ihre bisherige Markierungssemantik. Vorherige Stopregel unten überholt.

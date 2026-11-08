@@ -14,6 +14,7 @@ import {createCommandRegistry} from './command-registry.mjs';
 import {commandDefinitions} from './commands.mjs';
 import {todoRules,createTodoController} from './todo.mjs';
 import {markdown} from '@codemirror/lang-markdown';
+import {createPlanningController} from './planning.mjs';
 const pluginFacet=ViewPlugin.define(()=>({})).extension.at(-1).facet;
 class Element{
   constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.listeners={};this.attributes={};this.value='';this.scrollTop=0;this.scrollLeft=0;this.clientHeight=90;this.offsetHeight=30;this.classList={toggle:()=>{}};}
@@ -36,6 +37,63 @@ function fixture({selection={anchor:1,head:0},extra=[],docText='AB'}={}){
   const root=host.children[0],search=root.children[1],results=root.children[3],message=root.children[4],close=root.children[0].children[1];
   return {doc,view,controller,ring,panel,host,root,search,results,message,close,notices,context};
 }
+
+test('Planning form reuses shared panel with calendar, preview, apply/remove/abort and stale protection',()=>{
+ const f=fixture({selection:{anchor:3},docText:'# H\nBody',extra:[markdown(),todoRules]});
+ const controller=createPlanningController({view:f.view,panel:f.panel,getContext:()=>f.context});
+ const walk=(el,predicate)=>{if(predicate(el))return el;for(const child of el.children){const found=walk(child,predicate);if(found)return found;}};
+ const get=text=>walk(f.root,e=>e.textContent===text);
+ assert.ok(controller.open('SCHEDULED'));let form=f.root.children.at(-1),date=walk(form,e=>e.attributes?.['aria-label']==='Datum (YYYY-MM-DD)');date.value='2026-11-07';date.emit('input');assert.ok(get('SCHEDULED: <2026-11-07 Sa>'));
+ assert.ok(get('Nächster Monat'));get('Nächster Monat').click();assert.ok(get('Dezember 2026'));
+ form.emit('keydown',{key:'Enter',target:date});assert.equal(f.view.state.doc.toString(),'# H\nSCHEDULED: <2026-11-07 Sa>\nBody');assert.equal(f.panel.isOpen,false);
+ controller.open('DEADLINE');form=f.root.children.at(-1);const state=f.view.state;form.emit('keydown',{key:'Escape'});assert.equal(f.panel.isOpen,false);assert.equal(f.view.state,state);
+ controller.open('SCHEDULED');get('Entfernen').click();assert.equal(f.view.state.doc.toString(),'# H\nBody');
+ controller.open('SCHEDULED');form=f.root.children.at(-1);const stale=walk(form,e=>/^\d{4}-\d{2}-\d{2}$/.test(e.attributes?.['aria-label']??''));f.view.dispatch({selection:{anchor:1}});stale.click();assert.equal(f.view.state.doc.toString(),'# H\nBody');f.panel.close();
+ for(let n=0;n<50;n++){controller.open('SCHEDULED');f.panel.close();}f.panel.destroy();
+});
+
+test('Planning unmodified s/d follow sequences dispatch Registry/controller once after Ctrl release',()=>{
+ const f=fixture({selection:{anchor:2},docText:'# Task',extra:[markdown(),todoRules]});const planning=createPlanningController({view:f.view,panel:f.panel,getContext:()=>f.context});
+ const registry=createCommandRegistry(commandDefinitions({'planning.scheduled':()=>planning.open('SCHEDULED'),'planning.deadline':()=>planning.open('DEADLINE')}),()=>({state:f.view.state,hasDocument:true}));
+ const router=createPrefixRouter({registry,getContext:()=>f.context,showHelp:(...o)=>f.panel.showPrefix(...o),hideHelp:()=>f.panel.close({restore:false})});
+ for(const key of ['s','d']){f.view.focus();const send=(key,patch={})=>{const event={key,ctrlKey:true,preventDefault(){this.prevented=true;},...patch};router.keyDown(event,f.view);return event;};send('c');router.keyUp({key:'c'});assert.equal(send(key,{ctrlKey:false}).prevented,true);assert.equal(f.root.attributes['data-planning'],'');assert.equal(undoDepth(f.view.state),0);f.panel.close();}
+ f.panel.destroy();
+});
+
+test('Planning panel abort includes shared close header, form inputs and calendar with modifier/IME guards',()=>{
+ const f=fixture({selection:{anchor:2},docText:'# H\nBody',extra:[markdown(),todoRules]});const controller=createPlanningController({view:f.view,panel:f.panel,getContext:()=>f.context});
+ for(const targetKind of ['close','input','day'])for(const key of ['Escape','g']){
+  controller.open('SCHEDULED');const form=f.root.children.at(-1),strip=form.children.find(e=>e.className==='planning-months'),grid=strip.children.find(e=>e.children.length)?.children[1];const target=targetKind==='close'?f.close:targetKind==='input'?form.children.find(e=>e.tagName==='label').children[0]:grid.children.find(e=>e.tagName==='button');
+  const before=f.view.state;target.focus();f.root.emit('keydown',{target,key,ctrlKey:key==='g'});assert.equal(f.panel.isOpen,false);assert.equal(f.view.state,before);assert.equal(f.view.hasFocus,true);
+ }
+ for(const patch of [{altKey:true},{metaKey:true},{shiftKey:true},{isComposing:true},{keyCode:229},{getModifierState:()=>true},{ctrlKey:true}]){
+  controller.open('SCHEDULED');f.root.emit('keydown',{target:f.close,key:'Escape',...patch});assert.equal(f.panel.isOpen,true);f.panel.close();
+ }
+ f.panel.destroy();
+});
+
+test('Compact three-month calendar has one day tabstop, month boundaries, draft preservation and day keyboard guards',()=>{
+ const f=fixture({selection:{anchor:2},docText:'# H\nSCHEDULED: <2026-11-07 Sa 15:00-17:00>',extra:[markdown(),todoRules]});const controller=createPlanningController({view:f.view,panel:f.panel,getContext:()=>f.context});
+ const walk=(el,fn)=>[...(fn(el)?[el]:[]),...el.children.flatMap(c=>walk(c,fn))];
+ controller.open('SCHEDULED');const form=f.root.children.at(-1),days=()=>walk(form,e=>/^\d{4}-\d{2}-\d{2}$/.test(e.attributes?.['aria-label']??'')),labels=()=>walk(form,e=>e.className==='planning-calendar-month').map(e=>e.children[0]?.textContent);
+ assert.deepEqual(labels(),['Oktober 2026','November 2026','Dezember 2026']);assert.equal(days().filter(e=>e.tabIndex===0).length,1);
+ const date=walk(form,e=>e.attributes?.['aria-label']==='Datum (YYYY-MM-DD)')[0];const next=walk(form,e=>e.textContent==='Nächster Monat')[0];next.click();assert.equal(date.value,'2026-11-07');assert.deepEqual(labels(),['November 2026','Dezember 2026','Januar 2027']);assert.equal(days().filter(e=>e.tabIndex===0).length,1);
+ let selected=days().find(e=>e.attributes['aria-label']==='2026-11-07');selected.emit('keydown',{key:'ArrowRight',ctrlKey:true});assert.equal(date.value,'2026-11-07');selected.emit('keydown',{key:'ArrowRight'});assert.equal(date.value,'2026-11-08');assert.equal(days().filter(e=>e.tabIndex===0).length,1);
+ for(const edge of ['0001-01-01','9999-12-31']){date.value=edge;date.emit('input');assert.equal(walk(form,e=>e.className==='planning-calendar-month').filter(e=>e.children.length).length,2);assert.equal(days().filter(e=>e.tabIndex===0).length,1);}
+ f.panel.close();f.panel.destroy();
+});
+
+test('Day activation immediately commits once, closes shared panel and preserves old times with atomic history',()=>{
+ const walk=(el,fn)=>[...(fn(el)?[el]:[]),...el.children.flatMap(c=>walk(c,fn))];
+ for(const time of ['',' 15:00',' 15:00-17:00'])for(const activation of ['click','Enter',' ']){
+  const original='# H\nSCHEDULED: <2026-11-07 Sa'+time+'>\nBody',f=fixture({selection:{anchor:2},docText:original,extra:[markdown(),todoRules,EditorView.updateListener.of(()=>f.panel.invalidateStale())]});const controller=createPlanningController({view:f.view,panel:f.panel,getContext:()=>f.context});
+  controller.open('SCHEDULED');const form=f.root.children.at(-1),day=walk(form,e=>e.attributes?.['aria-label']==='2026-11-09')[0];assert.equal(walk(form,e=>e.tagName==='input').length,1);assert.equal(walk(form,e=>e.textContent==='Übernehmen').length,0);
+  const before=f.view.state;day.emit('keydown',{key:'ArrowRight',ctrlKey:true});assert.equal(f.view.state,before);day.emit('keydown',{key:'Enter',repeat:true});assert.equal(f.view.state,before);
+  if(activation==='click')day.click();else day.emit('keydown',{key:activation});assert.equal(f.panel.isOpen,false);assert.equal(f.view.hasFocus,true);assert.equal(f.view.state.doc.toString(),original.replace('11-07 Sa','11-09 Mo'));assert.equal(undoDepth(f.view.state),1);
+  day.click();assert.equal(undoDepth(f.view.state),1);assert.ok(undo(f.view));assert.equal(f.view.state.doc.toString(),original);assert.ok(redo(f.view));assert.equal(f.view.state.doc.toString(),original.replace('11-07 Sa','11-09 Mo'));f.panel.destroy();
+ }
+ const f=fixture({selection:{anchor:2},docText:'# H',extra:[markdown(),todoRules]});const c=createPlanningController({view:f.view,panel:f.panel,getContext:()=>f.context});c.open('DEADLINE');let form=f.root.children.at(-1);const input=walk(form,e=>e.tagName==='input')[0],initial=f.view.state;input.value='2026-11-09';input.emit('input');assert.equal(f.view.state,initial);form.emit('keydown',{key:'Enter',target:input});assert.equal(f.view.state.doc.toString(),'# H\nDEADLINE: <2026-11-09 Mo>');assert.equal(f.panel.isOpen,false);f.panel.destroy();
+});
 
 test('Prefix help reuses split layout, keeps focus/state/viewport and cleans rows on cancellation or ring switch',()=>{
   const f=fixture(),state=f.view.state,scroll={top:f.view.scrollDOM.scrollTop,left:f.view.scrollDOM.scrollLeft};

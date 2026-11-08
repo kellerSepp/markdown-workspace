@@ -10,6 +10,7 @@ const headingColors = {
 };
 const define = (id, name, scheme, colors) => Object.freeze({id,name,scheme,tokens:Object.freeze({
   ...fonts,...colors,todoOpen:scheme==='light'?'#326023':'#a0e0a0',todoClosed:scheme==='light'?'#a32b35':'#ffabb0',
+  planningKeyword:scheme==='light'?'#6f2585':'#d7a3f5',planningTimestamp:scheme==='light'?'#733392':'#d9b0ff',
   ...Object.fromEntries(headingColors[id].map((color,n)=>['syntaxHeading'+(n+1),color])),
   syntaxCode:colors.syntaxString,syntaxQuote:colors.muted,syntaxMarker:colors.syntaxMeta
 })});

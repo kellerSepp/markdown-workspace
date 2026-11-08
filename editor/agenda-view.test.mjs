@@ -1,0 +1,120 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {EditorState} from '@codemirror/state';
+import {history,undoDepth} from '@codemirror/commands';
+import {createAgendaView,AGENDA_CHOICES} from './agenda-view.mjs';
+import {createAgendaIndex} from './agenda-index.mjs';
+import {createAgendaSource} from './agenda-source.mjs';
+import {createSession} from './storage-session.mjs';
+import {createCommandRegistry} from './command-registry.mjs';
+import {commandDefinitions} from './commands.mjs';
+import {createCommandSurfaces} from './command-surfaces.mjs';
+
+// Deterministic DOM model: behavior/focus contracts, not native layout evidence.
+class Element{
+  constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.attributes={};this.listeners={};this.style={};this.dataset={};this.hidden=false;this.disabled=false;this.scrollTop=0;this.scrollHeight=1000;this.clientHeight=50;this.offsetHeight=20;this.offsetTop=0;const names=new Set();this.classList={add:n=>names.add(n),toggle(n,on){if(on)names.add(n);else names.delete(n);},contains:n=>names.has(n)};}
+  get isConnected(){return this===this.ownerDocument.body||!!this.parent?.isConnected;}
+  append(...children){for(const value of children){const child=typeof value==='string'?this.ownerDocument.createTextNode(value):value;child.parent=this;this.children.push(child);}}
+  replaceChildren(...children){for(const child of this.children)child.parent=null;this.children=[];this._text='';this.append(...children);}
+  set textContent(value){this.replaceChildren();this._text=value;}get textContent(){return (this._text??'')+this.children.map(c=>c.textContent).join('');}
+  setAttribute(n,v){this.attributes[n]=String(v);}removeAttribute(n){delete this.attributes[n];}
+  addEventListener(n,fn){(this.listeners[n]??=[]).push(fn);}removeEventListener(n,fn){this.listeners[n]=this.listeners[n]?.filter(x=>x!==fn);}
+  emit(n,values={}){const e={target:this,preventDefault(){this.defaultPrevented=true;},stopPropagation(){this.stopped=true;},...values};for(let el=this;el;el=el.parent){for(const fn of [...el.listeners[n]??[]])fn(e);if(e.stopped)break;}return e;}
+  focus(){this.ownerDocument.activeElement=this;}click(){if(!this.disabled)this.emit('click');}
+  showModal(){this.open=true;}close(){this.open=false;}remove(){if(this.parent)this.parent.children=this.parent.children.filter(c=>c!==this);this.parent=null;}
+  contains(el){return el===this||this.children.some(c=>c.contains(el));}scrollIntoView(){}
+}
+function dom(){const doc={createElement(tag){return new Element(tag,this);},createTextNode(text){const n=new Element('#text',this);n.textContent=text;return n;}};doc.body=doc.createElement('body');doc.defaultView=doc.createElement('window');doc.defaultView.innerWidth=1000;doc.defaultView.innerHeight=800;doc.listeners={};doc.addEventListener=Element.prototype.addEventListener;doc.removeEventListener=Element.prototype.removeEventListener;return doc;}
+function all(root,fn){return [root,...root.children.flatMap(c=>all(c,fn))].filter(fn);}
+const encoded=text=>new TextEncoder().encode(text);
+function rootOf(entries){return {name:'synthetic',async queryPermission(){return 'granted';},async *entries(){for(const name of Object.keys(entries))yield [name,{kind:'file'}];},async getFileHandle(name){return {async getFile(){return {async arrayBuffer(){return encoded(entries[name]).buffer;}};}};}};}
+async function fixture(){
+  const doc=dom(),origin=doc.createElement('div');doc.body.append(origin);origin.focus();const entries={'a.md':'# TODO Open\nSCHEDULED: <2026-11-08 So 09:00-10:00> DEADLINE: <2026-11-08 So 11:00>\n# DONE Closed\n# Other\nSCHEDULED: <2026-11-08 So 14:00>'},index=createAgendaIndex({yieldTask:async()=>{}});await index.selectVault(rootOf(entries));
+  const commands=[],navigation=[],notices=[];let controller;
+  controller=createAgendaView({index,document:doc,now:()=>new Date(2026,10,8,12),execute:id=>{commands.push(id);if(id==='agenda.week')return controller.openWeek();if(id==='agenda.todo')return controller.openTodos();if(id==='agenda.refresh')return index.rebuild();},navigate:async id=>{navigation.push(id);return false;},onClose:()=>origin.focus()});
+  return {doc,origin,index,controller,commands,navigation,notices,rows:()=>all(controller.element,e=>e.className==='agenda-row'),results:()=>all(controller.element,e=>e.className==='agenda-results')[0],buttons:()=>all(controller.element,e=>e.tagName==='button'),key:(key,patch={})=>doc.activeElement.emit('keydown',{key,...patch})};
+}
+test('Agenda dispatcher two active choices and disabled plans use plain keys/mouse, modifier and IME guards',async()=>{
+  const f=await fixture();f.controller.openDispatcher();assert.equal(f.controller.element.open,true);assert.equal(f.controller.element.attributes['data-mode'],'dispatch');
+  assert.equal(AGENDA_CHOICES.filter(c=>!c.disabled).length,2);const match=f.buttons().find(b=>b.textContent.includes('[m]'));assert.equal(match.disabled,true);match.click();f.key('m');assert.deepEqual(f.commands,[]);
+  for(const patch of [{ctrlKey:true},{altKey:true},{shiftKey:true},{metaKey:true},{isComposing:true},{keyCode:229},{repeat:true},{getModifierState:()=>true}])f.key('a',patch);
+  assert.deepEqual(f.commands,[]);f.key('a');assert.deepEqual(f.commands,['agenda.week']);assert.equal(f.rows().length,2);
+  f.key('q');assert.equal(f.controller.active,false);assert.equal(f.doc.activeElement,f.origin);f.controller.openDispatcher();f.buttons().find(b=>b.textContent.includes('[t]')).click();assert.equal(f.rows().length,1);
+});
+test('Agenda week keyboard/mouse date navigation, selection and source activation share controller path',async()=>{
+  const f=await fixture();f.controller.openWeek();assert.match(f.controller.element.textContent,/KW 45\/2026/);assert.equal(f.rows().length,2);assert.match(f.rows()[0].textContent,/09:00-10:00.*11:00/);
+  f.key('ArrowDown');assert.equal(f.rows()[1].attributes['aria-selected'],'true');f.key('Enter');await Promise.resolve();assert.equal(f.navigation[0],f.index.query().find(r=>r.title==='Other').id);
+  await Promise.resolve();f.rows()[0].click();await Promise.resolve();assert.equal(f.navigation[1],f.index.query().find(r=>r.title==='Open').id);
+  f.key('f');assert.match(f.controller.element.textContent,/KW 46\/2026/);f.key('b');assert.match(f.controller.element.textContent,/KW 45\/2026/);f.key('b');f.key('.');assert.match(f.controller.element.textContent,/KW 45\/2026/);
+  f.buttons().find(b=>b.textContent==='f →').click();assert.match(f.controller.element.textContent,/KW 46\/2026/);f.key('Escape');assert.equal(f.doc.activeElement,f.origin);
+});
+test('Agenda TODO filter, live snapshots, errors, refresh and vault reset preserve safe modal focus boundary',async()=>{
+  const f=await fixture();f.controller.openTodos();assert.equal(f.rows().length,1);const filter=all(f.controller.element,e=>e.tagName==='input')[0];filter.checked=true;filter.emit('change');assert.equal(f.rows().length,2);assert.match(f.rows()[1].textContent,/DONE Closed/);
+  f.controller.update({...f.index.snapshot(),diagnostics:[{path:'nested/bad.md',line:2,message:'Permission denied'}]});assert.match(f.controller.element.textContent,/Index unvollständig/);assert.match(f.controller.element.textContent,/nested\/bad.md:2: Permission denied/);
+  f.key('r');assert.ok(f.commands.includes('agenda.refresh'));f.controller.update({...f.index.snapshot(),epoch:f.index.snapshot().epoch+1,records:[]});assert.equal(f.controller.active,false);assert.equal(f.rows().length,0);
+  f.controller.destroy();assert.equal(f.controller.element.isConnected,false);
+});
+test('Agenda vault reset and destroy force lifecycle cleanup even while user close is commit-locked',async()=>{
+  const f=await fixture();f.controller.openTodos();f.controller.setCommitting(true);f.controller.close();assert.equal(f.controller.active,true);
+  f.controller.update({...f.index.snapshot(),epoch:f.index.snapshot().epoch+1,records:[]});assert.equal(f.controller.active,false);assert.equal(f.rows().length,0);assert.equal(f.controller.element.open,false);
+  f.controller.setCommitting(false);f.controller.openTodos();f.controller.setCommitting(true);f.controller.destroy();assert.equal(f.controller.element.isConnected,false);f.controller.setCommitting(false);
+});
+test('Agenda shortcut isolation disables mutating Registry actions and blocks global Alt+X palette entry',async()=>{
+  const f=await fixture();let mutation=0;const editor={state:EditorState.create({doc:'# TODO Keep',extensions:history()}),dom:f.origin,focus:()=>f.origin.focus()};
+  const context={busy:false,agendaActive:true,synthetic:true,vault:{},hasDocument:true,state:editor.state};
+  const registry=createCommandRegistry(commandDefinitions({'todo.next':()=>mutation++}),()=>context);
+  for(const id of ['todo.next','edit.undo','file.open','file.save','structure.heading-demote']){assert.equal(registry.availability(id).enabled,false);assert.equal(registry.execute(id),false);}
+  assert.equal(mutation,0);assert.equal(registry.availability('agenda.week').enabled,true);
+  const surfaces=createCommandSurfaces({registry,view:editor,document:f.doc,blocked:()=>true});surfaces.palette();assert.ok(!all(f.doc.body,e=>e.className==='command-palette')[0].open);f.doc.defaultView.emit('keydown',{key:'x',altKey:true});assert.ok(!all(f.doc.body,e=>e.className==='command-palette')[0].open);surfaces.destroy();
+});
+test('Agenda successful source activation restores editor focus after modal close, respecting native inertness',async()=>{
+  const f=await fixture();let closed=0,controller;const order=[];controller=createAgendaView({index:f.index,document:f.doc,now:()=>new Date(2026,10,8),execute(){},navigate:async()=>{order.push('jump');if(!controller.element.open)f.origin.focus();return true;},onClose:()=>{assert.equal(controller.element.open,false);order.push('focus');closed++;f.origin.focus();}});
+  controller.openWeek();const result=all(controller.element,e=>e.className==='agenda-results')[0];result.emit('keydown',{key:'Enter'});await Promise.resolve();await Promise.resolve();assert.equal(controller.active,false);assert.equal(closed,1);assert.deepEqual(order,['jump','focus']);assert.equal(f.doc.activeElement,f.origin);controller.destroy();
+});
+test('Agenda actual app source adapter synchronizes file selection for nested/same-file/missing-option sources and preserves selection on refusal',async()=>{
+  const app=await readFile(new URL('./app.mjs',import.meta.url),'utf8'),start=app.indexOf('function syncAgendaFileSelection(){'),end=app.indexOf('\n});',app.indexOf('agendaSource=createAgendaSource({'))+4;
+  assert.ok(start>=0&&end>start);const vault=rootOf({'project.md':'# TODO Source'}),nested=rootOf({'project.md':'# TODO Destination'}),map=new Map();let n=0;
+  nested.kind='directory';vault.entries=async function*(){yield ['project.md',{kind:'file'}];yield ['nested',nested];};vault.getDirectoryHandle=async name=>{assert.equal(name,'nested');return nested;};
+  const files={options:[{text:'project.md',value:'project.md'},{text:'nested/project.md',value:'nested/project.md'}],selected:'project.md',get value(){return this.selected;},set value(value){this.selected=this.options.some(option=>option.value===value)?value:'';},append(option){this.options.push(option);}};
+  const Option=class{constructor(text,value){this.text=text;this.value=value;}};
+  const session=createSession({store:{put:async(k,v)=>map.set(k,v),get:async k=>map.get(k),keys:async()=>[...map.keys()]},id:()=>String(++n)});await session.open({vault,handle:await vault.getFileHandle('project.md'),path:'project.md'});
+  const agendaIndex=createAgendaIndex({yieldTask:async()=>{}});await agendaIndex.selectVault(vault);const messages=[],jumps=[],view={state:EditorState.create({doc:session.text,extensions:history()}),dispatch(spec){jumps.push(spec.selection.anchor);this.state=this.state.update(spec).state;},focus(){}};
+  const context={createAgendaSource,agendaIndex,vault,session,view,$:id=>{assert.equal(id,'files');return files;},Option,permission:async()=>{},status:m=>messages.push(m),agenda:{message:m=>messages.push(m),setCommitting(){}},useRingVault:async()=>{},syncEditor:()=>{view.state=EditorState.create({doc:session.text,extensions:history()});},EditorView:{scrollIntoView:()=>({})}};
+  const {source,sync}=new Function(...Object.keys(context),'let agendaSource,persistPending=false;'+app.slice(start,end)+';return {source:agendaSource,sync:syncAgendaFileSelection};')(...Object.values(context));
+  // Filter the placeholder effect in this minimal state adapter; production uses EditorView.scrollIntoView.
+  view.dispatch=spec=>{jumps.push(spec.selection.anchor);view.state=view.state.update({selection:spec.selection}).state;};
+  const target=agendaIndex.query().find(r=>r.path==='nested/project.md');session.applyChanges([{from:session.text.length,to:session.text.length,insert:' unsaved'}]);assert.equal(await source.navigate(target.id),false);assert.equal(session.path,'project.md');assert.equal(session.dirty,true);assert.match(messages.at(-1),/Ungespeicherte/);assert.equal(files.value,'project.md');
+  // Explicit test cleanup opens a fresh real session source, then proves successful read navigation.
+  await session.open({vault,handle:await vault.getFileHandle('project.md'),path:'project.md'});view.state=EditorState.create({doc:session.text,extensions:history()});
+  assert.equal(await source.navigate(target.id),true);assert.equal(session.path,'nested/project.md');assert.equal(files.value,'nested/project.md');assert.equal(view.state.doc.toString(),'# TODO Destination');assert.deepEqual(jumps,[0]);assert.equal(undoDepth(view.state),0);
+  files.value='project.md';const sameState=view.state;assert.equal(await source.navigate(target.id),true);assert.equal(view.state.doc,sameState.doc);assert.equal(files.value,'nested/project.md');assert.equal(files.options.length,2);
+  files.options=files.options.filter(option=>option.value!=='nested/project.md');files.value='project.md';assert.equal(await source.navigate(target.id),true);assert.equal(files.value,'nested/project.md');assert.deepEqual(files.options.at(-1),new Option('nested/project.md','nested/project.md'));
+  files.value='project.md';const getFile=nested.getFileHandle;nested.getFileHandle=async()=>{throw Error('denied nested source');};assert.equal(await source.navigate(target.id),false);assert.equal(files.value,'project.md');assert.match(messages.at(-1),/denied nested source/);nested.getFileHandle=getFile;
+  // A successful session.open must sync the actual source even when its second
+  // read changes and subsequent navigation validation correctly refuses a jump.
+  await session.open({vault,handle:await vault.getFileHandle('project.md'),path:'project.md'});view.state=EditorState.create({doc:session.text,extensions:history()});files.options=files.options.filter(option=>option.value!=='nested/project.md');files.value='project.md';let reads=0;
+  nested.getFileHandle=async()=>({async getFile(){const text=++reads===1?'# TODO Destination':'# TODO External second read';return {async arrayBuffer(){return encoded(text).buffer;}};}});
+  assert.equal(await source.navigate(target.id),false);assert.equal(session.path,'nested/project.md');assert.equal(files.value,'nested/project.md');assert.equal(view.state.doc.toString(),'# TODO External second read');assert.equal(jumps.length,3);
+  const foreign=rootOf({'else.md':'# TODO Foreign'});await session.open({vault:foreign,handle:await foreign.getFileHandle('else.md'),path:'else.md'});files.value='project.md';const optionsBefore=files.options.length;sync();assert.equal(files.value,'project.md');assert.equal(files.options.length,optionsBefore);
+});
+test('Agenda commit phase locks q/Escape/close and other actions during actual deferred session.open; errors unlock without queued close',async()=>{
+  for(const failure of [false,true]){
+    const deferred=()=>{let resolve;return {promise:new Promise(r=>resolve=r),resolve};},gate=deferred(),entered=deferred();
+    const entries={'a.md':'# TODO A','b.md':'# TODO B'},vault=rootOf(entries),originalGet=vault.getFileHandle;let reads=0,watch=false;
+    vault.getFileHandle=async name=>{const handle=await originalGet(name),get=handle.getFile;handle.getFile=async()=>{if(watch&&name==='b.md'&&++reads===2){entered.resolve();await gate.promise;if(failure)throw Error('deferred source failure');}return get();};return handle;};
+    const map=new Map();let n=0;const session=createSession({store:{put:async(k,v)=>map.set(k,v),get:async k=>map.get(k),keys:async()=>[...map.keys()]},id:()=>String(++n)});await session.open({vault,handle:await vault.getFileHandle('a.md'),path:'a.md'});
+    const index=createAgendaIndex({yieldTask:async()=>{}});await index.selectVault(vault);const doc=dom(),origin=doc.createElement('div');doc.body.append(origin);origin.focus();let state={},controller,source,pending;const jumps=[],executed=[],commit=[];
+    source=createAgendaSource({index,getVault:()=>vault,getSession:()=>session,getState:()=>state,onCommit:value=>{commit.push(value);controller.setCommitting(value);},notify:text=>controller.message(text),jump:from=>jumps.push(from),open:async target=>{await session.open(target);state={};}});
+    controller=createAgendaView({index,document:doc,execute:id=>executed.push(id),onClose:()=>origin.focus(),cancelNavigation:()=>source.cancel(),navigate:id=>(pending=source.navigate(id))});
+    controller.openTodos();const results=all(controller.element,e=>e.className==='agenda-results')[0];results.emit('keydown',{key:'ArrowDown'});watch=true;results.emit('keydown',{key:'Enter'});await entered.promise;
+    assert.deepEqual(commit,[true]);results.emit('keydown',{key:'q'});assert.equal(controller.active,true);assert.match(controller.element.textContent,/Schließen.*gesperrt/);
+    results.emit('keydown',{key:'Escape'});controller.element.emit('cancel');all(controller.element,e=>e.tagName==='button'&&e.textContent==='Schließen')[0].click();assert.equal(controller.active,true);
+    results.emit('keydown',{key:'r'});results.emit('keydown',{key:'f'});controller.openDispatcher();assert.deepEqual(executed,[]);assert.equal(controller.element.attributes['data-mode'],'todo');
+    const filter=all(controller.element,e=>e.tagName==='input')[0];assert.equal(filter.disabled,true);filter.checked=true;filter.emit('change');assert.equal(filter.checked,false);
+    gate.resolve();await pending;await Promise.resolve();assert.deepEqual(commit,[true,false]);
+    if(failure){assert.equal(controller.active,true);assert.match(controller.element.textContent,/deferred source failure/);assert.equal(session.path,'a.md');assert.equal(jumps.length,0);results.emit('keydown',{key:'q'});assert.equal(controller.active,false);}
+    else{assert.equal(session.path,'b.md');assert.deepEqual(jumps,[0]);assert.equal(controller.active,false);assert.equal(doc.activeElement,origin);}
+    controller.destroy();
+  }
+});

@@ -1,5 +1,21 @@
 # Anforderungen (Stand 2026-11-03)
 
+## M7b — Freigabe 2026-11-08
+
+Agenda-Dispatcher C-c a mit zweispaltigem kompaktem Layout; a öffnet Wochenagenda, t offene TODO-Liste, m/s bleiben inaktiv geplant. Deutsche Mo–So-Woche mit ISO-Wochenjahr, aktuelle Woche default, SCHEDULED/DEADLINE/Zeiten/Quelle/Status sowie offene Rückstände darstellen, taggleiche Terminarten zusammenführen. Lokale Tasten f/b/./q/Escape/Pfeile/Enter und Maus, geschlossene Zustände im TODO-Filter einblendbar. M7a-Index/Registry/Themes/Panelbausteine nutzen, Refresh/Saveupdates/Vaultwechsel/Quellnavigation sicher integrieren. Editorentwurf und Storage-Schutzzustand erhalten. Synthetischer Probevault, unabhängige QA und konkrete native Testanleitung erforderlich. Grenzen und Abnahme: [M7B_AGENDA.md](M7B_AGENDA.md); keine weiteren Agenda-Funktionen, Dependencies oder Commit/Push.
+
+## M7a — Freigabe 2026-11-08
+
+Lesender, vollständig aus Vault-Markdown rekonstruierbarer Aufgaben-/Terminindex für H1–H6 einschließlich Hierarchie, dateilokalem SEQ_TODO, Offen-/Abgeschlossen-Klassifikation und M6a-SCHEDULED/DEADLINE mit optionaler Zeit/Zeitfenster. Termine auch ohne TODO; Checklisten sind keine Aufgaben. Rekursiver Aufbau, Update nach erfolgreichem Speichern, Reset beim Vaultwechsel, expliziter Refresh externer Änderungen. Fehler einzelner Quellen isoliert und nachvollziehbar melden; veraltete asynchrone Ergebnisse dürfen neuere Daten nicht ersetzen. Editorentwürfe und Storage-Schutzmechanismen erhalten. Abfragen und Quellenzuordnung für M7b vorbereiten, keine dauerhaften IDs behaupten. Details: [M7A_AGENDA_INDEX.md](M7A_AGENDA_INDEX.md). Keine Agendaoberfläche/Dispatcher/C-c a/Repeater/Benachrichtigungen/Dependencies/Commit/Push. Frühere Indexsperren gelten für diesen Umfang nicht mehr.
+
+## M6a — Freigabe 2026-11-07
+
+PO-Korrektur 2026-11-08: Kalender-Tagesaktivierung übernimmt direkt und schließt, ohne Übernehmen. Bestehende Uhrzeiten erhalten; Zeitbearbeitung direkt im <...>-Text. Automatischer Wochentag bei gültiger Datum-/Zeit-Rohtexteingabe, keine Mutation ungültiger Zwischenstände oder unberührter Angaben, atomare Undo/Redo.
+
+Aktuelle PO-Nachbesserung nach Referenzbildern: Ersatzfolgen C-c s/C-c d (s/d unmodifiziert nach Loslassen), kompakte vorherige/aktuelle/nächste Monatsgruppe, gesonderte Editorfarben für Planungswörter und unterstrichene volle Zeitstempel. Künftiger Datumsklick zur Tagesagenda im Zusatzpanel wird nur für M7 vorgemerkt; derzeit keine funktionslose Klickaktion.
+
+Scheduling/Deadlines/Datumswahl gemäß [M6A_SCHEDULING.md](M6A_SCHEDULING.md) freigegeben. H1–H6 auch ohne TODO, beide Eigenschaften unabhängig, deutsche Wochentage automatisch, optionale Zeit/Zeitfenster, Kalender und Tastatureingabe, Vorschau/Entfernen/Abbruch. C-c C-s und C-c C-d mit nativer Konfliktprüfung; Registry/Palette/Kontextmenü wiederverwenden. Keine Agenda/Repeater/Storageänderungen/Dependencies.
+
 ## TODO-Paket freigegeben — 2026-11-07
 
 Bestätigter Nachtrag in PLAN_TODO_AGENDA.md samt angenommenen Randregeln in DECISIONS.md ist zur Umsetzung freigegeben. Jede H1–H6 kann eine eigene Aufgabe sein; verschachtelte Aufgaben gehören strukturell zu ihren Vorfahren und behalten unabhängige Zustände. Keine implizite Statusvererbung oder Eltern-/Kindänderung. Spätere Agenda berücksichtigt diese Hierarchie, ist aber nicht Teil dieses Pakets. Statusänderung betrifft nur den Präfix genau einer Überschrift, atomar Undo/Redo. Auswahl-/Fokus-/Dateigrenzen schützen; native Browserprüfung separat.

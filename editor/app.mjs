@@ -23,6 +23,12 @@ import {createWorkPanel} from './work-panel.mjs';
 import {refileHistory,undoRefile,redoRefile} from './refile-history.mjs';
 import {createRefileController} from './refile.mjs';
 import {createPrefixRouter} from './prefix-router.mjs';
+import {createPlanningController} from './planning.mjs';
+import {planningHighlight} from './planning-highlight.mjs';
+import {planningNormalization} from './planning-normalization.mjs';
+import {createAgendaIndex} from './agenda-index.mjs';
+import {createAgendaView} from './agenda-view.mjs';
+import {createAgendaSource} from './agenda-source.mjs';
 import {todoRules,todoHighlight,todoKeyboard,todoCycleAbortCleanup,createTodoController} from './todo.mjs';
 
 const $ = id => document.getElementById(id);
@@ -37,13 +43,21 @@ $('theme').replaceChildren(...THEMES.map(theme => new Option(theme.name,theme.id
 $('theme').value = activeTheme.id;
 let session, vault, busy = true, syncing = false, timer, persistPending = false;
 const status = message => {$('status').textContent = message;};
+let agenda,agendaSource;
+const agendaIndex=createAgendaIndex({onChange:snapshot=>{
+  $('agendaIndexStatus').textContent=`${snapshot.running?'Index wird gelesen … · ':''}${snapshot.files} Dateien · ${snapshot.records.length} Einträge · ${snapshot.diagnostics.length} Hinweise/Fehler · Revision ${snapshot.revision}`;
+  $('agendaIndexErrors').replaceChildren(...snapshot.diagnostics.map(item=>{
+    const row=document.createElement('li');row.textContent=`${item.path}${item.line?':'+item.line:''}: ${item.message}`;return row;
+  }));
+  agenda?.update(snapshot);
+}});
 let workPanel,ringVault;
 const editingContext=()=>({busy,hasDocument:!!session?.hasDocument});
 const prefix=createPrefixRouter({registry:{get:id=>registry.get(id),availability:id=>registry.availability(id),execute:id=>registry.execute(id)},getContext:editingContext,
   showHelp:(...args)=>workPanel.showPrefix(...args),moveHelp:delta=>workPanel.moveSelection(delta),activateHelp:()=>workPanel.activateSelection(),hideHelp:()=>workPanel?.close({restore:false}),notify:status});
 const emacs=createEmacsEditing({getContext:editingContext,notify:status,openChooser:()=>workPanel?.openRing()??false});
 const extensions = () => [
-  todoCycleAbortCleanup(),
+  planningNormalization,planningHighlight,todoCycleAbortCleanup(),
   prefix.extension(),refileHistory(),
   EditorView.updateListener.of(()=>workPanel?.invalidateStale()),
   // TASK Shift arrows outrank empty active-mark navigation; nonempty selections
@@ -84,14 +98,35 @@ const extensions = () => [
 ];
 const view = new EditorView({parent:$('editor'), state:EditorState.create({extensions:extensions()})});
 const handlers={};
-const registry=createCommandRegistry(commandDefinitions(handlers),()=>({busy,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
-const surfaces=createCommandSurfaces({registry,view,notify:status});
+handlers['agenda.refresh']=()=>{void agendaIndex.rebuild();return true;};
+const registry=createCommandRegistry(commandDefinitions(handlers),()=>({busy,agendaActive:!!agenda?.active,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
+const surfaces=createCommandSurfaces({registry,view,notify:status,blocked:()=>!!agenda?.active});
 workPanel=createWorkPanel({host:$('workPanel'),workspace:$('editorWorkspace'),view,ring:emacs.ring,getContext:editingContext,insert:(id,target)=>emacs.insertRingEntry(view,id,target),notify:status});
+function syncAgendaFileSelection(){
+  if(!session?.hasDocument||session.vault!==vault)return;
+  const select=$('files');
+  if(!Array.from(select.options).some(option=>option.value===session.path))select.append(new Option(session.path,session.path));
+  select.value=session.path;
+}
+agendaSource=createAgendaSource({index:agendaIndex,getVault:()=>vault,getSession:()=>session,getState:()=>view.state,
+  permission,
+  onCommit:value=>agenda.setCommitting(value),
+  notify:message=>{status(message);agenda.message(message);},
+  open:async target=>{await session.open(target);syncAgendaFileSelection();await useRingVault(session.vault);syncEditor();persistPending=false;},
+  jump:from=>{view.dispatch({selection:{anchor:from},effects:EditorView.scrollIntoView(from,{y:'center'})});syncAgendaFileSelection();view.focus();}
+});
+agenda=createAgendaView({index:agendaIndex,execute:id=>registry.execute(id),
+  onOpen:()=>{prefix.cancel();workPanel.close({restore:false});emacs.invalidate();},onClose:()=>view.focus(),cancelNavigation:()=>agendaSource.cancel(),
+  navigate:id=>run(async()=>{try{requireSynthetic();const success=await agendaSource.navigate(id);if(success)void agendaIndex.updateFile(session.path,vault);return success;}catch(error){agenda.message(error.message);throw error;}})
+});
+handlers['agenda.dispatch']=()=>agenda.openDispatcher();handlers['agenda.week']=()=>agenda.openWeek();handlers['agenda.todo']=()=>agenda.openTodos();
 const refile=createRefileController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['structure.refile-h1']=()=>refile.open();
 const todo=createTodoController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['todo.status']=()=>todo.open();handlers['todo.reload']=()=>todo.reload();
 handlers['todo.previous']=()=>todo.cycle(-1);handlers['todo.next']=()=>todo.cycle(1);
+const planning=createPlanningController({view,panel:workPanel,getContext:editingContext,notify:status});
+handlers['planning.scheduled']=()=>planning.open('SCHEDULED');handlers['planning.deadline']=()=>planning.open('DEADLINE');
 for(const {id} of EMACS_COMMANDS)handlers['edit.emacs-'+id]=()=>{
   if(id==='show-ring'||id==='yank-pop')workPanel.preserveViewport(()=>view.focus());else view.focus();
   return emacs.run(view,id);
@@ -154,7 +189,7 @@ function setBusy(value) {
   if(value){prefix.cancel();workPanel?.close({restore:false});}
   if(value)emacs.invalidate();
   busy = value;
-  for (const element of document.querySelectorAll('button,select,input')) if(!element.closest('.command-palette,.command-context')) element.disabled = value;
+  for (const element of document.querySelectorAll('button,select,input')) if(!element.closest('.command-palette,.command-context,.agenda-dialog')) element.disabled = value;
   view.dispatch({effects:editable.reconfigure([EditorState.readOnly.of(value || !session?.hasDocument),EditorView.editable.of(!value && !!session?.hasDocument)])});
 }
 function syncEditor() {
@@ -177,7 +212,7 @@ async function persistDraft() {
 async function run(action) {
   if (busy) return;
   clearTimeout(timer); setBusy(true);
-  try {await action();}
+  try {return await action();}
   catch (error) {status(`${error.name}: ${error.message}`);}
   finally {
     render(); setBusy(false);
@@ -224,7 +259,7 @@ bind('choose', async () => {
   const selected = await showDirectoryPicker({mode:'readwrite'});
   await session.persist();
   if(!await sameVault(vault,selected))emacs.invalidate({clearRing:true});
-  $('files').replaceChildren(); vault = selected; await scan();
+  $('files').replaceChildren(); vault = selected; void agendaIndex.selectVault(vault); await scan();
 });
 bind('grant', async () => {
   if (session.hasDocument) await session.grant();
@@ -239,12 +274,14 @@ bind('open', async () => {
   for (const name of parts.slice(0,-1)) dir = await dir.getDirectoryHandle(name);
   const handle = await dir.getFileHandle(parts.at(-1));
   await session.open({vault,handle,path}); await useRingVault(session.vault); syncEditor(); persistPending = false;
+  if(await sameVault(session.vault,vault))void agendaIndex.updateFile(session.path,vault);
   status('Datei geöffnet. Änderungen werden erst mit Speichern in die Datei geschrieben.'); view.focus();
 });
 async function save() {
   requireSynthetic();
   if (!session.hasDocument) throw Error('Datei öffnen.');
   const result = await session.save(); persistPending = false;
+  if(await sameVault(session.vault,vault))void agendaIndex.updateFile(session.path,vault);
   status(result.unchanged ? 'Bytegleich: Datei nicht neu geschrieben.' : `Gespeichert und geprüft. Sicherung: ${result.backupName}`);
 }
 bind('save',save);
@@ -260,6 +297,7 @@ bind('recover', async () => {
   await session.persist(); await session.recover(key);
   await useRingVault(session.vault);
   vault = session.vault;
+  void agendaIndex.selectVault(vault);
   $('files').replaceChildren();
   syncEditor(); persistPending = false; status('Entwurf geladen. Vor Speichern werden Rechte und externe Änderungen geprüft.');
 });

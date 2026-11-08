@@ -13,7 +13,7 @@ import {markdownFolding,guardedFold,stagedUnfold} from './folding.mjs';
 import {foldedRanges} from '@codemirror/language';
 
 function fixture(){
-  const context={busy:false,hasDocument:true},calls=[],notices=[];let shown=null,hidden=0;
+  const context={busy:false,hasDocument:true,synthetic:true,vault:{}},calls=[],notices=[];let shown=null,hidden=0;
   const view={hasFocus:true,state:EditorState.create({doc:'# Title\nBody\n## Child\nMore',selection:{anchor:8,head:10},extensions:[history(),markdown()]}),setTabFocusMode(value){this.tabFocus=value;}};
   const registry=createCommandRegistry(commandDefinitions(Object.fromEntries(PREFIX_BINDINGS.map(b=>[b.id,()=>{calls.push(b.id);return true;}]))),()=>({...context,state:view.state}),s=>notices.push(s));
   const router=createPrefixRouter({registry,getContext:()=>context,showHelp:(choices,choose,cancel)=>{shown={choices,choose,cancel};},hideHelp:()=>hidden++,notify:s=>notices.push(s)});
@@ -24,7 +24,9 @@ function fixture(){
 
 test('Approved plain and modifier sequences route to existing Registry IDs after keyup; start preserves exact state/history',()=>{
   for(const binding of PREFIX_BINDINGS){const f=fixture();if(binding.id==='structure.refile-h1'||binding.id==='todo.status')f.view.state=EditorState.create({doc:'# Source\nBody\n# Target',selection:{anchor:3},extensions:[history(),markdown()]});if(binding.id==='todo.reload')f.view.state=EditorState.create({doc:'#+SEQ_TODO: TODO(t) | DONE(d)\n# TODO Task',selection:{anchor:3},extensions:[history(),markdown()]});const before=f.view.state;
-    assert.equal(f.start().defaultPrevented,true);assert.equal(f.view.state,before);assert.equal(undoDepth(f.view.state),0);
+    if(binding.id.startsWith('planning.'))f.view.state=EditorState.create({doc:'# Heading',extensions:[history(),markdown()]});
+    const expectedState=f.view.state;
+    assert.equal(f.start().defaultPrevented,true);assert.equal(f.view.state,expectedState);assert.equal(undoDepth(f.view.state),0);
     assert.deepEqual(f.shown.choices.map(c=>c.id),PREFIX_BINDINGS.map(c=>c.id));
     f.release();assert.equal(f.down(binding.key,{ctrlKey:!!binding.ctrl}).handled,true);assert.deepEqual(f.calls,[binding.id]);assert.equal(f.router.active,false);assert.equal(f.hidden,1);
   }
@@ -68,7 +70,7 @@ test('Busy/read-only/missing document/focus and changed state refuse stale keybo
 });
 test('Registry availability is checked again, including blocked folding context; help reports reasons',()=>{
   const f=fixture();f.view.state=EditorState.create({doc:'plain',extensions:markdown()});f.start();
-  assert.ok(f.shown.choices.every(c=>!c.enabled&&c.reason));f.release();f.down('1');assert.deepEqual(f.calls,[]);assert.ok(f.notices.length);
+  assert.ok(f.shown.choices.filter(c=>c.id!=='agenda.dispatch').every(c=>!c.enabled&&c.reason));assert.equal(f.shown.choices.find(c=>c.id==='agenda.dispatch').enabled,true);f.release();f.down('1');assert.deepEqual(f.calls,[]);assert.ok(f.notices.length);
   for(const mode of ['busy','missing','readonly']){const g=fixture();if(mode==='busy')g.context.busy=true;if(mode==='missing')g.context.hasDocument=false;if(mode==='readonly')g.view.state=EditorState.create({extensions:EditorState.readOnly.of(true)});g.start();assert.equal(g.router.active,false);}
 });
 test('Extension hooks cancel on blur, composition, mouse, selection/update and destruction; repeated lifecycle is bounded',()=>{

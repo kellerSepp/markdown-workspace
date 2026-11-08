@@ -1,7 +1,7 @@
 import {isPaletteShortcut} from './command-registry.mjs';
 
 // DOM rendering uses textContent only. No polling, external definitions or HTML templates.
-export function createCommandSurfaces({registry,view,document:doc=globalThis.document,notify=()=>{}}) {
+export function createCommandSurfaces({registry,view,document:doc=globalThis.document,notify=()=>{},blocked=()=>false}) {
   const win=doc.defaultView;
   const dialog=doc.createElement('dialog');dialog.className='command-palette';dialog.setAttribute('aria-label','Command Palette');
   const label=doc.createElement('label');label.textContent='Befehl suchen';
@@ -62,6 +62,7 @@ export function createCommandSurfaces({registry,view,document:doc=globalThis.doc
     select(0);
   }
   function palette() {
+    if(blocked())return;
     if(mode==='palette') {search.focus();return;}
     if(mode) close();
     snapshot=capture();mode='palette';search.value='';shortcutsOnly=false;shortcutButton.setAttribute('aria-pressed','false');dialog.showModal();render(results,matches());search.focus();
@@ -107,6 +108,7 @@ export function createCommandSurfaces({registry,view,document:doc=globalThis.doc
   }
   view.dom.addEventListener('contextmenu',context);
   const shortcut=event=>{
+    if(blocked())return;
     if(isPaletteShortcut(event)) {event.preventDefault();event.stopPropagation();palette();}
     else if(!mode&&view.dom.contains(event.target)&&!event.isComposing&&(event.key==='ContextMenu'||event.shiftKey&&event.key==='F10')&&!event.ctrlKey&&!event.altKey&&!event.metaKey) context(event,true);
   };

@@ -45,3 +45,48 @@ code{background:var(--code-background);color:var(--text)}
 .work-panel-results{position:relative;min-height:0;overflow:auto;overflow-anchor:none}
 .work-panel-row{display:block;width:100%;text-align:left;overflow-wrap:anywhere;white-space:normal;background:var(--surface);border:0;border-bottom:1px solid var(--border);border-radius:0}
 .work-panel-active{background:var(--hover);outline:2px solid var(--focus);outline-offset:-2px}
+/* Planning uses the shared lower workspace; all colors follow theme tokens. */
+.planning-form {overflow:auto; min-height:0; padding:4px; display:grid; align-content:start; gap:4px 8px; grid-template-columns:12ch 12ch 12ch; font-size:.82rem;}
+.work-panel[data-planning] {grid-template-rows:auto minmax(0,1fr);}
+.planning-form label {display:grid; gap:3px;}
+.work-panel .planning-form input {min-width:0; width:100%; box-sizing:border-box;padding:.18rem .25rem;font-size:inherit;}
+.planning-month,.planning-months,.planning-actions,.planning-form > p {grid-column:1/-1;}
+.planning-month,.planning-actions {display:flex; align-items:center; justify-content:flex-start; gap:8px;}
+.planning-month {justify-content:flex-start;}
+.planning-month button,.planning-actions button {font-size:inherit;padding:.15rem .35rem;}
+.planning-months {display:flex; gap:1rem; width:max-content; max-width:100%;}
+.planning-calendar-month {flex:0 0 auto; width:21ch;font-family:var(--font-editor);}
+.planning-calendar-month > strong {display:block;text-align:center;font-size:inherit;margin-bottom:2px;}
+.planning-grid {display:grid;grid-template-columns:repeat(7,3ch);gap:0;font-family:var(--font-editor);line-height:1.15;}
+.planning-grid > span {text-align:center;}
+.planning-grid button {padding:0;min-height:0;min-width:0;height:1.35em;font:inherit;background:transparent;border:0;border-radius:0;}
+.planning-grid button[aria-pressed="true"] {outline:2px solid var(--focus); background:var(--hover);}
+@media(max-width:600px){.planning-form{grid-template-columns:12ch 12ch 12ch;}.planning-months{max-width:none;}}
+/* Agenda reuses the panel shell inside an isolated modal focus surface. */
+.agenda-dialog{box-sizing:border-box;width:min(68rem,calc(100vw - 1rem));max-width:100%;height:min(38rem,85vh);max-height:90vh;padding:.35rem;color:var(--text);background:var(--surface);border:1px solid var(--border);font:14px/1.4 var(--font-editor)}
+.agenda-dialog::backdrop{background:var(--background);opacity:.65}
+.agenda-panel{display:flex;flex-direction:column;padding:.2rem;border:0}
+.agenda-dialog[data-mode=dispatch]{height:auto;width:min(44rem,calc(100vw - 1rem))}
+.agenda-panel [hidden]{display:none!important}
+.agenda-panel button{font:inherit;padding:.12rem .35rem}
+.agenda-toolbar{display:flex;flex-wrap:wrap;gap:.25rem .5rem;align-items:center;margin-bottom:.25rem}
+.agenda-toolbar label{display:flex;align-items:center;font-size:.85em}
+.agenda-toolbar input{width:auto;padding:0}
+.agenda-dispatcher{display:grid;grid-template-columns:1fr 1fr;gap:.15rem .5rem;align-content:start}
+.agenda-dispatcher button{text-align:left;white-space:normal;overflow-wrap:anywhere;border:0;background:transparent}
+.agenda-results{position:relative;flex:1;min-height:0;overflow:auto;overflow-anchor:none;outline-offset:-2px}
+.agenda-results:focus-visible{outline:2px solid var(--focus)}
+.agenda-day{font:inherit;font-weight:bold;color:var(--accent);margin:.35rem 0 .1rem}
+.agenda-today{text-decoration:underline}
+.agenda-panel .agenda-row{display:block;width:100%;min-height:1.6em;text-align:left;white-space:normal;overflow-wrap:anywhere;border:0;border-radius:0;background:transparent;padding:.08rem .4rem}
+.agenda-panel .agenda-row.agenda-active{background:var(--hover);outline:2px solid var(--focus);outline-offset:-2px}
+.agenda-source{color:var(--muted)}
+.agenda-marks{color:var(--planning-keyword)}
+.agenda-late{color:var(--warning)}
+.agenda-open{color:var(--todo-open);text-decoration:underline dotted}
+.agenda-closed{color:var(--todo-closed);text-decoration:line-through}
+.agenda-appointment{color:var(--planning-timestamp)}
+.agenda-notice{font-size:.8em;color:var(--muted);margin:.2rem 0}
+.agenda-panel details{margin:0;font-size:.8em;max-height:6em;overflow:auto}
+.agenda-panel details ul{margin:.15rem 0;padding-left:1.5em}
+@media(max-width:600px){.agenda-dialog{font-size:12px;height:85vh}.agenda-source{display:block}.agenda-dispatcher{gap:.1rem .25rem}}

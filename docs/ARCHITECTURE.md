@@ -1,5 +1,37 @@
 # Architekturvorschlag – zur Freigabe
 
+## M7b — freigegebene Agendaoberfläche, 2026-11-08
+
+M7a bleibt einziger Vault-Index. Ein reines Agenda-Modell projiziert seine Records auf deutsche Mo–So-Wochen mit ISO-Wochenjahr und auf die offene TODO-Liste. Ein eigener fokussierter Dialog verwendet vorhandene Panelhülle, lokale Scrollhilfe und Theme-Tokens; der Editorzustand wird beim Anzeigen/Schließen nicht ersetzt. Dispatcheroptionen stehen in einer kleinen erweiterbaren Datenliste mit Registryreferenzen; geplante Optionen sind nicht ausführbar. Keine dynamischen Befehle aus Markdown.
+
+Ein separater Quelladapter prüft aktuelle Indexkennung, Vaultgeneration und gespeicherte Quelle vor Navigation. Mehrdeutige/veraltete Ziele werden verweigert statt nach Titel geraten. Bei ungespeicherten Editoränderungen bleibt die Navigation konservativ gesperrt, bis der Nutzer sie selbst speichert; Öffnen, Filtern und Schließen der Agenda erhalten die Arbeit. Der Adapter verwendet bestehende Session-/Berechtigungsoperationen und ändert deren Schutzmodell nicht.
+
+Abbruchgeneration vor asynchroner Rechteprüfung reservieren. Die bestehende Sessionöffnung ist nach Start nicht abbrechbar; deshalb signalisiert der Quelladapter eine kurze Öffnungsphase mit `onCommit`, in der die Ansicht Schließen und weitere Aktionen klar erkennbar sperrt. Fehler geben die Sperre in `finally` frei. Keine fragile Sessionzurückrollung und keine Änderung der Storage-API. Erfolgsfokus erst nach Schließen des nativen Modals setzen, weil dessen Inertness vorherigen Editorfokus verhindert.
+
+Rückstände sind eine reine Ansichtsprojektion: vergangene offene SCHEDULED-/DEADLINE-Angaben zusätzlich unter heute, sofern heute in der angezeigten Woche liegt; pro Aufgabe/Tag zusammenführen. Datierte abgeschlossene Aufgaben bleiben am Originaldatum sichtbar und werden nicht fortgeschrieben. Statuslose Termine erscheinen am Originaldatum, ohne erfundene Erledigungsklassifikation. Keine Vorwarnfristen, Terminmutation oder Remote-Statusänderung. Umfang/Abnahme/Org-Abweichungen: [M7B_AGENDA.md](M7B_AGENDA.md).
+
+## M7a — freigegebener Vault-Index, 2026-11-08
+
+Ein rekonstruierbarer RAM-Index liest die Markdown-Dateien des ausgewählten Vaults. Bestehende Markdown-Struktur-, TODO- und M6a-Planungsparser bleiben die fachliche Grundlage; keine zweite Zeitstempelgrammatik. Dateizugriff, reine Extraktion und Abfragen sind im Indexmodul gekapselt, der App-Adapter verbindet Auswahl, erfolgreiches Speichern, erneutes Öffnen und explizite Aktualisierung. Keine persistente Datenbank, Markdown-Metadaten, Überwachung oder Serverkomponente.
+
+Generationsgebundene Veröffentlichung verwirft überholte asynchrone Ergebnisse. Vaultwechsel leert Daten und dateilokale Regelhistorie vor neuem Einlesen. Einzelne Dateifehler werden mit Pfad und Ursache gemeldet; sie verhindern keine Auswertung anderer Dateien. Positionskennungen bezeichnen ausschließlich einen Indexstand und sind keine dauerhaft eindeutigen Aufgaben-IDs. Elternbezüge bleiben auch über Überschriften ohne eigenen Aufgabenstatus erhalten. M7b muss Quelle und Aktualität vor Navigation erneut prüfen.
+
+Empfehlung für den Quellumfang: automatisch alle Markdown-Dateien im bewusst gewählten Vault statt zusätzlicher Registrierung wie Org `C-c [`. Vorteil: keine versehentlich fehlenden Quelldateien; Nachteil: auch Archivdateien werden gelesen. Eine spätere Auswahl-/Ausschlusskonfiguration wäre ein eigener PO-Entscheid. Schnittstelle, Fehlerverhalten, Abnahme und Grenzen: [M7A_AGENDA_INDEX.md](M7A_AGENDA_INDEX.md). M7b-Oberfläche/Dispatcher und C-c a bleiben gesperrt.
+
+## M6a Direktwahl und Rohtextkorrektur — 2026-11-08
+
+Kalendertag-Aktivierung ruft den bestehenden Controller direkt auf, ohne anschließendes Rendern/Fokussieren des möglicherweise bereits zerstörten Formulars. Datumwahl erhält alte Zeitwerte. `planning-normalization.mjs` ergänzt einen synchronen CodeMirror-Transaktionsfilter: nur Eingabe/Löschung in explizit betroffenen gültigen Planungszeitstempeln korrigiert den Wochentag innerhalb derselben Transaktion. Cursor/Auswahl werden mitgeführt; History, Laden und Planertransaktionen bleiben unbeeinflusst. Vollständigen Parserbaum und bestehenden Kontext/Parser verwenden, keine Timer oder Hintergrundmigration. Normale Bodyeingabe löst keine Metadatenauswertung aus.
+
+## M6a kompakte Darstellung — 2026-11-07
+
+Kalenderadapter erhält kompakte drei Monatsgruppen mit gemeinsamer Auswahl und vorhandenen Eingabe-/Fokus-/Cleanupregeln. Editor-Dekorationen nutzen den bestehenden Planungsparser, keine zweite Regex-Wahrheit: nur gültige zugeordnete Metadaten, Wortbereich und vollständiger Zeitstempel getrennt markieren. Theme-Tokens und explizite Nachfahrenfarben gegen Syntaxüberschreibung verwenden. Dekoration bleibt Ansicht ohne Text-/Historyänderung. M7 kann später denselben Zeitstempelbereich an eine Tagesagenda binden; kein Clickhandler oder Index in dieser Korrektur.
+
+`planning-highlight.mjs` hält Records über schwache Dokument-/Baum-/Regelreferenzen im Cache; Cursor-/Viewport-/Themewechsel starten keine vollständige Metadatenauswertung. Nur sichtbare Markbereiche ausgeben, nach Parserfortschritt neu aufbauen. Monatsbreite und Tageszellen verwenden dieselbe Editorschrift für konsistente ch-Maße. Ein gemeinsamer Tages-Tabstop über drei Monate, enge lokale Scrollfläche statt großflächig gedehnter Tageszellen.
+
+## M6a — 2026-11-07
+
+Reiner Zeitstempelparser und lokaler Textplaner getrennt vom Kalenderpanel. Registry, Präfixpolicy und gemeinsame Panelhülle/Layoutschutz wiederverwenden; Formularmodus ergänzt bestehende Auswahlmodi. Kalenderarithmetik datumstreu ohne UTC-/Sommerzeitverschiebung. Ein aus Markdown rekonstruierbares Modell mit Heading-/Quelldaten bereitet spätere Agenda vor; kein persistenter Index oder zweite TODO-Verwaltung. Mehrdeutige Metadaten erhalten und verweigern. Abnahme und Modulgrenzen: M6A_SCHEDULING.md.
+
 ## TODO-Zyklusfortsetzung — 2026-11-07
 
 QA-Randfälle: Ein gebundener leerer Zustand wird in Kontext/Planer und Dekoration als leer behandelt, auch wenn das ursprüngliche erste Titelwort einem geladenen Status entspricht. So bleibt etwa `TODO DONE Titel` über alle Zyklusschritte textgetreu erhalten. Ein separater nichtkonsumierender Abbruchadapter vor dem Prefixrouter löscht die Fortsetzung bei Escape/C-g; der eigentliche Shift-Handler bleibt hinter dem Prefixrouter. Dadurch kann der Prefixabbruch den Cleanup nicht überholen.

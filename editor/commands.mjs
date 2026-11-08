@@ -1,4 +1,5 @@
 import {refileContext} from './refile.mjs';
+import {planningContext} from './planning.mjs';
 import {todoContext,todoDefinitionLine,todoCycleContext} from './todo.mjs';
 import {LIST_COMMANDS,planListInteraction} from './list-interaction.mjs';
 import {planStructure} from './structure.mjs';
@@ -21,6 +22,10 @@ function add(id,name,category,description,context,unavailable,shortcut='') {cata
 add('workspace.choose','Test-Vault wählen / wechseln','Datei','Synthetischen lokalen Ordner wählen; bisherigen Entwurf sichern.','global',synthetic);
 add('workspace.grant','Ordnerrechte anfordern','Entwicklung','Bestehende Ordnerfreigabe erneut anfordern.','vault',vault);
 add('workspace.scan','Dateiliste aktualisieren','Datei','Markdown-Dateien im gewählten Test-Vault suchen.','vault',vault);
+add('agenda.refresh','Agenda-Index neu einlesen','Datei','Alle Markdown-Dateien des gewählten Vaults rein lesend neu indizieren; Editorentwurf erhalten.','vault',c=>synthetic(c)||vault(c));
+add('agenda.dispatch','Agenda öffnen','Agenda','Kompakten Dispatcher für Wochenagenda und TODO-Liste öffnen.','vault',c=>synthetic(c)||vault(c));
+add('agenda.week','Wochenagenda öffnen','Agenda','Gespeicherte Termine und Aufgaben von Montag bis Sonntag anzeigen.','vault',c=>synthetic(c)||vault(c));
+add('agenda.todo','TODO-Liste öffnen','Agenda','Offene Überschriftenaufgaben im Vault anzeigen; abgeschlossene Zustände optional einblenden.','vault',c=>synthetic(c)||vault(c));
 add('file.open','Ausgewählte Datei öffnen','Datei','Datei aus der Dateiauswahl laden; Undo-Grenze neu beginnen.','vault',c=>synthetic(c)||vault(c)||(!c.file?'Bitte eine Markdown-Datei in der Dateiauswahl wählen.':''));
 add('file.save','Datei speichern','Datei','Explizit mit vorhandener Sicherungs- und Konfliktprüfung speichern.','document',c=>synthetic(c)||documentReason(c),'Strg+S');
 add('file.check','Datei auf externe Änderungen prüfen','Entwicklung','Dateirechte und externe Änderungen prüfen.','document',documentReason);
@@ -56,6 +61,7 @@ for(const [id,name,down,shortcut,orgShortcut] of [['line-up','Zeile nach oben',f
   Object.assign(catalog.at(-1),{orgShortcut,compatibility:'Org/Emacs-Zeilenbewegung bei einzelnem Cursor; Code-/Frontmatter-Grenzen zusätzlich geschützt, keine Regionen.'});
 }
 add('structure.refile-h1','Teilbaum unter H1 verschieben','Überschriften','Aktuellen Teilbaum als letztes Kind unter H1 dieser Datei verschieben; keine Regionen.','editor',c=>documentReason(c)||refileContext(c.state).message||'');
+for(const [id,name] of [['scheduled','Scheduling bearbeiten'],['deadline','Deadline bearbeiten']])add('planning.'+id,name,'Planung','Datum der aktuellen Überschrift wählen; vorhandene Uhrzeit erhalten. Uhrzeiten direkt im Zeitstempel bearbeiten.','editor',c=>documentReason(c)||planningContext(c.state).message||'');
 add('todo.status','Aufgabenstatus wählen','Aufgaben','Status dieser H1–H6-Überschrift wählen; Kinder und Eltern behalten ihren eigenen Status.','editor',c=>documentReason(c)||todoContext(c.state).message||'');
 add('todo.reload','TODO-Regeln neu laden','Aufgaben','Dateilokale SEQ_TODO-Definition laden; Fehler behalten letzte gültige Regeln.','editor',c=>documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':c.state.selection.ranges.length!==1||!c.state.selection.main.empty?'Nur ein Cursor ohne Auswahl.':!todoDefinitionLine(c.state)?'Cursor muss auf der SEQ_TODO-Zeile stehen.':''));
 for(const [id,name,shortcut] of [['previous','Vorheriger Aufgabenstatus','Umschalt+Links'],['next','Nächster Aufgabenstatus','Umschalt+Rechts']])add('todo.'+id,name,'Aufgaben','Status auf der Aufgabenüberschrift wechseln; Textauswahl hat Vorrang.','editor',c=>documentReason(c)||todoCycleContext(c.state).message||'',shortcut);
@@ -63,7 +69,7 @@ for(const {id,key,label} of PREFIX_BINDINGS){const command=catalog.find(c=>c.id=
 for(const id of ['heading-up','heading-down']) Object.assign(catalog.find(c=>c.id==='structure.'+id),{shortcut:id==='heading-up'?'Alt+Oben':'Alt+Unten',orgShortcut:id==='heading-up'?'M-UP':'M-DOWN',compatibility:'Org-Unterbaumtausch nur mit gleichrangigem Geschwister innerhalb derselben Elterngrenze.'});
 export const COMMAND_METADATA=Object.freeze(catalog.map(c=>Object.freeze(c)));
 export function commandDefinitions(handlers) {
-  return COMMAND_METADATA.map(command=>({...command,execute:(_context,args)=>{
+  return COMMAND_METADATA.map(command=>({...command,unavailable:context=>context.agendaActive&&!command.id.startsWith('agenda.')?'Agenda zuerst schließen.':command.unavailable(context),execute:(_context,args)=>{
     const handler=handlers[command.id];
     if(!handler) throw Error('Command-Handler fehlt: '+command.id);
     return handler(args);
