@@ -4,9 +4,13 @@ Minimalistischer, lokaler Markdown-Workspace, inspiriert von Org-mode, Obsidian,
 
 ## Status
 
-**Aktuell: Phase 2 M4b.1 einschließlich Alt-Tastaturkorrektur.** Gemeinsame Command Registry, Palette über Alt+X, Editor-Kontextmenü und Org-referenzierte Strukturkürzel. [Bedienung und Grenzen](docs/ORG_KEYBOARD_M4B1.md), [Command Gamebook](docs/COMMAND_GAMEBOOK.md), [Projektstatus](docs/PROJECT_STATUS.md). Developer und unabhängige QA: 110/110 Tests und Build bestanden. PO berichtet erfolgreiche Bedienprobe ohne aktuell festgestellte Bugs. Start: `npm start`, in Edge `http://127.0.0.1:8766`; nur synthetische Ordner unter `test-vault/` wählen. M4b.2 und produktive Vaults bleiben gesperrt.
+**Aktuell: private Alpha für praktische Erfahrung.** Lokaler Markdown-Editor mit Org-artiger Struktursteuerung, TODO-Workflows, SCHEDULED/DEADLINE, vaultweitem Agenda-Index und Wochen-/TODO-Ansicht. **C-c f** öffnet die Pfadeingabe zum Öffnen vorhandener oder leeren Anlegen neuer Markdown-Dateien; Tab vervollständigt. Tastensequenz: Strg+C, C und Strg loslassen, dann f.
 
-### Historie bis M3.2b
+Ein separater privater Vault ist für den bewusst bestätigten Pilotbetrieb freigegeben: ein Editor pro Vault und unabhängiges Backup. Das bekannte externe Schreibfenster bleibt; Tests und Entwicklungsagenten verwenden weiterhin ausschließlich synthetische Daten. [Alpha-Einstieg und Grenzen](docs/ALPHA.md), [Command Gamebook](docs/COMMAND_GAMEBOOK.md), [aktueller Prüfstand](docs/PROJECT_STATUS.md). Lokal: `npm start`, in Edge `http://127.0.0.1:8766`. Die bestehende Pages-Pipeline veröffentlicht nur den Anwendungsbuild; private Vaults außerhalb des öffentlichen Repositories halten.
+
+### Historische Abschlüsse
+
+**M4b.1 einschließlich Alt-Tastaturkorrektur.** Gemeinsame Command Registry, Palette über Alt+X, Editor-Kontextmenü und Org-referenzierte Strukturkürzel. [Bedienung und Grenzen](docs/ORG_KEYBOARD_M4B1.md). Damals Developer/QA110/110 Tests und Build grün; damalige synthetisch-only Produktgrenze durch die begrenzte Alpha-Freigabe oben ersetzt. Frühere Freigabesperren darunter sind historisch, aktueller Stand in PROJECT_STATUS.md.
 
 **Aktuell: M3.2b — Textformatierung und kräftigere Überschriftenfarben.** Fünf Auswahlformatierungen, sichere Toggles und zentrale H1–H6-Paletten in vier Themes. [Anleitung, Tests und Grenzen](docs/FORMATTING_M32B.md). Start `npm start`, dann `http://127.0.0.1:8766`; synthetische Probe `test-vault/vault-structure/formatting.md`. Keine neue Einrückung, Sprachbibliothek oder Storageänderung.
 

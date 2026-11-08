@@ -15,18 +15,19 @@ import {PREFIX_BINDINGS} from './emacs-policy.mjs';
 
 const documentReason=c=>c.busy?'Ein Vorgang läuft.':!c.hasDocument?'Bitte zuerst eine Datei öffnen.':'';
 const idle=c=>c.busy?'Ein Vorgang läuft.':'';
-const synthetic=c=>idle(c)||(!c.synthetic?'Synthetischen Test-Vault zuerst bestätigen.':'');
-const vault=c=>idle(c)||(!c.vault?'Bitte zuerst einen Test-Vault wählen.':'');
+const synthetic=c=>idle(c)||(!c.synthetic?'Alpha-Nutzungshinweis zuerst bestätigen.':'');
+const vault=c=>idle(c)||(!c.vault?'Bitte zuerst einen Vault wählen.':'');
 const catalog=[];
 function add(id,name,category,description,context,unavailable,shortcut='') {catalog.push({id,name,category,description,context,unavailable,shortcut});}
-add('workspace.choose','Test-Vault wählen / wechseln','Datei','Synthetischen lokalen Ordner wählen; bisherigen Entwurf sichern.','global',synthetic);
+add('workspace.choose','Vault wählen / wechseln','Datei','Separaten Alpha-Vault wählen; bisherigen Entwurf sichern.','global',synthetic);
 add('workspace.grant','Ordnerrechte anfordern','Entwicklung','Bestehende Ordnerfreigabe erneut anfordern.','vault',vault);
-add('workspace.scan','Dateiliste aktualisieren','Datei','Markdown-Dateien im gewählten Test-Vault suchen.','vault',vault);
+add('workspace.scan','Dateiliste aktualisieren','Datei','Markdown-Dateien im gewählten Vault suchen.','vault',vault);
 add('agenda.refresh','Agenda-Index neu einlesen','Datei','Alle Markdown-Dateien des gewählten Vaults rein lesend neu indizieren; Editorentwurf erhalten.','vault',c=>synthetic(c)||vault(c));
 add('agenda.dispatch','Agenda öffnen','Agenda','Kompakten Dispatcher für Wochenagenda und TODO-Liste öffnen.','vault',c=>synthetic(c)||vault(c));
 add('agenda.week','Wochenagenda öffnen','Agenda','Gespeicherte Termine und Aufgaben von Montag bis Sonntag anzeigen.','vault',c=>synthetic(c)||vault(c));
 add('agenda.todo','TODO-Liste öffnen','Agenda','Offene Überschriftenaufgaben im Vault anzeigen; abgeschlossene Zustände optional einblenden.','vault',c=>synthetic(c)||vault(c));
 add('file.open','Ausgewählte Datei öffnen','Datei','Datei aus der Dateiauswahl laden; Undo-Grenze neu beginnen.','vault',c=>synthetic(c)||vault(c)||(!c.file?'Bitte eine Markdown-Datei in der Dateiauswahl wählen.':''));
+add('file.find','Datei öffnen/anlegen','Datei','Vault-relativen Markdown-Pfad vervollständigen und öffnen oder eine fehlende Datei leer anlegen.','vault',c=>synthetic(c)||vault(c));
 add('file.save','Datei speichern','Datei','Explizit mit vorhandener Sicherungs- und Konfliktprüfung speichern.','document',c=>synthetic(c)||documentReason(c),'Strg+S');
 add('file.check','Datei auf externe Änderungen prüfen','Entwicklung','Dateirechte und externe Änderungen prüfen.','document',documentReason);
 add('draft.list','Browser-Entwürfe auflisten','Wiederaufnahme','Entwürfe dieses Browsers und Origins auflisten.','global',idle);
@@ -69,7 +70,7 @@ for(const {id,key,label} of PREFIX_BINDINGS){const command=catalog.find(c=>c.id=
 for(const id of ['heading-up','heading-down']) Object.assign(catalog.find(c=>c.id==='structure.'+id),{shortcut:id==='heading-up'?'Alt+Oben':'Alt+Unten',orgShortcut:id==='heading-up'?'M-UP':'M-DOWN',compatibility:'Org-Unterbaumtausch nur mit gleichrangigem Geschwister innerhalb derselben Elterngrenze.'});
 export const COMMAND_METADATA=Object.freeze(catalog.map(c=>Object.freeze(c)));
 export function commandDefinitions(handlers) {
-  return COMMAND_METADATA.map(command=>({...command,unavailable:context=>context.agendaActive&&!command.id.startsWith('agenda.')?'Agenda zuerst schließen.':command.unavailable(context),execute:(_context,args)=>{
+  return COMMAND_METADATA.map(command=>({...command,unavailable:context=>context.filePickerActive?'Dateidialog zuerst schließen.':context.agendaActive&&!command.id.startsWith('agenda.')?'Agenda zuerst schließen.':command.unavailable(context),execute:(_context,args)=>{
     const handler=handlers[command.id];
     if(!handler) throw Error('Command-Handler fehlt: '+command.id);
     return handler(args);

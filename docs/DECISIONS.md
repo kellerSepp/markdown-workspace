@@ -1,5 +1,9 @@
 # Architekturentscheidungen
 
+## Alpha / Datei öffnen-anlegen — PO-Freigabe 2026-11-08
+
+PO akzeptiert **C-c f** statt Konflikt mit C-x Ausschneiden und verlangt einen kleinen sichtbaren Hinweis/Tooltip. Privater Alpha-Pilotbetrieb auf separatem Vault für praktische Erfahrung ist freigegeben; keine parallele/doppelte Bearbeitung geplant. Diese Freigabe ersetzt die synthetisch-only Produktgrenze nur für den bewusst gewählten Nutzer-Alpha-Vault. Agenten/QA bleiben bei synthetischen Daten. Das bekannte externe Schreibfenster bleibt bestehen, keine neue atomare Sicherheitsgarantie. Begrenzter Pfad-/Dateianlageumfang und Abnahme: [PLAN_FIND_FILE.md](PLAN_FIND_FILE.md). Keine neue Storage-Sicherheitsstrategie, Dependencies/Commit/Push/Deploy oder Folgefunktionen freigegeben.
+
 ## M7b — PO-Freigabe 2026-11-08
 
 Freigegeben: Org-artige Agendaoberfläche und Quellnavigation auf M7a, Dispatcher C-c a mit a Woche/t TODO, deutsche ISO-Woche Montag–Sonntag, lokale Tastatur-/Mausnavigation, offener TODO-Filter mit optional abgeschlossenen Zuständen, Refresh und Diagnose. Referenzbilder images/agenda_menue.png, agenda-week-example.png und Agenda_todo_examples.png. Keine zweite TODO-Verwaltung, Indexsystem, neue Formate oder Storage-Sicherheitsänderung. Match/Suche nur sichtbar geplant, kein Follow Mode/Wiederholungen/Drag-drop/Benachrichtigungen/Dependencies/Commit/Push. Nach Bericht stoppen; keine Folgefreigabe ableiten.

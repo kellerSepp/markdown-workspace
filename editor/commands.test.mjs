@@ -25,7 +25,7 @@ test('Registry prüft IDs, sucht alle Metadaten und prüft Kontext beim Ausführ
 test('Registrierte Befehle unterscheiden fehlende Datei, Busy, Auswahl, Code, H1/H6 und Undo',()=>{
   let context=base(state('# Titel\nText'));const handlers=Object.fromEntries(COMMAND_METADATA.map(c=>[c.id,()=>true]));
   const registry=createCommandRegistry(commandDefinitions(handlers),()=>context);
-  assert.equal(registry.list().length,83);
+  assert.equal(registry.list().length,84);
   assert.equal(registry.availability('structure.heading-promote').enabled,false);
   assert.equal(registry.availability('structure.heading-demote').enabled,true);
   assert.equal(registry.availability('format.bold').enabled,false);

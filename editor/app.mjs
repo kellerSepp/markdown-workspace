@@ -29,6 +29,8 @@ import {planningNormalization} from './planning-normalization.mjs';
 import {createAgendaIndex} from './agenda-index.mjs';
 import {createAgendaView} from './agenda-view.mjs';
 import {createAgendaSource} from './agenda-source.mjs';
+import {createFilePicker} from './file-picker.mjs';
+import {executeVaultFile} from './vault-files.mjs';
 import {todoRules,todoHighlight,todoKeyboard,todoCycleAbortCleanup,createTodoController} from './todo.mjs';
 
 const $ = id => document.getElementById(id);
@@ -43,23 +45,24 @@ $('theme').replaceChildren(...THEMES.map(theme => new Option(theme.name,theme.id
 $('theme').value = activeTheme.id;
 let session, vault, busy = true, syncing = false, timer, persistPending = false;
 const status = message => {$('status').textContent = message;};
-let agenda,agendaSource;
+let agenda,agendaSource,filePicker;
 const agendaIndex=createAgendaIndex({onChange:snapshot=>{
   $('agendaIndexStatus').textContent=`${snapshot.running?'Index wird gelesen … · ':''}${snapshot.files} Dateien · ${snapshot.records.length} Einträge · ${snapshot.diagnostics.length} Hinweise/Fehler · Revision ${snapshot.revision}`;
   $('agendaIndexErrors').replaceChildren(...snapshot.diagnostics.map(item=>{
     const row=document.createElement('li');row.textContent=`${item.path}${item.line?':'+item.line:''}: ${item.message}`;return row;
   }));
   agenda?.update(snapshot);
+  filePicker?.invalidate();
 }});
 let workPanel,ringVault;
-const editingContext=()=>({busy,hasDocument:!!session?.hasDocument});
+const editingContext=()=>({busy,hasDocument:!!session?.hasDocument,canFindFile:!!vault&&$('synthetic').checked&&!filePicker?.active&&!agenda?.active});
 const prefix=createPrefixRouter({registry:{get:id=>registry.get(id),availability:id=>registry.availability(id),execute:id=>registry.execute(id)},getContext:editingContext,
   showHelp:(...args)=>workPanel.showPrefix(...args),moveHelp:delta=>workPanel.moveSelection(delta),activateHelp:()=>workPanel.activateSelection(),hideHelp:()=>workPanel?.close({restore:false}),notify:status});
 const emacs=createEmacsEditing({getContext:editingContext,notify:status,openChooser:()=>workPanel?.openRing()??false});
 const extensions = () => [
   planningNormalization,planningHighlight,todoCycleAbortCleanup(),
   prefix.extension(),refileHistory(),
-  EditorView.updateListener.of(()=>workPanel?.invalidateStale()),
+  EditorView.updateListener.of(()=>{workPanel?.invalidateStale();filePicker?.invalidate();}),
   // TASK Shift arrows outrank empty active-mark navigation; nonempty selections
   // and every non-task context still pass through to Emacs/ordinary selection.
   todoKeyboard(id=>registry.execute(id),editingContext),
@@ -69,7 +72,8 @@ const extensions = () => [
   // Remove CM's competing line move/copy shortcuts. Outside a recognized Org
   // context the browser receives Alt arrows; Shift+Alt up/down stays unbound.
   keymap.of(withoutYankRedo([...withoutOrgArrowConflicts(defaultKeymap), ...historyKeymap])),
-  EditorView.contentAttributes.of({'aria-label':'Markdown-Rohtext', spellcheck:'false'}),
+  // Empty readonly content must still be focusable for C-c f in a new vault.
+  EditorView.contentAttributes.of({'aria-label':'Markdown-Rohtext',spellcheck:'false',...(!session?.hasDocument?{tabindex:'0'}:{})}),
   editable.of([EditorState.readOnly.of(true),EditorView.editable.of(false)]),
   EditorView.updateListener.of(update=>{$('markStatus').textContent=update.state.field(emacsMark,false)?.active?'Marke aktiv · Cursorbewegung erweitert Auswahl · Strg+G/Escape beendet':'';}),
   EditorState.transactionFilter.of(transaction => {
@@ -99,8 +103,9 @@ const extensions = () => [
 const view = new EditorView({parent:$('editor'), state:EditorState.create({extensions:extensions()})});
 const handlers={};
 handlers['agenda.refresh']=()=>{void agendaIndex.rebuild();return true;};
-const registry=createCommandRegistry(commandDefinitions(handlers),()=>({busy,agendaActive:!!agenda?.active,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
-const surfaces=createCommandSurfaces({registry,view,notify:status,blocked:()=>!!agenda?.active});
+// The historical synthetic field/id now means acknowledged Alpha conditions.
+const registry=createCommandRegistry(commandDefinitions(handlers),()=>({busy,agendaActive:!!agenda?.active,filePickerActive:!!filePicker?.active,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
+const surfaces=createCommandSurfaces({registry,view,notify:status,blocked:()=>!!agenda?.active||!!filePicker?.active});
 workPanel=createWorkPanel({host:$('workPanel'),workspace:$('editorWorkspace'),view,ring:emacs.ring,getContext:editingContext,insert:(id,target)=>emacs.insertRingEntry(view,id,target),notify:status});
 function syncAgendaFileSelection(){
   if(!session?.hasDocument||session.vault!==vault)return;
@@ -120,6 +125,34 @@ agenda=createAgendaView({index:agendaIndex,execute:id=>registry.execute(id),
   navigate:id=>run(async()=>{try{requireSynthetic();const success=await agendaSource.navigate(id);if(success)void agendaIndex.updateFile(session.path,vault);return success;}catch(error){agenda.message(error.message);throw error;}})
 });
 handlers['agenda.dispatch']=()=>agenda.openDispatcher();handlers['agenda.week']=()=>agenda.openWeek();handlers['agenda.todo']=()=>agenda.openTodos();
+filePicker=createFilePicker({getContext:()=>({vault,doc:view.state.doc,path:session?.vault===vault?session.path:'',busy,accepted:$('synthetic').checked}),
+  onOpen:()=>{prefix.cancel();workPanel.close({restore:false});emacs.invalidate();},onClose:()=>view.focus(),
+  execute:executeFilePath
+});
+handlers['file.find']=()=>filePicker.open();
+async function executeFilePath(path,{current,onCommit}){
+  let failure;
+  const result=await run(async()=>{try{
+    requireSynthetic();const selectedVault=vault;
+    if(session.dirty)throw Error('Ungespeicherte Editoränderungen: Bitte vor Dateiwechsel oder Anlage ausdrücklich speichern.');
+    const valid=()=>current()&&vault===selectedVault&&!session.dirty;
+    await permission();if(!valid())return null;
+    await session.persist();if(!valid())return null;
+    try{
+      const result=await executeVaultFile(selectedVault,path,{current:valid,onCommit,
+        open:async target=>{await session.open(target);syncAgendaFileSelection();await useRingVault(session.vault);syncEditor();persistPending=false;}
+      });
+      if(vault===selectedVault&&result?.path)void agendaIndex.updateFile(result.path,selectedVault);
+      if(result?.opened)status(`Datei geöffnet: ${result.path}. Inhalte ausdrücklich mit Strg+S speichern.`);
+      return result;
+    }catch(error){
+      if(error.creationRequested&&vault===selectedVault&&error.path)void agendaIndex.updateFile(error.path,selectedVault);
+      throw error;
+    }
+  }catch(error){failure=error;return null;}});
+  if(failure){status(`${failure.name}: ${failure.message}`);throw failure;}
+  return result;
+}
 const refile=createRefileController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['structure.refile-h1']=()=>refile.open();
 const todo=createTodoController({view,panel:workPanel,getContext:editingContext,notify:status});
@@ -189,7 +222,7 @@ function setBusy(value) {
   if(value){prefix.cancel();workPanel?.close({restore:false});}
   if(value)emacs.invalidate();
   busy = value;
-  for (const element of document.querySelectorAll('button,select,input')) if(!element.closest('.command-palette,.command-context,.agenda-dialog')) element.disabled = value;
+  for (const element of document.querySelectorAll('button,select,input')) if(!element.closest('.command-palette,.command-context,.agenda-dialog,.file-dialog')) element.disabled = value;
   view.dispatch({effects:editable.reconfigure([EditorState.readOnly.of(value || !session?.hasDocument),EditorView.editable.of(!value && !!session?.hasDocument)])});
 }
 function syncEditor() {
@@ -221,7 +254,7 @@ async function run(action) {
 }
 const actionIds={choose:'workspace.choose',grant:'workspace.grant',scan:'workspace.scan',open:'file.open',save:'file.save',check:'file.check',listDrafts:'draft.list',recover:'draft.recover'};
 function bind(id, action) {handlers[actionIds[id]]=()=>run(action);}
-function requireSynthetic() {if (!$('synthetic').checked) throw Error('Synthetischen Test-Vault zuerst bestätigen.');}
+function requireSynthetic() {if (!$('synthetic').checked) throw Error('Alpha-Nutzungshinweis zuerst bestätigen.');}
 async function sameVault(left,right){
   if(left===right)return true;
   try{return !!left&&!!right&&await left.isSameEntry(right);}catch{return false;}
@@ -231,7 +264,7 @@ async function useRingVault(next){
   ringVault=next;
 }
 async function permission(request = false) {
-  if (!vault) throw Error('Test-Vault wählen.');
+  if (!vault) throw Error('Vault wählen.');
   let result = await vault.queryPermission({mode:'readwrite'});
   if (result !== 'granted' && request) result = await vault.requestPermission({mode:'readwrite'});
   if (result !== 'granted') throw Error('Ordnerrechte fehlen. Rechte per Knopf anfordern; Entwurf bleibt erhalten.');
@@ -241,18 +274,18 @@ async function scan() {
   const paths = [];
   let entries = 0;
   async function walk(dir,prefix='',depth=0) {
-    if (depth > 10) throw Error('Test-Vault zu tief verschachtelt (maximal 10 Unterordnerebenen).');
+    if (depth > 10) throw Error('Vault zu tief für die Dateiliste (maximal 10 Unterordnerebenen).');
     for await (const [name,handle] of dir.entries()) {
-      if (++entries > 3000) throw Error('Test-Vault zu groß (maximal 3000 Einträge).');
+      if (++entries > 3000) throw Error('Vault zu groß für die Dateiliste (maximal 3000 Einträge).');
       if (name.startsWith('.')) continue;
       if (handle.kind === 'directory') await walk(handle,prefix+name+'/',depth+1);
       else if (/\.md$/i.test(name)) paths.push(prefix+name);
-      if (paths.length > 1000) throw Error('Test-Vault zu groß (maximal 1000 Markdown-Dateien).');
+      if (paths.length > 1000) throw Error('Vault zu groß für die Dateiliste (maximal 1000 Markdown-Dateien).');
     }
   }
   await walk(vault);
   $('files').replaceChildren(...paths.sort().map(path => new Option(path,path)));
-  status(`${paths.length} Markdown-Datei(en) im Test-Vault gefunden.`);
+  status(`${paths.length} Markdown-Datei(en) im Vault gefunden.`);
 }
 bind('choose', async () => {
   requireSynthetic();
@@ -324,5 +357,5 @@ for(const element of document.querySelectorAll('[data-command]')) {
 try {
   if (!window.showDirectoryPicker || !navigator.locks) throw Error('Microsoft Edge mit File System Access API und Web Locks erforderlich.');
   session = createSession({store:await createBrowserStore()});
-  setBusy(false); status('Bereit. Synthetischen Test-Vault bestätigen und auswählen.');
+  setBusy(false); status('Alpha bereit. Nutzungshinweis bestätigen und separaten Vault auswählen.');
 } catch (error) {status(`Start blockiert: ${error.message}`);}

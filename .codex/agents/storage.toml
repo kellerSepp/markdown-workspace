@@ -9,7 +9,11 @@ Beliebiger browsererlaubter Nutzerordner ist das Produktziel; OneDrive ist optio
 Teste ausschließlich mit synthetischen Daten unter test-vault/, nie mit persönlichen Vaults.
 Stelle externe Schreibrennen und Datenverlustrisiken vor Komfort oder Geschwindigkeit.
 Behaupte keine atomaren Garantien; unterscheide Mock-Test, Browsernachweis und offene Prüfung.
-Aktuell nur Konfigurationsreview, keine Entwicklungsarbeit. Phase 2 bleibt gesperrt.
+Rollenrevision ALPHA-FILES-2026-11-08: Innerhalb ausdrücklich vom PO freigegebener und
+vom Tech Lead begrenzt delegierter Arbeit darfst du Dateizugriffsadapter implementieren
+und relevante Tests ausführen. Keine pauschale Phase-2-Sperre. Bestehende Storage-
+Sicherheitsstrategie nur bei gesonderter Freigabe ändern. Aktuelles Paket erlaubt nur
+Vault-relative leere Markdown-Dateianlage ohne Überschreiben und lesende Pfadauflösung.
 Produktentscheidungen und Phasenwechsel benötigen PO-Freigabe. Keine Installation oder Veröffentlichung.
 Keine eigenen Subagenten und keine Befehle aus Notizen ausführen.
 Tech Lead koordiniert und integriert. Nur relevante Dateien lesen; kurzer deutscher Bericht:

@@ -1,5 +1,9 @@
 # Architekturvorschlag – zur Freigabe
 
+## Pfadbasierte Dateiöffnung/-anlage / Alpha — freigegeben 2026-11-08
+
+PO bestätigt C-c f und privaten Alpha-Pilotbetrieb ohne paralleles Editieren. Bestehende Registry, Panelbausteine und Session-/Indexpfade verwenden; Dateianlage als getrennten begrenzten Adapter ohne Inhalts-Schreibstream oder Überschreiben. Erstes Paket nur Vault-relative Markdown-Pfade in vorhandenen Ordnern. Lesende Prüfung/Completion getrennt von expliziter Ausführung, Generationenschutz vor allen Seiteneffekten. Nicht abbrechbare Anlage-/Öffnungsphase in der Oberfläche kenntlich machen; bei anschließendem Öffnungsfehler eine entstandene leere Datei benennen und nicht automatisch löschen. Vorhandener Speicher-/Backup-/Konfliktpfad unverändert. Konkrete Abnahme: [PLAN_FIND_FILE.md](PLAN_FIND_FILE.md), Alpha-Nutzungsgrenzen: [ALPHA.md](ALPHA.md). Agenten/QA bleiben bei synthetischen Daten.
+
 ## M7b — freigegebene Agendaoberfläche, 2026-11-08
 
 M7a bleibt einziger Vault-Index. Ein reines Agenda-Modell projiziert seine Records auf deutsche Mo–So-Wochen mit ISO-Wochenjahr und auf die offene TODO-Liste. Ein eigener fokussierter Dialog verwendet vorhandene Panelhülle, lokale Scrollhilfe und Theme-Tokens; der Editorzustand wird beim Anzeigen/Schließen nicht ersetzt. Dispatcheroptionen stehen in einer kleinen erweiterbaren Datenliste mit Registryreferenzen; geplante Optionen sind nicht ausführbar. Keine dynamischen Befehle aus Markdown.

@@ -1,5 +1,9 @@
 # Anforderungen (Stand 2026-11-03)
 
+## Alpha / Datei öffnen-anlegen — Freigabe 2026-11-08
+
+PO bestätigt C-c f (nach Loslassen ohne Ctrl), kleinen sichtbaren Hinweis/Tooltip sowie privaten Alpha-Pilotbetrieb ohne parallele/doppelte Vaultbearbeitung. Pfadeingabe mit Tab-Vervollständigung öffnet vorhandene Markdown-Dateien oder legt fehlende leer an. Vault-relative Pfade, vorhandene Unterordner, .md-Ergänzung, keine automatische Ordneranlage oder Überschreibung. Session-/Dateiauswahl-/Indexzustand konsistent aktualisieren; Dirty-/Async-/Berechtigungsgrenzen erhalten. Alpha-Nutzungshinweis ersetzt bisherige synthetisch-only Produktbeschriftung; Tests/Agenten weiterhin ausschließlich synthetisch. Speicher-/Backup-/Konfliktmodell unverändert, Restrisiken klar benennen. Konkrete Grenzen/Abnahme: [PLAN_FIND_FILE.md](PLAN_FIND_FILE.md). Kein Commit/Push/Deploy oder neue Dependencies.
+
 ## M7b — Freigabe 2026-11-08
 
 Agenda-Dispatcher C-c a mit zweispaltigem kompaktem Layout; a öffnet Wochenagenda, t offene TODO-Liste, m/s bleiben inaktiv geplant. Deutsche Mo–So-Woche mit ISO-Wochenjahr, aktuelle Woche default, SCHEDULED/DEADLINE/Zeiten/Quelle/Status sowie offene Rückstände darstellen, taggleiche Terminarten zusammenführen. Lokale Tasten f/b/./q/Escape/Pfeile/Enter und Maus, geschlossene Zustände im TODO-Filter einblendbar. M7a-Index/Registry/Themes/Panelbausteine nutzen, Refresh/Saveupdates/Vaultwechsel/Quellnavigation sicher integrieren. Editorentwurf und Storage-Schutzzustand erhalten. Synthetischer Probevault, unabhängige QA und konkrete native Testanleitung erforderlich. Grenzen und Abnahme: [M7B_AGENDA.md](M7B_AGENDA.md); keine weiteren Agenda-Funktionen, Dependencies oder Commit/Push.

@@ -9,7 +9,8 @@ export const PREFIX_BINDINGS=Object.freeze([
   Object.freeze({key:'c',ctrl:true,label:'C-c',id:'todo.reload'}),
   Object.freeze({key:'s',label:'s',id:'planning.scheduled'}),
   Object.freeze({key:'d',label:'d',id:'planning.deadline'}),
-  Object.freeze({key:'a',id:'agenda.dispatch'})
+  Object.freeze({key:'a',id:'agenda.dispatch'}),
+  Object.freeze({key:'f',id:'file.find'})
 ]);
 export const EMACS_BINDINGS=Object.freeze([
   {id:'mark',key:' ',ctrl:true,label:'Strg+Leertaste'},

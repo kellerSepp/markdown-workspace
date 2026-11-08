@@ -70,7 +70,7 @@ test('Busy/read-only/missing document/focus and changed state refuse stale keybo
 });
 test('Registry availability is checked again, including blocked folding context; help reports reasons',()=>{
   const f=fixture();f.view.state=EditorState.create({doc:'plain',extensions:markdown()});f.start();
-  assert.ok(f.shown.choices.filter(c=>c.id!=='agenda.dispatch').every(c=>!c.enabled&&c.reason));assert.equal(f.shown.choices.find(c=>c.id==='agenda.dispatch').enabled,true);f.release();f.down('1');assert.deepEqual(f.calls,[]);assert.ok(f.notices.length);
+  assert.ok(f.shown.choices.filter(c=>!['agenda.dispatch','file.find'].includes(c.id)).every(c=>!c.enabled&&c.reason));assert.equal(f.shown.choices.find(c=>c.id==='agenda.dispatch').enabled,true);assert.equal(f.shown.choices.find(c=>c.id==='file.find').enabled,true);f.release();f.down('1');assert.deepEqual(f.calls,[]);assert.ok(f.notices.length);
   for(const mode of ['busy','missing','readonly']){const g=fixture();if(mode==='busy')g.context.busy=true;if(mode==='missing')g.context.hasDocument=false;if(mode==='readonly')g.view.state=EditorState.create({extensions:EditorState.readOnly.of(true)});g.start();assert.equal(g.router.active,false);}
 });
 test('Extension hooks cancel on blur, composition, mouse, selection/update and destruction; repeated lifecycle is bounded',()=>{

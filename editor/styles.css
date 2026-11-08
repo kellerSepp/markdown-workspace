@@ -90,3 +90,15 @@ code{background:var(--code-background);color:var(--text)}
 .agenda-panel details{margin:0;font-size:.8em;max-height:6em;overflow:auto}
 .agenda-panel details ul{margin:.15rem 0;padding-left:1.5em}
 @media(max-width:600px){.agenda-dialog{font-size:12px;height:85vh}.agenda-source{display:block}.agenda-dispatcher{gap:.1rem .25rem}}
+/* Vault file entry shares the compact themed panel shell. */
+.file-dialog{box-sizing:border-box;width:min(42rem,calc(100vw - 1rem));max-height:85vh;padding:.35rem;color:var(--text);background:var(--surface);border:1px solid var(--border);font:14px/1.4 var(--font-editor)}
+.file-dialog::backdrop{background:var(--background);opacity:.65}
+.file-panel{display:flex;flex-direction:column;height:auto;max-height:calc(85vh - 1rem);gap:.25rem;padding:.2rem;border:0}
+.file-panel label{font:inherit}
+.file-panel button{font:inherit;padding:.18rem .4rem}
+.file-panel input{padding:.25rem}
+.file-results{position:relative;min-height:0;max-height:35vh;overflow:auto;overflow-anchor:none}
+.file-panel .file-row{display:block;width:100%;text-align:left;overflow-wrap:anywhere;background:transparent;border:0;border-radius:0}
+.file-row[aria-selected=true]{background:var(--hover);outline:2px solid var(--focus);outline-offset:-2px}
+.file-target{margin:.2rem 0;overflow-wrap:anywhere;color:var(--accent)}
+@media(max-width:600px){.file-dialog{font-size:12px}}

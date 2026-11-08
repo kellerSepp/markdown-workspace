@@ -9,7 +9,7 @@ export {PREFIX_BINDINGS} from './emacs-policy.mjs';
 
 export function createPrefixRouter({registry,getContext=()=>({}),showHelp=()=>{},hideHelp=()=>{},moveHelp=()=>{},activateHelp=()=>{},notify=()=>{}}){
   let target=null,released=false;
-  const ready=view=>{const c=getContext();return view.hasFocus&&!c.busy&&c.hasDocument!==false&&!view.state.readOnly;};
+  const ready=view=>{const c=getContext();return view.hasFocus&&!c.busy&&((c.hasDocument!==false&&!view.state.readOnly)||(c.hasDocument===false&&c.canFindFile));};
   function cancel(){const active=!!target;target=null;released=false;if(active)hideHelp();}
   function choices(){return PREFIX_BINDINGS.map(binding=>({...binding,name:registry.get(binding.id).name,...registry.availability(binding.id)}));}
   function choose(view,key){

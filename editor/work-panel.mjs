@@ -178,7 +178,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     layout.setOpen(true,()=>{
       shell.show('C-c · Folgebefehl');search.hidden=true;
       root.setAttribute('data-prefix-help','');
-      hint.textContent='C und Strg loslassen · 1 / 2 / 3 / w / t / s (Scheduling) / d (Deadline) / a (Agenda); Strg+C: Regeln · Alt+↑/↓ wählen · Enter · Escape/Strg+G · Alt+W kopiert';
+      hint.textContent='C und Strg loslassen · 1 / 2 / 3 / w / t / s (Scheduling) / d (Deadline) / a (Agenda) / f (Datei); Strg+C: Regeln · Alt+↑/↓ wählen · Enter · Escape/Strg+G · Alt+W kopiert';
       message.textContent='';
       for(const choice of choices){
         const row=doc.createElement('button');row.type='button';row.className='work-panel-row';

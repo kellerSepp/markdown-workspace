@@ -1,5 +1,17 @@
 # Projektstatus
 
+## Alpha / C-c f implementiert — private PO-Probe, 2026-11-08
+
+Implementiert: C-c f und sichtbarer Knopf/Tooltip, kleiner themekonformer Pfaddialog mit Tab-/Kandidatensteuerung, vorhandene Markdown-Dateien öffnen oder fehlende leer anlegen. Alpha-Kennzeichnung und bestätigte Pilotbedingungen erlauben den vom PO gewählten separaten privaten Vault ohne parallele/doppelte Bearbeitung; Agenten/QA bleiben ausschließlich synthetisch. Storageadapter `vault-files.mjs` (Rollenrevision ALPHA-FILES-2026-11-08 bestätigt), UI `file-picker.mjs`, bestehende Registry/Prefix/Session-/Index-/Selectpfade wiederverwendet. Kein Eingriff in vorhandene Speicher-/Backup-/Konfliktimplementierung oder Pages-Pipeline. Details [PLAN_FIND_FILE.md](PLAN_FIND_FILE.md), Einstieg/Grenzen/native Testanleitung [ALPHA.md](ALPHA.md).
+
+Storage9/9 gezielte Tests; Developer/QA jeweils **324/324 Tests**, Build, sieben/neun Syntaxchecks und Diffcheck grün; QA **13 unabhängige Prüfgruppen**, kein belegter verbleibender Blocker im geprüften Umfang. Nach reinem Textnachtrag Commandtests7/7+Build/Syntax/Diffcheck grün. Tatsächliche Appcallbacks mit echter Session/Index/BusyGate sowie synthetischen Handles prüfen Byteerhalt, Dirty-/Permission-/Persistenz-/Abbruch-/Vaultgrenzen, nichtabbrechbare Anlage-/Öffnungsphase, Fehlerhinweise und Empty-Vault-Einstieg. Berichte: [Storage](../_Communication_Pipeline/storage_alpha_files.md), [Developer](../_Communication_Pipeline/developer_alpha_files.md), [QA](../_Communication_Pipeline/qa_alpha_files.md).
+
+**Nächste Aktion:** stoppen für native PO-Probe mit `test-vault/alpha-acceptance`, danach bewusst privaten Alpha-Vault außerhalb des öffentlichen Repositories wählen. Native/Permission/Zoom/AltGr/IME/Langzeit offen; bekanntes externes Schreibfenster bleibt. Nutzerseitig geänderte Agenda-Fixture und Emacs-Lockfiles erhalten. Keine persönlichen Vaults durch Agenten, keine Dependencies/Commit/Push/Deploy; Pagesänderung erst nach Veröffentlichung durch PO online.
+
+## Praktische Nutzung / Datei öffnen-anlegen — Gespräch 2026-11-08
+
+PO erwägt privaten separaten Vault und wünscht Pfadeingabe mit Tab-Vervollständigung zum Öffnen/Anlegen. Tatsächlichen Storage geprüft: Sicherung/Byteprüfung vorhanden, bekanntes externes Schreibfenster weiterhin offen, bisher synthetische Testvaultgrenze. Konkreter Vorschlag mit Abnahme: [PLAN_FIND_FILE.md](PLAN_FIND_FILE.md). **Nächste Aktion:** Tastaturkonflikt entscheiden: C-x ist bereits Ausschneiden, Lead empfiehlt C-c f statt stiller Änderung. Danach begrenzte Rollen-/Umsetzungsabgrenzung, Storageadapter separat; keine App-/Shortcut-/Storageänderung, reale Vaultfreigabe oder Commit/Push vorgenommen.
+
 ## M7b Dateiauswahl nach Agendasprung — gezielte Korrektur, 2026-11-08
 
 PO meldet positive erste Agenda-Sichtprobe, aber veraltete Dateiauswahl nach Quellöffnung. Gezielt korrigiert in `editor/app.mjs`: `#files` folgt der tatsächlich geladenen Sessiondatei nach erfolgreichem Öffnen beziehungsweise Sprung in derselben Datei. Fehlende Option als relativen Pfad ergänzen; Fehler/Dirty-Verweigerung ohne Dateiwechsel verändern die Auswahl nicht. Keine allgemeine Render-Synchronisierung, die bewusste Dateivorauswahl überschreiben könnte.
