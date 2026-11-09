@@ -1,5 +1,7 @@
 # Command Gamebook
 
+Aktuelle TODO-Farben (PO, 2026-11-09): offene/aktive Zustände rot, abgeschlossene Zustände grün, in allen Themes sowie Editor und Agenda. Frühere Angaben mit umgekehrter Farbzuordnung sind historisch. Statuslogik und Titelgestaltung bleiben erhalten.
+
 Alpha-Dateieinstieg 2026-11-08 implementiert und unabhängig geprüft: Developer/QA jeweils324/324 Tests, Build grün; QA13 Prüfgruppen. PO bestätigt C-c f für `file.find` und privaten Alpha-Pilotbetrieb. C-x bleibt Ausschneiden. Sichtbarer Mausknopf/Tooltip und Präfixhilfe zeigen die Folge; ein leerer Vault braucht kein schon geöffnetes Dokument für den Dateieinstieg. Native Probe offen. Konkrete Grenzen/Testanleitung: [PLAN_FIND_FILE.md](PLAN_FIND_FILE.md), [ALPHA.md](ALPHA.md).
 
 M7b-Nachtrag 2026-11-08: Agendaoberfläche implementiert und unabhängig geprüft, Developer/QA jeweils308/308 Tests, Build grün. `agenda.dispatch`, `agenda.week`, `agenda.todo` verwenden M7a; C-c a ist im Editor aktiviert. Dispatcher a/t, lokale f/b/./q/Escape/Pfeile/Enter/r und Maus; m/s nur geplant/inaktiv. Frühere Agenda-Planungssperren unten sind historisch. Native Probe offen. Abnahme und Grenzen: [M7B_AGENDA.md](M7B_AGENDA.md).
@@ -189,3 +191,15 @@ Kein Timer und keine automatische Ausführung. Wiederholung startet oder vollend
 Ergaenzung Prefixnavigation: Nach C-c und Loslassen waehlt Alt+Auf/Ab die naechste aktive Option mit Umlauf; Enter fuehrt einmalig aus. Deaktivierte Optionen zeigen den Sperrgrund und werden uebersprungen; ohne aktive Option keine Ausfuehrung. Linkes Alt allein erhaelt die Hilfe; rechtes Alt/AltGr und fremde Alt-Kombinationen brechen ab. Maus und Enter beachten das Loslass-Gate sowie aktuellen Registrykontext. Ring und Prefix verwenden denselben panelMove-Resolver, moveSelection/select und revealPanelRow. Fokus bleibt im Editor; ausserhalb der Hilfe bleiben Org-Alt-Pfeile erhalten. Alt+W-Hinweis bleibt auf PO-Wunsch bestehen. Native Browserprobe offen.
 
 | `structure.refile-h1` | Teilbaum unter H1 verschieben | Überschriften | ATX-Teilbaum als letztes H2-Kind unter H1 derselben Datei; relative Ebenen | Einzelner Cursor; kein Setext/Container; maximal H6 | Palette, Kontextmenü, Prefixpanel | C-c w (Editor) | Implementiert | Org-Original C-c C-w; Workspace: C und Strg loslassen, unmodifiziert w. PO meldete Tab-Schließen beim Original; neue native Zustellung und Mappingfix-QA offen. Alt+W bleibt Copy. |
+
+## Zeilenumbruch (2026-11-09)
+
+Befehl view.line-wrap: Alt+X → Zeilenumbruch umschalten oder C-c l (kleines L nach Loslassen von Strg). Sichtbarer Knopf zeigt an/aus. Standard an: visueller Wortumbruch an der Editorbreite; aus: horizontal scrollen. Einstellung nur im aktuellen Tab, bleibt bei Datei-/Vaultwechsel erhalten, Reload setzt auf an. Keine Text-, Dirty- oder Undoänderung; physische Zeilen und Strukturbefehle behalten ihre Bedeutung. Keine vollständige Emacs-visual-line-mode-Navigationssemantik.
+
+PO-Probe: Nach Strg+F5 langen synthetischen Absatz bei schmalem Fenster öffnen, per Knopf, Palette und C-c l umschalten; Tabelle/Code und geöffnetes Zusatzpanel prüfen. Auswahl, Undo/Redo und Dateiwechsel prüfen. Native Darstellung/Tastenzustellung noch offen.
+
+| `view.line-wrap` | Zeilenumbruch umschalten | Ansicht | Visueller Wortumbruch an/aus, ohne Textänderung | Kein laufender Vorgang | Palette; Knopf; Editorpräfix | C-c l | Implementiert | Standard an; Einstellung nur im Tab; native Probe offen. |
+
+## Statuszyklus auf neuen Überschriften (2026-11-09)
+
+PO-Korrektur: Shift+Rechts/Links startet jetzt auch auf unmarkierten normalen H1–H6 direkt auf der Überschriftenzeile, an jeder Cursorposition. Rechts wählt den ersten geladenen Zustand, links den letzten; danach umlaufend einschließlich Kein Status. Dateilokale SEQ_TODO-Regeln gelten. Nichtleere Auswahl hat Vorrang; Body, Code, Frontmatter, Container, Readonly, Busy, AltGr und IME bleiben geschützt. Frühere Beschränkungen auf bereits markierte Überschriften sind damit aufgehoben. Native PO-Probe nach Strg+F5 offen.

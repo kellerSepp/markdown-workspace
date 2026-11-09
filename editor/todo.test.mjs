@@ -63,7 +63,7 @@ test('TODO Shift arrows apply on entire task heading, preserve nonempty selectio
   for(const patch of [{ctrlKey:true},{altKey:true},{metaKey:true},{isComposing:true},{keyCode:229},{getModifierState:()=>true}])assert.equal(handler(event(patch),f.view),false);
   assert.equal(handler(event({}),f.view),true);assert.deepEqual(calls,['todo.next']);assert.equal(handler(event({repeat:true}),f.view),true);assert.equal(calls.length,1);
   f.view.dispatch({selection:{anchor:0,head:3}});assert.equal(handler(event({}),f.view),false);f.view.dispatch({selection:{anchor:16}});assert.equal(handler(event({}),f.view),false);
-  f.view.state=make('# Plain',5);assert.equal(handler(event({}),f.view),false);
+  f.view.state=make('# Plain',5);assert.equal(handler(event({}),f.view),true);
 });
 test('Definition reload only on actual declaration and one cursor; decorations distinguish open/closed without altering source',()=>{
   const doc='#+SEQ_TODO: TODO(t) | DONE(d)\n# TODO Parent\n## DONE Child\n```\n# TODO code\n```';const s=make(doc,3);assert.equal(todoDefinitionLine(s),true);const decorations=todoDecorations(s,[{from:0,to:s.doc.length}]),classes=[];decorations.between(0,s.doc.length,(_a,_b,d)=>classes.push(d.spec.class));assert.deepEqual(classes,['cm-todo-open','cm-todo-closed']);
@@ -100,7 +100,7 @@ test('Task colors contrast with all four editor surfaces and retain textual open
  const f=fixture('# TODO A',5);f.controller.open();assert.match(f.options.entries[1].text,/offen/);assert.match(f.options.entries[2].text,/abgeschlossen/);
 });
 
-test('Actual App handler order: TASK Shift arrows outrank empty mark; region/body/plain heading retain Emacs selection',async()=>{
+test('Actual App handler order: TASK Shift arrows outrank empty mark; all headings cycle; region/body retain Emacs selection',async()=>{
  const source=await readFile(new URL('./app.mjs',import.meta.url),'utf8'),extensions=source.slice(source.indexOf('const extensions ='),source.indexOf('const view ='));
  assert.ok(extensions.indexOf('todoKeyboard(')<extensions.indexOf('emacs.extension('));
  const facet=ViewPlugin.define(()=>({})).extension.at(-1).facet;
@@ -113,7 +113,7 @@ test('Actual App handler order: TASK Shift arrows outrank empty mark; region/bod
   const initial=state.doc.toString(),event={key:'ArrowRight',shiftKey:true,preventDefault(){this.prevented=true;}};
   for(const {plugin} of state.facet(facet))if(plugin.domEventHandlers?.keydown?.(event,view))break;
   assert.equal(event.prevented,true,mode);
-  if(mode==='task'){assert.deepEqual(calls,['todo.next']);assert.equal(state.doc.toString(),'# DONE Title\nBody');assert.equal(state.selection.main.empty,true);}
+  if(mode==='task'||mode==='plain'){assert.deepEqual(calls,['todo.next']);assert.equal(state.doc.toString(),mode==='plain'?'# TODO Plain Title':'# DONE Title\nBody');assert.equal(state.selection.main.empty,true);}
   else {assert.deepEqual(calls,[]);assert.equal(state.doc.toString(),initial);assert.equal(state.selection.main.empty,false,mode);}
  }
 });

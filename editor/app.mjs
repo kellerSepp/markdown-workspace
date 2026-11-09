@@ -31,12 +31,14 @@ import {createAgendaView} from './agenda-view.mjs';
 import {createAgendaSource} from './agenda-source.mjs';
 import {createFilePicker} from './file-picker.mjs';
 import {executeVaultFile} from './vault-files.mjs';
+import {createLineWrapping} from './line-wrapping.mjs';
 import {todoRules,todoHighlight,todoKeyboard,todoCycleAbortCleanup,createTodoController} from './todo.mjs';
 
 const $ = id => document.getElementById(id);
 const editable = new Compartment();
 const appearance = new Compartment();
 const visualAppearance = new Compartment();
+const lineWrapping=createLineWrapping();
 let visualOptions={...DEFAULT_VISUAL_STRUCTURE};
 let themeStorage;
 try {themeStorage = window.localStorage;} catch {}
@@ -60,6 +62,7 @@ const prefix=createPrefixRouter({registry:{get:id=>registry.get(id),availability
   showHelp:(...args)=>workPanel.showPrefix(...args),moveHelp:delta=>workPanel.moveSelection(delta),activateHelp:()=>workPanel.activateSelection(),hideHelp:()=>workPanel?.close({restore:false}),notify:status});
 const emacs=createEmacsEditing({getContext:editingContext,notify:status,openChooser:()=>workPanel?.openRing()??false});
 const extensions = () => [
+  lineWrapping.extension(),
   planningNormalization,planningHighlight,todoCycleAbortCleanup(),
   prefix.extension(),refileHistory(),
   EditorView.updateListener.of(()=>{workPanel?.invalidateStale();filePicker?.invalidate();}),
@@ -102,6 +105,12 @@ const extensions = () => [
 ];
 const view = new EditorView({parent:$('editor'), state:EditorState.create({extensions:extensions()})});
 const handlers={};
+handlers['view.line-wrap']=()=>{
+  const enabled=lineWrapping.toggle(view);
+  $('lineWrap').textContent=`Zeilenumbruch: ${enabled?'an':'aus'}`;
+  $('lineWrap').setAttribute('aria-pressed',String(enabled));
+  return true;
+};
 handlers['agenda.refresh']=()=>{void agendaIndex.rebuild();return true;};
 // The historical synthetic field/id now means acknowledged Alpha conditions.
 const registry=createCommandRegistry(commandDefinitions(handlers),()=>({busy,agendaActive:!!agenda?.active,filePickerActive:!!filePicker?.active,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);

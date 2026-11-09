@@ -70,8 +70,7 @@ export function todoContext(state,{headingOnly=false,requireStatus=false}={}){
   return {heading:h,line,from,to:from+(status?.name.length??0),status,rules};
 }
 export function todoCycleContext(state){
-  const c=todoContext(state,{headingOnly:true});if(c.message)return c;
-  return c.status||state.field(todoRules,false)?.cycleFrom===c.line.from?c:fail('Überschrift hat keinen aktiven Aufgabenzyklus.');
+  return todoContext(state,{headingOnly:true});
 }
 export function planTodo(state,name){
   const c=todoContext(state);if(c.message)return c;if(name!==null&&!c.rules.some(r=>r.name===name))return fail('Unbekannter Aufgabenstatus.');

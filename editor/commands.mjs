@@ -18,6 +18,7 @@ const idle=c=>c.busy?'Ein Vorgang läuft.':'';
 const synthetic=c=>idle(c)||(!c.synthetic?'Alpha-Nutzungshinweis zuerst bestätigen.':'');
 const vault=c=>idle(c)||(!c.vault?'Bitte zuerst einen Vault wählen.':'');
 const catalog=[];
+add('view.line-wrap','Zeilenumbruch umschalten','Ansicht','Visuellen Wortumbruch umschalten; aus: horizontal scrollen. Gilt für diesen Tab, ohne Textänderung.','global',idle);
 function add(id,name,category,description,context,unavailable,shortcut='') {catalog.push({id,name,category,description,context,unavailable,shortcut});}
 add('workspace.choose','Vault wählen / wechseln','Datei','Separaten Alpha-Vault wählen; bisherigen Entwurf sichern.','global',synthetic);
 add('workspace.grant','Ordnerrechte anfordern','Entwicklung','Bestehende Ordnerfreigabe erneut anfordern.','vault',vault);
