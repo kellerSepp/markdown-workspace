@@ -52,6 +52,7 @@ code{background:var(--code-background);color:var(--text)}
 .work-panel .planning-form input {min-width:0; width:100%; box-sizing:border-box;padding:.18rem .25rem;font-size:inherit;}
 .planning-month,.planning-months,.planning-actions,.planning-form > p {grid-column:1/-1;}
 .planning-month,.planning-actions {display:flex; align-items:center; justify-content:flex-start; gap:8px;}
+.planning-actions {flex-wrap:wrap;}
 .planning-month {justify-content:flex-start;}
 .planning-month button,.planning-actions button {font-size:inherit;padding:.15rem .35rem;}
 .planning-months {display:flex; gap:1rem; width:max-content; max-width:100%;}

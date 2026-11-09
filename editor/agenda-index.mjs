@@ -27,7 +27,7 @@ export async function parseAgendaFile(bytes,path,previousRules,{yieldTask=pause,
     return node?.parent?.name==='Document';
   }).map(record=>{
     if(record.error)diagnostics.push({path,line:state.doc.lineAt(record.from).number,kind:'planning',message:record.error});
-    const stamp=value=>value?{date:value.date,startTime:value.startTime,endTime:value.endTime,from:value.from,to:value.to}:null;
+    const stamp=value=>value?{date:value.date,startTime:value.startTime,endTime:value.endTime,...(value.repeat?{repeat:value.repeat}:{}),from:value.from,to:value.to}:null;
     return {...record,line:state.doc.lineAt(record.from).number,scheduled:stamp(record.scheduled),deadline:stamp(record.deadline)};
   });
   const byFrom=new Map(headings.map(h=>[h.from,h]));

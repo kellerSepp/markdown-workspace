@@ -1,5 +1,15 @@
 # Projektstatus
 
+## M6b Wiederholungen und LOGBOOK implementiert — PO-Probe, 2026-11-09
+
+PO gibt ausschließlich M6b frei. Repeater `+N`, `++N`, `.+N` für d/w/m/y, bestehende Kalenderbearbeitung und wiederkehrender Abschluss über TODO-Befehle umgesetzt. Dieselbe Aufgabe bleibt erhalten; Termine, lokaler Rücksetzstatus und ein neuer LOGBOOK-Eintrag ändern sich atomar mit Undo/Redo. Gültiges offenes REPEAT_TO_STATE hat Vorrang, sonst erster offener Zustand; ungültiger Wert mit sichtbarem Fallbackhinweis. Normale Aufgaben und direkt getippte Statuswörter werden nicht automatisch geloggt. Kindmetadaten und vorhandene Historie bleiben erhalten.
+
+Offizielle Org-Regeln geprüft und mit temporären synthetischen Puffern des installierten Org9.8.7 verglichen. PO entscheidet ausdrücklich: einmaliges SCHEDULED beim Wiederholen entfernen, nur TODO-Befehle auswerten, Monats-/Jahresende pro Schritt begrenzen statt Org-Überlauf, `++` strikt zukünftig nach Handbuch inklusive noch zukünftigem heutigen Uhrzeittermin. Bestehenden M7a-Index und Saveupdates wiederverwendet; LOGBOOK ist inaktive Historie, keine zusätzliche offene Aufgabe. Keine Änderung an Storage, Dependencies oder globaler Tastaturbehandlung.
+
+Developer und unabhängige QA jeweils **377/377 Tests**, Build, elf/neun Syntaxchecks und Diffcheck grün. QA **16 unabhängige Prüfgruppen**, drei P2-Befunde zu unvollständigen Drawergrenzen, falsch platzierten Properties und kombiniertem SCHEDULED-Entfernen korrigiert/unabhängig geschlossen. Begrenzte Ressourcenproben im [QA-Bericht](../_Communication_Pipeline/qa_m6b.md); kein Langzeitbeweis. Positive Fixture: **13 Records / null Diagnosen**; zwölf konkrete Abschlüsse mit echtem Parser/Planer durch Lead geprüft.
+
+**Nächste Aktion:** stoppen für native Edge-Probe nach Strg+F5 mit synthetischem `test-vault/m6b-repeat`. Technische Regeln, bewusste Grenzen und konkrete erwartete Daten/Status: [M6B_REPETITION.md](M6B_REPETITION.md). Native Kalender-/Tastenzustellung, Zoom/AltGr/IME und Stundenstabilität offen. Keine weitere Org-Funktion/Phase, keine Veröffentlichung. **Kein Git-Commit oder Push; der PO übernimmt den Commit.**
+
 ## Agenda Follow und Remote-Abgleich — 2026-11-09
 
 PO gibt kompaktes unteres Agenda-Panel mit verstellbarem 50:50-Split, Wochenend-/Heute-/Statusdarstellung, Follow und Fokuswechsel frei. Finale Taste **Shift+F**. Dispatcher bleibt modal; Woche und TODO teilen den bestehenden Arbeitsbereich mit dem oben sichtbaren Editor. **PO-Nachbesserung:** Split praktisch bestätigt; obere Arbeitsfläche bleibt bei sichtbarer Agenda bearbeitbar, inklusive Undo/Redo und ausdrücklich Speichern. Die zuvor zu eng gesetzte Vorschau-Schreibsperre entfällt. Follow behält beim Folgen den Fokus unten; Fokuswechsel in den Editor verwirft ausstehende Sprünge. Tippen indiziert keine Entwürfe; vorhandene Saveupdates und Refresh bleiben. Bestehende Quellenvalidierung, Dirty-/Revisions-/Abbruch-/Vault-/Commitgrenzen unverändert. Feiertage nur als späterer Wunsch dokumentiert. [Bedienung und native Handprobe](AGENDA_FOLLOW.md).

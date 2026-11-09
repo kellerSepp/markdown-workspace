@@ -1,5 +1,7 @@
 # M6a — Scheduling, Deadlines und Datumswahl
 
+M6b-Nachtrag: Wiederholer und LOGBOOK sind separat freigegeben. Die historischen Wiederholer-Ausschlüsse unten werden ausschließlich durch [M6B_REPETITION.md](M6B_REPETITION.md) ersetzt; andere Grenzen bleiben bestehen. Bestehende Datumswahl und Registry werden wiederverwendet.
+
 ## Aktuelle Direktwahl — 2026-11-08
 
 Abgeschlossen: Developer/QA jeweils276/276 Tests, Build, Syntax und Diffcheck erfolgreich; QA79 unabhängige Prüfgruppen. Berichte: [Developer](../_Communication_Pipeline/developer_m6a_flow.md), [QA](../_Communication_Pipeline/qa_m6a_flow.md). Native Handprobe offen.

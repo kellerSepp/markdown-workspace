@@ -31,7 +31,7 @@ test('M7a malformed planning diagnoses independently; invalid workflows retain l
   const invalid=await parseAgendaFile(bytes('#+SEQ_TODO: broken\n# NEXT work\nSCHEDULED: <2026-02-30 Mo>\n# TODO Unknown\n# Date\nDEADLINE: <2026-11-08 So>'),'a.md',valid.rules);
   assert.equal(invalid.records.length,2);assert.equal(invalid.records[0].status,'NEXT');assert.equal(invalid.records[0].scheduled,null);assert.equal(invalid.diagnostics.length,2);
   const defaults=await parseAgendaFile(bytes('#+SEQ_TODO: broken\n# TODO default'),'a.md');assert.equal(defaults.records[0].status,'TODO');
-  for(const stamp of ['<2026-11-08 So 24:00>','<2026-11-08 So 15:00-14:00>','<2026-11-08 So +1w>']){
+  for(const stamp of ['<2026-11-08 So 24:00>','<2026-11-08 So 15:00-14:00>','<2026-11-08 So +0w>']){
     const p=await parseAgendaFile(bytes('# TODO A\nSCHEDULED: '+stamp+'\n# TODO B'),'a.md');assert.equal(p.records.length,2);assert.equal(p.diagnostics.length,1);
   }
 });

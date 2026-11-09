@@ -14,7 +14,7 @@ test('Calendar validation handles leap centuries, strict times, weekday normaliz
  for(const date of ['1900-02-29','2026-02-29','2026-13-01','2026-04-31','0000-01-01'])assert.equal(parseDate(date),null);
  assert.equal(timestamp(value).text,'<2026-11-07 Sa 15:00-17:00>');assert.equal(parseTimestamp('<2026-11-07 Mon>').text,'<2026-11-07 Sa>');
  for(const v of [{...value,startTime:'24:00'},{...value,endTime:'14:00'},{...value,startTime:''}])assert.ok(timestamp(v).message);
- assert.ok(parseTimestamp('<2026-11-07 Sa +1w>').message);assert.equal(monthCells(2026,11)[6],'2026-11-01');assert.equal(shiftDate('2024-02-28',1),'2024-02-29');
+ assert.equal(parseTimestamp('<2026-11-07 Sa +1w>').value.repeat,'+1w');assert.equal(monthCells(2026,11)[6],'2026-11-01');assert.equal(shiftDate('2024-02-28',1),'2024-02-29');
 });
 test('H1-H6 current section including every column, body and child boundaries',()=>{
  for(let level=1;level<=6;level++){const head='#'.repeat(level)+' Heading';for(let col=0;col<=head.length;col++){const s=make(head+'\nBody',col),p=planPlanning(s,'SCHEDULED',value);assert.equal(s.update(p.spec).state.doc.toString(),head+'\nSCHEDULED: <2026-11-07 Sa 15:00-17:00>\nBody');}}

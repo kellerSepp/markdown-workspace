@@ -5,14 +5,16 @@ import {isolateHistory} from '@codemirror/commands';
 import {frontmatterEnd} from './structure.mjs';
 import {sectionAt} from './section-folding.mjs';
 import {emacsMark,setEmacsMark} from './emacs-editing.mjs';
+import {planningDrawerRanges,inPlanningDrawer} from './planning-drawers.mjs';
+import {planRecurringCompletion} from './recurrence.mjs';
 
 export const DEFAULT_TODO=Object.freeze([{name:'TODO',key:'t',closed:false},{name:'DONE',key:'d',closed:true}].map(Object.freeze));
 const fail=message=>({message});
 function excluded(tree,pos){for(let n=tree.resolveInner(pos,1);n;n=n.parent)if(/^(FencedCode|CodeBlock|HTMLBlock|Blockquote|ListItem)$/.test(n.name))return true;return false;}
 export function readTodoRules(state){
   const tree=ensureSyntaxTree(state,state.doc.length,100);if(!tree)return fail('TODO-Regeln: Dokument noch nicht vollständig analysiert.');
-  const definitions=[],front=frontmatterEnd(state);
-  for(let i=1;i<=state.doc.lines;i++){const l=state.doc.line(i);if(l.from<front||!/^ {0,3}#\+SEQ_TODO\b/i.test(l.text)||excluded(tree,l.from))continue;definitions.push(l);}
+  const definitions=[],front=frontmatterEnd(state),drawers=planningDrawerRanges(state);
+  for(let i=1;i<=state.doc.lines;i++){const l=state.doc.line(i);if(l.from<front||!/^ {0,3}#\+SEQ_TODO\b/i.test(l.text)||excluded(tree,l.from)||inPlanningDrawer(drawers,l.from))continue;definitions.push(l);}
   if(!definitions.length)return {rules:DEFAULT_TODO};
   if(definitions.length!==1)return fail('TODO-Regeln: Genau eine SEQ_TODO-Definition pro Datei erlaubt.');
   const line=definitions[0],match=/^ {0,3}#\+SEQ_TODO:\s*(.*?)\s*$/.exec(line.text);
@@ -50,7 +52,7 @@ export function todoDefinitionLine(state){
   // trust a top-level fallback from an incomplete tree for code exclusion.
   if(syntaxTree(state).length<state.doc.length||!syntaxTreeAvailable(state,state.doc.length))return false;
   const line=state.doc.lineAt(state.selection.main.head);
-  return line.from>=frontmatterEnd(state)&&/^ {0,3}#\+SEQ_TODO\b/i.test(line.text)&&!excluded(syntaxTree(state),line.from);
+  return line.from>=frontmatterEnd(state)&&/^ {0,3}#\+SEQ_TODO\b/i.test(line.text)&&!excluded(syntaxTree(state),line.from)&&!inPlanningDrawer(planningDrawerRanges(state),line.from);
 }
 export function todoContext(state,{headingOnly=false,requireStatus=false}={}){
   if(state.readOnly)return fail('Editor ist schreibgeschützt.');
@@ -72,17 +74,22 @@ export function todoContext(state,{headingOnly=false,requireStatus=false}={}){
 export function todoCycleContext(state){
   return todoContext(state,{headingOnly:true});
 }
-export function planTodo(state,name){
+export function planTodo(state,name,{now=new Date()}={}){
   const c=todoContext(state);if(c.message)return c;if(name!==null&&!c.rules.some(r=>r.name===name))return fail('Unbekannter Aufgabenstatus.');
   if((c.status?.name??null)===name)return {noop:true};
+  let recurring={recurring:false};
+  if(c.status&&!c.status.closed&&c.rules.find(rule=>rule.name===name)?.closed){
+    recurring=planRecurringCompletion(state,c,name,now);if(recurring.message)return recurring;if(recurring.recurring)name=recurring.status;
+  }
   let {from,to}=c,insert=name??'';
   if(c.status&&name===null){const ws=/^[ \t]+/.exec(state.doc.sliceString(to,c.line.to));to+=ws?.[0].length??0;}
   else if(!c.status&&name!==null){insert+=from<c.line.to?' ':'';if(!/[ \t]$/.test(state.doc.sliceString(c.line.from,from)))insert=' '+insert;}
-  const changes=state.changes({from,to,insert});return {spec:{changes,selection:state.selection.map(changes),annotations:isolateHistory.of('full'),userEvent:'input.todo'}};
+  const edits=[...(recurring.changes??[])];if(state.doc.sliceString(from,to)!==insert)edits.push({from,to,insert});edits.sort((a,b)=>a.from-b.from);
+  const changes=state.changes(edits);return {warning:recurring.warning,spec:{changes,selection:state.selection.map(changes),annotations:isolateHistory.of('full'),userEvent:'input.todo'}};
 }
-export function createTodoController({view,panel,getContext=()=>({}),notify=()=>{}}){
+export function createTodoController({view,panel,getContext=()=>({}),notify=()=>{},now=()=>new Date()}){
   const ready=()=>{const c=getContext();return !c.busy&&c.hasDocument!==false&&!view.state.readOnly;};
-  function apply(name,saved,cycleFrom=null){if(!ready()||saved&&saved.state!==view.state){notify('TODO verworfen: Ziel geändert.');return false;}const p=planTodo(view.state,name);if(p.noop)return true;if(!p.spec){notify(p.message);return false;}if(cycleFrom!==null)p.spec.effects=setTodoCycle.of(cycleFrom);const expected=p.spec.changes.apply(view.state.doc);view.dispatch(p.spec);return view.state.doc.eq(expected);}
+  function apply(name,saved,cycleFrom=null){if(!ready()||saved&&saved.state!==view.state){notify('TODO verworfen: Ziel geändert.');return false;}const p=planTodo(view.state,name,{now:now()});if(p.noop)return true;if(!p.spec){notify(p.message);return false;}if(cycleFrom!==null)p.spec.effects=setTodoCycle.of(cycleFrom);const expected=p.spec.changes.apply(view.state.doc);view.dispatch(p.spec);const applied=view.state.doc.eq(expected);if(applied&&p.warning)notify(p.warning);return applied;}
   return {open(){if(!ready())return false;
     if(view.state.field(todoRules,false)?.cycleFrom!=null)view.dispatch({effects:setTodoCycle.of(null)});
     const c=todoContext(view.state);if(c.message){notify(c.message);return false;}

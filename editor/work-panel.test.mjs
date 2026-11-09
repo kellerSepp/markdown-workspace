@@ -87,12 +87,29 @@ test('Day activation immediately commits once, closes shared panel and preserves
  const walk=(el,fn)=>[...(fn(el)?[el]:[]),...el.children.flatMap(c=>walk(c,fn))];
  for(const time of ['',' 15:00',' 15:00-17:00'])for(const activation of ['click','Enter',' ']){
   const original='# H\nSCHEDULED: <2026-11-07 Sa'+time+'>\nBody',f=fixture({selection:{anchor:2},docText:original,extra:[markdown(),todoRules,EditorView.updateListener.of(()=>f.panel.invalidateStale())]});const controller=createPlanningController({view:f.view,panel:f.panel,getContext:()=>f.context});
-  controller.open('SCHEDULED');const form=f.root.children.at(-1),day=walk(form,e=>e.attributes?.['aria-label']==='2026-11-09')[0];assert.equal(walk(form,e=>e.tagName==='input').length,1);assert.equal(walk(form,e=>e.textContent==='Übernehmen').length,0);
+  controller.open('SCHEDULED');const form=f.root.children.at(-1),day=walk(form,e=>e.attributes?.['aria-label']==='2026-11-09')[0];assert.equal(walk(form,e=>e.tagName==='input').length,2);assert.equal(walk(form,e=>e.textContent==='Übernehmen').length,0);
   const before=f.view.state;day.emit('keydown',{key:'ArrowRight',ctrlKey:true});assert.equal(f.view.state,before);day.emit('keydown',{key:'Enter',repeat:true});assert.equal(f.view.state,before);
   if(activation==='click')day.click();else day.emit('keydown',{key:activation});assert.equal(f.panel.isOpen,false);assert.equal(f.view.hasFocus,true);assert.equal(f.view.state.doc.toString(),original.replace('11-07 Sa','11-09 Mo'));assert.equal(undoDepth(f.view.state),1);
   day.click();assert.equal(undoDepth(f.view.state),1);assert.ok(undo(f.view));assert.equal(f.view.state.doc.toString(),original);assert.ok(redo(f.view));assert.equal(f.view.state.doc.toString(),original.replace('11-07 Sa','11-09 Mo'));f.panel.destroy();
  }
  const f=fixture({selection:{anchor:2},docText:'# H',extra:[markdown(),todoRules]});const c=createPlanningController({view:f.view,panel:f.panel,getContext:()=>f.context});c.open('DEADLINE');let form=f.root.children.at(-1);const input=walk(form,e=>e.tagName==='input')[0],initial=f.view.state;input.value='2026-11-09';input.emit('input');assert.equal(f.view.state,initial);form.emit('keydown',{key:'Enter',target:input});assert.equal(f.view.state.doc.toString(),'# H\nDEADLINE: <2026-11-09 Mo>');assert.equal(f.panel.isOpen,false);f.panel.destroy();
+});
+
+test('Calendar direct day preserves stored repeater; explicit edit/remove preserves time and is one undo step',()=>{
+ const walk=(el,fn)=>[...(fn(el)?[el]:[]),...el.children.flatMap(c=>walk(c,fn))];
+ const original='# TODO Own\nSCHEDULED: <2026-11-07 Sa 15:00-17:00 ++2w>\nBody';
+ for(const operation of ['day','edit','remove','invalid','abort']){
+  const f=fixture({selection:{anchor:2},docText:original,extra:[markdown(),todoRules]});const controller=createPlanningController({view:f.view,panel:f.panel,getContext:()=>f.context});controller.open('SCHEDULED');
+  const form=f.root.children.at(-1),repeat=walk(form,e=>e.attributes?.['aria-label']==='Wiederholung (+1w / ++1m / .+1d)')[0];assert.equal(repeat.value,'++2w');repeat.value=operation==='invalid'?'+0d':'.+1m';repeat.emit('input');assert.equal(f.view.state.doc.toString(),original);
+  if(operation==='day')walk(form,e=>e.attributes?.['aria-label']==='2026-11-09')[0].click();
+  if(operation==='edit'||operation==='invalid')walk(form,e=>e.textContent==='Wiederholung setzen')[0].click();
+  if(operation==='remove')walk(form,e=>e.textContent==='Wiederholung entfernen')[0].click();
+  if(operation==='abort')walk(form,e=>e.textContent==='Abbrechen')[0].click();
+  const expected=operation==='day'?original.replace('11-07 Sa','11-09 Mo'):operation==='edit'?original.replace('++2w','.+1m'):operation==='remove'?original.replace(' ++2w',''):original;
+  assert.equal(f.view.state.doc.toString(),expected);assert.equal(f.panel.isOpen,operation==='invalid');
+  if(expected!==original){assert.equal(undoDepth(f.view.state),1);assert.ok(undo(f.view));assert.equal(f.view.state.doc.toString(),original);}
+  f.panel.destroy();
+ }
 });
 
 test('Prefix help reuses split layout, keeps focus/state/viewport and cleans rows on cancellation or ring switch',()=>{
