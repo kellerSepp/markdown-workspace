@@ -56,7 +56,7 @@ Bei `C-c` zuerst **Strg+C** drücken, anschließend **C und Strg loslassen** und
 
 In der Pfadeingabe zeigt die Vorschau **„Öffnen“** oder **„Neue Datei anlegen“**. Enter führt aus, Escape beziehungsweise Strg+G bricht vor der Ausführungsphase ab. Neue Dateien werden zunächst leer angelegt; Inhalte anschließend mit Strg+S speichern. Eine fehlende Endung wird als `.md` ergänzt. Unterordner müssen bereits existieren; automatische Ordneranlage gehört noch nicht zum Umfang.
 
-In der Wochenagenda wechseln `f`/`b` die Woche, `.` springt zur aktuellen Woche. Pfeile wählen Einträge, Enter/Klick öffnet die Quelle, `r` liest neu ein und `q`/Escape schließt die Ansicht. Vor einem Quellsprung oder der Ausführung im Dateidialog ungespeicherte Arbeit ausdrücklich speichern.
+In der Wochenagenda wechseln `f`/`b` die Woche, `.` springt zur aktuellen Woche. Die Agenda steht im unteren Panel; die Trennlinie verändert den zunächst hälftigen Editor-/Agenda-Split. `Shift+F` oder der Follow-Schalter aktiviert/deaktiviert automatisches Folgen der Auswahl im Editor. Der Fokus bleibt dabei in der Agenda. Der obere Editor bleibt bei sichtbarer Agenda bearbeitbar; Schreiben, Undo/Redo und Speichern sind möglich. Beim Wechsel in den Editor werden ausstehende Follow-Sprünge verworfen. Enter öffnet die Quelle und wechselt in den Editor, `r` liest neu ein und `q`/Escape schließt mit Rückkehr zum Editor. Vor einem Quellsprung oder der Ausführung im Dateidialog ungespeicherte Arbeit ausdrücklich speichern. Die Agenda zeigt weiterhin den gespeicherten Indexstand, keine ungespeicherten Texte. Details und Handprobe: [Agenda Follow](docs/AGENDA_FOLLOW.md).
 
 ## Prüfstand und bekannte Grenzen
 

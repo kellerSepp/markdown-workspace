@@ -1,5 +1,13 @@
 # Projektstatus
 
+## Agenda Follow und Remote-Abgleich — 2026-11-09
+
+PO gibt kompaktes unteres Agenda-Panel mit verstellbarem 50:50-Split, Wochenend-/Heute-/Statusdarstellung, Follow und Fokuswechsel frei. Finale Taste **Shift+F**. Dispatcher bleibt modal; Woche und TODO teilen den bestehenden Arbeitsbereich mit dem oben sichtbaren Editor. **PO-Nachbesserung:** Split praktisch bestätigt; obere Arbeitsfläche bleibt bei sichtbarer Agenda bearbeitbar, inklusive Undo/Redo und ausdrücklich Speichern. Die zuvor zu eng gesetzte Vorschau-Schreibsperre entfällt. Follow behält beim Folgen den Fokus unten; Fokuswechsel in den Editor verwirft ausstehende Sprünge. Tippen indiziert keine Entwürfe; vorhandene Saveupdates und Refresh bleiben. Bestehende Quellenvalidierung, Dirty-/Revisions-/Abbruch-/Vault-/Commitgrenzen unverändert. Feiertage nur als späterer Wunsch dokumentiert. [Bedienung und native Handprobe](AGENDA_FOLLOW.md).
+
+Nach ausdrücklicher PO-Freigabe lokale Änderungen bytegeprüft als ZIP und zusätzlich per Stash gesichert; Branch `feature/agenda-follow-mode` per Fast-forward auf Remote-Stand `bc38df3` aktualisiert, Follow-Arbeit konfliktfrei wiederhergestellt. Neue Zeilenumbruchfunktion `C-c l` und Statusfarben des Remote-Commits erhalten. Vor Editierkorrektur **340/340 Tests**, final danach **347/347**, Build, Syntax und Diffcheck grün; dreizehn unabhängige QA-Gruppen, [Bericht](../_Communication_Pipeline/qa_agenda_follow.md). ZIP und Stash bleiben erhalten. Kein neuer Commit oder Push.
+
+**Nächste Aktion:** native PO-Probe der Editierkorrektur nach Strg+F5. PO bestätigt den Split praktisch; eine vollständige native Bedienmatrix liegt nicht vor. Computer-Use-Appfreigabe für die synthetische Vorschau abgelaufen. Zoom/kleines Fenster/AltGr/IME/Permission und Langzeit weiterhin offen. Keine weiteren Funktionen, Dependencies, Storageänderung oder Veröffentlichung ableiten.
+
 ## README auf Alpha-Stand aktualisiert — 2026-11-08
 
 README beschreibt aktuellen Funktionsumfang, Pages-/lokalen Start, C-c f und Agenda-Tasten, freie Vault-Wahl außerhalb des Testordners sowie OneDrive als noch nicht praktisch geprüfte Option mit lokalen Dateien/pausierter Synchronisation/eigenem Backup. Widersprüchliche alte „Aktuell“-Abschnitte durch Links auf die Projekthistorie ersetzt; private Alpha-Nutzung klar von synthetischer Entwicklungs-QA getrennt. Nur Dokumentation geändert. Nächste Aktion bleibt praktische PO-Erprobung; keine Appänderung/Commit/Push/Veröffentlichung.

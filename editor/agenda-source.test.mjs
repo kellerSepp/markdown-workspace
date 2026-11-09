@@ -19,6 +19,21 @@ test('Agenda reserves cancellation before asynchronous permission checks, not on
 test('Agenda source validates duplicate title by offset, opens exact heading and never writes',async()=>{
   const f=await fixture(),target=f.index.query().at(-1);assert.equal(await f.source.navigate(target.id),true);assert.equal(f.opened,1);assert.deepEqual(f.jumps,[target.from]);
 });
+
+test('Agenda follow passes focus policy through validated cross-file and same-file jumps only',async()=>{
+  const f=await fixture(),jumps=[];
+  const source=createAgendaSource({index:f.index,getVault:()=>f.vault,getSession:()=>f.session,getState:()=>null,
+    open:async target=>Object.assign(f.session,{hasDocument:true,vault:target.vault,path:target.path,text:f.text}),
+    jump:(from,options)=>jumps.push({from,...options})});
+  const first=f.index.query()[0],last=f.index.query().at(-1);
+  assert.equal(await source.navigate(first.id,{follow:true}),true);
+  assert.equal(await source.navigate(last.id,{follow:true}),true);
+  assert.equal(await source.navigate(first.id),true);
+  assert.deepEqual(jumps,[{from:first.from,follow:true},{from:last.from,follow:true},{from:first.from,follow:false}]);
+  f.session.dirty=true;
+  assert.equal(await source.navigate(last.id,{follow:true}),false);
+  assert.equal(jumps.length,3);
+});
 test('Agenda source rejects all dirty editor navigation and preserves same-file history boundary',async()=>{
   const f=await fixture();f.session.dirty=true;assert.equal(await f.source.navigate(f.index.query()[0].id),false);assert.equal(f.opened,0);assert.match(f.notices[0],/Ungespeicherte/);
   f.session.dirty=false;f.session.hasDocument=true;f.session.vault=f.vault;f.session.path='a.md';f.session.text=f.text;assert.equal(await f.source.navigate(f.index.query()[1].id),true);assert.equal(f.opened,0);

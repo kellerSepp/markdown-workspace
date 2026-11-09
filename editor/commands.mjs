@@ -12,6 +12,7 @@ import {planLineMove} from './line-move.mjs';
 import {EMACS_COMMANDS} from './emacs-policy.mjs';
 import {emacsCommandReason} from './emacs-editing.mjs';
 import {PREFIX_BINDINGS} from './emacs-policy.mjs';
+import {agendaCommandReason} from './agenda-command-policy.mjs';
 
 const documentReason=c=>c.busy?'Ein Vorgang läuft.':!c.hasDocument?'Bitte zuerst eine Datei öffnen.':'';
 const idle=c=>c.busy?'Ein Vorgang läuft.':'';
@@ -70,8 +71,9 @@ for(const [id,name,shortcut] of [['previous','Vorheriger Aufgabenstatus','Umscha
 for(const {id,key,label} of PREFIX_BINDINGS){const command=catalog.find(c=>c.id===id);command.shortcut=[command.shortcut,'C-c '+(label??key)+' (Editor)'].filter(Boolean).join(' / ');}
 for(const id of ['heading-up','heading-down']) Object.assign(catalog.find(c=>c.id==='structure.'+id),{shortcut:id==='heading-up'?'Alt+Oben':'Alt+Unten',orgShortcut:id==='heading-up'?'M-UP':'M-DOWN',compatibility:'Org-Unterbaumtausch nur mit gleichrangigem Geschwister innerhalb derselben Elterngrenze.'});
 export const COMMAND_METADATA=Object.freeze(catalog.map(c=>Object.freeze(c)));
-export function commandDefinitions(handlers) {
-  return COMMAND_METADATA.map(command=>({...command,unavailable:context=>context.filePickerActive?'Dateidialog zuerst schließen.':context.agendaActive&&!command.id.startsWith('agenda.')?'Agenda zuerst schließen.':command.unavailable(context),execute:(_context,args)=>{
+export function commandDefinitions(handlers,beforeExecute=()=>true) {
+  return COMMAND_METADATA.map(command=>({...command,unavailable:context=>context.filePickerActive?'Dateidialog zuerst schließen.':agendaCommandReason(command,context)||command.unavailable(context),execute:(_context,args)=>{
+    if(beforeExecute(command.id)===false)return false;
     const handler=handlers[command.id];
     if(!handler) throw Error('Command-Handler fehlt: '+command.id);
     return handler(args);

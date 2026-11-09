@@ -1,5 +1,7 @@
 # M7b — Agendaoberfläche und Navigation
 
+Nachtrag 2026-11-09: PO hat unteren verstellbaren Agenda-Split und Follow per **Shift+F** freigegeben. Die neue Ansicht ersetzt den bisherigen überlagernden Wochen-/TODO-Dialog; nur der Dispatcher bleibt modal. Fokus, Quellvorschau und Handprobe: [AGENDA_FOLLOW.md](AGENDA_FOLLOW.md). Die folgenden M7b-Angaben beschreiben den vorherigen Stand; bisherige Follow-Ausschlüsse sind ausschließlich für dieses neue Paket aufgehoben.
+
 Stand: 2026-11-08. M7b implementiert und unabhängig geprüft. Weitere Agenda-Funktionen brauchen eine neue PO-Freigabe.
 
 ## Bedienung und Umfang

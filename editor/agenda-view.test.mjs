@@ -29,10 +29,10 @@ function dom(){const doc={createElement(tag){return new Element(tag,this);},crea
 function all(root,fn){return [root,...root.children.flatMap(c=>all(c,fn))].filter(fn);}
 const encoded=text=>new TextEncoder().encode(text);
 function rootOf(entries){return {name:'synthetic',async queryPermission(){return 'granted';},async *entries(){for(const name of Object.keys(entries))yield [name,{kind:'file'}];},async getFileHandle(name){return {async getFile(){return {async arrayBuffer(){return encoded(entries[name]).buffer;}};}};}};}
-async function fixture(){
+async function fixture(extra={}){
   const doc=dom(),origin=doc.createElement('div');doc.body.append(origin);origin.focus();const entries={'a.md':'# TODO Open\nSCHEDULED: <2026-11-08 So 09:00-10:00> DEADLINE: <2026-11-08 So 11:00>\n# DONE Closed\n# Other\nSCHEDULED: <2026-11-08 So 14:00>'},index=createAgendaIndex({yieldTask:async()=>{}});await index.selectVault(rootOf(entries));
   const commands=[],navigation=[],notices=[];let controller;
-  controller=createAgendaView({index,document:doc,now:()=>new Date(2026,10,8,12),execute:id=>{commands.push(id);if(id==='agenda.week')return controller.openWeek();if(id==='agenda.todo')return controller.openTodos();if(id==='agenda.refresh')return index.rebuild();},navigate:async id=>{navigation.push(id);return false;},onClose:()=>origin.focus()});
+  controller=createAgendaView({index,document:doc,now:()=>new Date(2026,10,8,12),execute:id=>{commands.push(id);if(id==='agenda.week')return controller.openWeek();if(id==='agenda.todo')return controller.openTodos();if(id==='agenda.refresh')return index.rebuild();},navigate:async id=>{navigation.push(id);return false;},onClose:()=>origin.focus(),...extra});
   return {doc,origin,index,controller,commands,navigation,notices,rows:()=>all(controller.element,e=>e.className==='agenda-row'),results:()=>all(controller.element,e=>e.className==='agenda-results')[0],buttons:()=>all(controller.element,e=>e.tagName==='button'),key:(key,patch={})=>doc.activeElement.emit('keydown',{key,...patch})};
 }
 test('Agenda dispatcher two active choices and disabled plans use plain keys/mouse, modifier and IME guards',async()=>{
@@ -41,6 +41,35 @@ test('Agenda dispatcher two active choices and disabled plans use plain keys/mou
   for(const patch of [{ctrlKey:true},{altKey:true},{shiftKey:true},{metaKey:true},{isComposing:true},{keyCode:229},{repeat:true},{getModifierState:()=>true}])f.key('a',patch);
   assert.deepEqual(f.commands,[]);f.key('a');assert.deepEqual(f.commands,['agenda.week']);assert.equal(f.rows().length,2);
   f.key('q');assert.equal(f.controller.active,false);assert.equal(f.doc.activeElement,f.origin);f.controller.openDispatcher();f.buttons().find(b=>b.textContent.includes('[t]')).click();assert.equal(f.rows().length,1);
+});
+
+function timerModel(){let next=0;const tasks=new Map();return {setTimeout(fn){const id=++next;tasks.set(id,fn);return id;},clearTimeout(id){tasks.delete(id);},flush(){for(const [id,fn] of [...tasks]){tasks.delete(id);fn();}},get size(){return tasks.size;}};}
+test('Follow debounces to latest row, keeps focus, and never repeats from unchanged index publication',async()=>{
+  const timers=timerModel(),calls=[],f=await fixture({timers,navigate:async(...args)=>{calls.push(args);return true;}});f.controller.openWeek();
+  f.key('F',{shiftKey:true});assert.equal(timers.size,1);f.key('ArrowDown');assert.equal(timers.size,1);timers.flush();await Promise.resolve();
+  assert.equal(calls.length,1);assert.equal(calls[0][0],f.index.query().find(r=>r.title==='Other').id);assert.deepEqual(calls[0][1],{follow:true});assert.equal(f.controller.active,true);assert.equal(f.doc.activeElement,f.results());
+  f.controller.update(f.index.snapshot());timers.flush();await Promise.resolve();assert.equal(calls.length,1);
+  f.key('F',{shiftKey:true});f.key('ArrowUp');timers.flush();assert.equal(calls.length,1);f.controller.destroy();
+});
+test('Follow serializes pending source checks and runs only latest surviving selection',async()=>{
+  const timers=timerModel(),calls=[];let finish;
+  const f=await fixture({timers,navigate:(...args)=>{calls.push(args);return new Promise(resolve=>{finish=resolve;});}});f.controller.openWeek();
+  f.key('F',{shiftKey:true});timers.flush();assert.equal(calls.length,1);
+  f.key('ArrowDown');timers.flush();assert.equal(calls.length,1);f.key('ArrowUp');timers.flush();assert.equal(calls.length,1);
+  finish(true);await Promise.resolve();await Promise.resolve();assert.equal(calls.length,2);assert.equal(calls[1][0],f.index.query().find(r=>r.title==='Open').id);
+  f.key('F',{shiftKey:true});finish(true);await Promise.resolve();assert.equal(f.controller.active,true);assert.equal(timers.size,0);f.controller.destroy();
+});
+test('Weekday headings mark weekend separately and today remains distinguishable',async()=>{
+  const f=await fixture();f.controller.openWeek();const headings=all(f.controller.element,e=>e.className==='agenda-day');
+  assert.equal(headings.length,7);assert.equal(headings.filter(e=>e.classList.contains('agenda-weekend')).length,2);assert.equal(headings[6].classList.contains('agenda-today'),true);f.controller.destroy();
+});
+test('Agenda active lifecycle notifies integration once per open/actual close including forced cleanup',async()=>{
+  const changes=[],f=await fixture({onActiveChange:active=>changes.push(active)});
+  f.controller.openDispatcher();f.controller.openWeek();f.controller.openTodos();assert.deepEqual(changes,[true]);
+  f.controller.setCommitting(true);f.controller.close();assert.deepEqual(changes,[true]);
+  f.controller.update({...f.index.snapshot(),epoch:f.index.snapshot().epoch+1});assert.deepEqual(changes,[true,false]);
+  f.controller.setCommitting(false);f.controller.openWeek();f.controller.close({restore:false});assert.deepEqual(changes,[true,false,true,false]);
+  f.controller.openTodos();f.controller.destroy();f.controller.destroy();assert.deepEqual(changes,[true,false,true,false,true,false]);
 });
 test('Agenda week keyboard/mouse date navigation, selection and source activation share controller path',async()=>{
   const f=await fixture();f.controller.openWeek();assert.match(f.controller.element.textContent,/KW 45\/2026/);assert.equal(f.rows().length,2);assert.match(f.rows()[0].textContent,/09:00-10:00.*11:00/);

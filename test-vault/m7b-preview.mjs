@@ -20,7 +20,12 @@ const registry=createCommandRegistry(commandDefinitions({
 }),()=>({busy:false,synthetic:true,vault:{},hasDocument:true,agendaActive:!!agenda?.active,state:view.state}));
 const prefix=createPrefixRouter({registry,getContext:()=>({busy:false,hasDocument:true}),showHelp:choices=>{$('previewStatus').textContent='C-c · '+choices.filter(c=>c.enabled).map(c=>c.key+' '+c.name).join(' · ');},hideHelp:()=>{$('previewStatus').textContent='Synthetische Vorschau: echte Agendaansicht und Präfixrouter, keine Speicher-/Dateisystemabnahme.';}});
 const view=new EditorView({parent:$('editor'),state:EditorState.create({doc:main,extensions:[markdown(),prefix.extension()]})});
-agenda=createAgendaView({index,execute:id=>registry.execute(id),onClose:()=>view.focus(),now:()=>new Date(2026,10,8,12),navigate:async id=>{const source=index.source(id);if(!source)return false;$('previewStatus').textContent=`Vorschauquelle ${source.path}:${source.line}; Produktion nutzt zusätzlichen Quell-/Dirtyschutz.`;return true;}});
+agenda=createAgendaView({index,host:$('workPanel'),workspace:$('editorWorkspace'),view,execute:id=>registry.execute(id),onClose:()=>view.focus(),now:()=>new Date(2026,10,8,12),navigate:async id=>{
+  const source=index.source(id);if(!source)return false;
+  view.setState(EditorState.create({doc:entries[source.path],extensions:[markdown(),prefix.extension()]}));
+  view.dispatch({selection:{anchor:source.from},effects:EditorView.scrollIntoView(source.from,{y:'center'})});
+  $('previewStatus').textContent=`Vorschauquelle ${source.path}:${source.line}; Produktion nutzt zusätzlichen Quell-/Dirtyschutz.`;return true;
+}});
 $('openAgenda').addEventListener('click',()=>registry.execute('agenda.dispatch'));
 $('theme').replaceChildren(...THEMES.map(t=>new Option(t.name,t.id)));$('theme').addEventListener('change',()=>applyTheme(document.documentElement,$('theme').value));applyTheme(document.documentElement,'midnight');
 await index.selectVault(directory(''));view.focus();
