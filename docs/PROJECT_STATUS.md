@@ -1,5 +1,37 @@
 # Projektstatus
 
+## Checklisten zur Integration freigegeben
+
+Der PO meldet die praktische Probe positiv und gibt Commit, Merge nach `main` und Push frei. Die folgenden Einträge halten den Stand vor der Freigabe fest.
+
+## TODO-Fortsetzung und Checkboxcursor korrigiert — PO-Probe, 2026-11-10
+
+Alt+Shift+Enter auf einer Headingzeile erzeugt direkt anschließend eine TODO-Überschrift gleicher H1–H6-Ebene und führender Einrückung; bisherigen Titel erhalten, ersten geladenen offenen Zustand verwenden. Cursor hinter Status/Leerzeichen. Checkboxkonvertierung setzt Marker-/Einrückungscursor hinter `[ ] ` und erhält bestehende logische Titelpositionen. Explizite Selektionsaufnahme nach der Änderung erhält die Position auch bei Redo. Weiterhin eine Text-Undo-Operation.
+
+**422/422 Tests**, Build, drei gezielte Syntaxchecks und Diffcheck grün. Drei neue Regressionsgruppen prüfen alle Ebenen, eigene TODO-Regeln, Registry/Router, unveränderte Titel/Folgetexte, Cursor an verschiedenen Spalten, Zählerbreiten und Undo/Redo. [Handprobe](CHECKLISTS.md) aktualisiert. Native Probe offen; kein Commit/Push/Merge/Deploy, keine Dependencies-/Storageänderung.
+
+## Checklisten-Nachbesserung — PO-Probe, 2026-11-10
+
+PO verlangt Alt+Shift+Enter kontextabhängig: normalen Listenpunkt an Ort und Stelle zur Checkbox machen (auch bloßes `-`), leere Textzeile zur TODO-Überschrift auf Ebene der letzten vorherigen H1–H6-Überschrift; ohne vorheriges Heading H1. Erster geladener offener Zustand wird verwendet. Auf bereits vorhandener Checkbox bleibt das Einfügen eines offenen Geschwisterpunkts erhalten. Neuer begrenzter Planer `editor/task-insert.mjs`, bestehende Registry-ID und Schutzgrenzen wiederverwendet. Bruch- und Prozentzähler können jetzt gemeinsam am Zeilenende stehen, beide Reihenfolgen möglich; beide werden in derselben Undo-Operation aktualisiert. Doppelte Zähler derselben Art/Code/Links bleiben geschützt.
+
+**419/419 Tests**, Build, sieben gezielte Syntaxchecks und Diffcheck grün. Sieben zusätzliche Prüfgruppen für Konvertierung an mehreren Cursorspalten, H1–H6/custom TODO-Regeln, echte Tastaturrouter-/Registry-Verkettung, Schutzkontexte, kombinierte Zähler und Undo/Redo. Keine native Browserabnahme daraus ableiten. [Aktualisierte Handprobe](CHECKLISTS.md); nach Bericht stoppen für PO-Probe. Branch bleibt `feature/checklists`, kein Commit/Push/Merge/Deploy, keine Dependencies oder Storageänderung.
+
+## Checklisten implementiert — PO-Probe, 2026-11-10
+
+PO hat die Implementierung des besprochenen Pakets ausdrücklich beauftragt. Zuvor `main` konfliktfrei per Fast-forward auf Remote `187cfff` aktualisiert, lokale Dateien als bytegeprüfte ZIP gesichert und `feature/checklists` erstellt. Keine neuen Commits oder Pushes.
+
+Umgesetzt: lokales Checkboxmodell aus vorhandenem Markdown-AST, abgeleitete Elternzustände, explizite Bruch-/Prozentzähler, Markerklick und Marker Enter/Space sowie kontextabhängiges C-c C-c. SEQ_TODO-Neuladen bleibt erhalten. Palette/Registry bieten Toggle, Marker hinzufügen/entfernen und Neuberechnung der aktuellen Datei. Checkboxaktionen und unterstützte Strukturaktionen samt Zähler-/Elternreparatur bilden eine Undo-Operation; nach Rohtextänderungen explizit neu berechnen. Keine Änderungen an Storage/Dependencies, Heading-TODO-Abschlussregeln oder Agendaaufgaben; kein automatischer Checkboxreset bei Wiederholung.
+
+**412/412 Tests**, Build, **14 Syntaxchecks** und Diffcheck grün. 23 neue Checklistenprüfgruppen mit tatsächlichem App-Kontexthandler/Prefix, fünf Ebenen, Zählgrenzen, Cursor bei Zahlenbreitenwechsel, Struktur/Undo/Redo, Schutzkontexten und 100 kurzen Modellzyklen. Synthetischer Probevault mit echtem Parser/Planer geprüft: keine Checklistendiagnosen, erwarteter Beispielabschluss und weiterhin zwei Heading-TODOs. Keine unabhängige QA-Rollenabnahme oder native Browser-/Stundenabnahme daraus ableiten.
+
+**Nächste Aktion:** stoppen für PO-Probe nach Strg+F5. Anleitung und genaue Grenzen: [CHECKLISTS.md](CHECKLISTS.md); Fixture: `test-vault/checklists/checklists.md`. Native Markerklick-/Fokus-/Tastaturzustellung, Themes/Zoom/AltGr/IME und Langzeit weiterhin praktisch prüfen. Kein Commit/Push/Merge/Deploy; Merge erst nach PO-Abnahme. Die früheren Planungsnotizen folgen als Historie.
+
+## Checklisten vorgeschlagen / Firefox vorgemerkt — 2026-11-10
+
+PO beauftragt Recherche und Vorschlag für Checklisten anhand von `images/Checklist.png`, noch keine Implementierung. [PLAN_CHECKLISTS.md](PLAN_CHECKLISTS.md) beschreibt vorhandene Listenbausteine, offizielle Org-/GFM-Quellen, empfohlenes Paket mit Checkboxhierarchie und Fortschrittszählern, kontextabhängiges C-c C-c, Abnahme und noch zu bestätigende Produktregeln. Nächste Aktion: mit PO besprechen; keine Runtimeänderung aus diesem Auftrag ableiten.
+
+Firefox-Add-on mit lokalem Hilfsprogramm als spätere Option auf PO-Wunsch [festgehalten](FIREFOX_BACKLOG.md). Keine Installation oder Browser-/Storageumstellung freigegeben. Nur Dokumentation geändert; kein Commit/Push/Deploy.
+
 ## M6b Wiederholungen und LOGBOOK implementiert — PO-Probe, 2026-11-09
 
 PO gibt ausschließlich M6b frei. Repeater `+N`, `++N`, `.+N` für d/w/m/y, bestehende Kalenderbearbeitung und wiederkehrender Abschluss über TODO-Befehle umgesetzt. Dieselbe Aufgabe bleibt erhalten; Termine, lokaler Rücksetzstatus und ein neuer LOGBOOK-Eintrag ändern sich atomar mit Undo/Redo. Gültiges offenes REPEAT_TO_STATE hat Vorrang, sonst erster offener Zustand; ungültiger Wert mit sichtbarem Fallbackhinweis. Normale Aufgaben und direkt getippte Statuswörter werden nicht automatisch geloggt. Kindmetadaten und vorhandene Historie bleiben erhalten.

@@ -326,7 +326,7 @@ test('TODO shared panel fast keys, none/Space, navigation, stale cleanup and emp
 test('TODO real Registry plus prefix router opens status panel and C-c C-c reloads only declaration',()=>{
  const text='#+SEQ_TODO: NEXT(n) | DONE(d)\n# NEXT Parent\n## DONE Child',f=fixture({docText:text,selection:{anchor:33},extra:[markdown(),todoRules]});
  const todo=createTodoController({view:f.view,panel:f.panel,getContext:()=>f.context});
- const registry=createCommandRegistry(commandDefinitions({'todo.status':()=>todo.open(),'todo.reload':()=>todo.reload()}),()=>({...f.context,state:f.view.state}));
+ const registry=createCommandRegistry(commandDefinitions({'todo.status':()=>todo.open(),'todo.reload':()=>todo.reload(),'editor.confirm':()=>todo.reload()}),()=>({...f.context,state:f.view.state}));
  const prefix=createPrefixRouter({registry,showHelp:(...args)=>f.panel.showPrefix(...args),hideHelp:()=>f.panel.close({restore:false})});
  const down=(key,patch={})=>prefix.keyDown({key,preventDefault(){},...patch},f.view);
  down('c',{ctrlKey:true});prefix.keyUp({key:'c'});down('t');assert.equal(f.panel.isOpen,true);assert.match(f.results.children[1].textContent,/NEXT/);f.root.emit('keydown',{key:'d',target:f.search});assert.match(f.view.state.doc.toString(),/# DONE Parent\n## DONE Child/);

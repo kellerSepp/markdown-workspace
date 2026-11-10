@@ -9,6 +9,7 @@ import {markdownFolding,guardedFold,stagedUnfold} from './folding.mjs';
 import {LIST_COMMANDS,runListInteraction} from './list-interaction.mjs';
 import {runStructure} from './structure.mjs';
 import {runMetaReturn} from './meta-return.mjs';
+import {runTaskInsert} from './task-insert.mjs';
 import {structureKeyboard,withoutOrgArrowConflicts} from './structure-keymap.mjs';
 import {visualStructure,DEFAULT_VISUAL_STRUCTURE,MARKER_STYLES} from './visual-structure.mjs';
 import {runFormat} from './formatting.mjs';
@@ -34,7 +35,9 @@ import {createAgendaSource} from './agenda-source.mjs';
 import {createFilePicker} from './file-picker.mjs';
 import {executeVaultFile} from './vault-files.mjs';
 import {createLineWrapping} from './line-wrapping.mjs';
-import {todoRules,todoHighlight,todoKeyboard,todoCycleAbortCleanup,createTodoController} from './todo.mjs';
+import {todoRules,todoHighlight,todoKeyboard,todoCycleAbortCleanup,createTodoController,todoDefinitionLine} from './todo.mjs';
+import {runChecklist,checklistNormalization} from './checklists.mjs';
+import {checklistView} from './checklist-view.mjs';
 
 const $ = id => document.getElementById(id);
 const editable = new Compartment();
@@ -74,7 +77,8 @@ const extensions = () => [
     }
   }),
   lineWrapping.extension(),
-  planningNormalization,planningHighlight,todoCycleAbortCleanup(),
+  planningNormalization,planningHighlight,todoCycleAbortCleanup(),checklistNormalization(status),
+  checklistView(id=>registry.execute(id),editingContext),
   prefix.extension(),refileHistory(),
   EditorView.updateListener.of(()=>{workPanel?.invalidateStale();filePicker?.invalidate();}),
   // TASK Shift arrows outrank empty active-mark navigation; nonempty selections
@@ -187,6 +191,8 @@ const refile=createRefileController({view,panel:workPanel,getContext:editingCont
 handlers['structure.refile-h1']=()=>refile.open();
 const todo=createTodoController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['todo.status']=()=>todo.open();handlers['todo.reload']=()=>todo.reload();
+handlers['editor.confirm']=()=>todoDefinitionLine(view.state)?todo.reload():runChecklist(view,'confirm',status);
+for(const id of ['toggle','marker','refresh'])handlers['checklist.'+id]=()=>{const result=runChecklist(view,id,status);view.focus();return result;};
 handlers['todo.previous']=()=>todo.cycle(-1);handlers['todo.next']=()=>todo.cycle(1);
 const planning=createPlanningController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['planning.scheduled']=()=>planning.open('SCHEDULED');handlers['planning.deadline']=()=>planning.open('DEADLINE');
@@ -194,7 +200,7 @@ for(const {id} of EMACS_COMMANDS)handlers['edit.emacs-'+id]=()=>{
   if(id==='show-ring'||id==='yank-pop')workPanel.preserveViewport(()=>view.focus());else view.focus();
   return emacs.run(view,id);
 };
-for(const [id] of LIST_COMMANDS) handlers['list.'+id]=()=>{runListInteraction(view,id,status);view.focus();};
+for(const [id] of LIST_COMMANDS) handlers['list.'+id]=()=>{const result=id==='insert-checkbox'?runTaskInsert(view,status):runListInteraction(view,id,status);view.focus();return result;};
 for(const [id] of ORG_STRUCTURE) handlers['structure.'+id]=()=>{runOrgStructure(view,id,status);view.focus();};
 for(const [id,down] of [['line-up',false],['line-down',true]]) handlers['edit.'+id]=()=>{runLineMove(view,down,status);view.focus();};
 for(const [id,global] of [['org-local-cycle',false],['org-global-cycle',true]]) handlers['fold.'+id]=()=>{cycleOrgVisibility(view,global,status);view.focus();};

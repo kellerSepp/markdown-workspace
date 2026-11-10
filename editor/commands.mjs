@@ -14,6 +14,8 @@ import {EMACS_COMMANDS} from './emacs-policy.mjs';
 import {emacsCommandReason} from './emacs-editing.mjs';
 import {PREFIX_BINDINGS} from './emacs-policy.mjs';
 import {agendaCommandReason} from './agenda-command-policy.mjs';
+import {checklistReason,checklistConfirmReason} from './checklists.mjs';
+import {planTaskInsert} from './task-insert.mjs';
 
 const documentReason=c=>c.busy?'Ein Vorgang läuft.':!c.hasDocument?'Bitte zuerst eine Datei öffnen.':'';
 const idle=c=>c.busy?'Ein Vorgang läuft.':'';
@@ -40,7 +42,7 @@ for(const [id,name] of [['collapse','Abschnitt einklappen'],['reveal','Nächste 
   add('fold.'+id,name,'Folding','Ansicht des aktuellen Abschnitts oder lokalen Blocks verändern; Text bleibt erhalten.','editor',c=>documentReason(c)||(!foldingContext(c.state)?'Kein faltbarer Abschnitt oder Block im Cursorkontext.':''),id==='collapse'?'Strg+Umschalt+,':id==='reveal'?'Strg+Umschalt+.':'');
 for(const [id,name] of [['heading-up','Abschnitt nach oben'],['heading-down','Abschnitt nach unten'],['heading-promote','Überschrift: Ebene höher'],['heading-demote','Überschrift: Ebene tiefer'],['list-up','Listenpunkt nach oben'],['list-down','Listenpunkt nach unten'],['list-indent','Listenpunkt einrücken'],['list-outdent','Listenpunkt ausrücken'],['list-prefix','Gewähltes Listenpräfix anwenden']])
   add('structure.'+id,name,id.startsWith('heading')?'Überschriften':'Listen','Vorhandene sichere Strukturaktion; Wahl „Unterstruktur mitnehmen“ beachten.','editor',c=>documentReason(c)||planStructure(c.state,id,c.structure).message||'','');
-for(const [id,name,shortcut] of LIST_COMMANDS) add('list.'+id,name,'Listen','Kontextuelle Listenbedienung; Markdown-Schutzgrenzen beachten.','editor',c=>documentReason(c)||planListInteraction(c.state,id).message||'',shortcut);
+for(const [id,name,shortcut] of LIST_COMMANDS) add('list.'+id,name,'Listen',id==='insert-checkbox'?'Listenpunkt zur Checkbox machen; auf Überschrift folgendes TODO gleicher Ebene, auf leerer Textzeile TODO letzter Headingebene erstellen. Cursor steht bereit für den Titel.':'Kontextuelle Listenbedienung; Markdown-Schutzgrenzen beachten.','editor',c=>documentReason(c)||(id==='insert-checkbox'?planTaskInsert(c.state):planListInteraction(c.state,id)).message||'',shortcut);
 for(const [id,name] of [['bold','Fett'],['italic','Kursiv'],['underline','Unterstrichen'],['strike','Durchgestrichen'],['code','Inline-Code']])
   add('format.'+id,name,'Textformatierung','Formatierung der Auswahl setzen oder bei passender Auswahl entfernen. Codeblöcke bleiben geschützt.','selection',c=>documentReason(c)||planFormat(c.state,id).message||'');
 for(const [id,name,depth,shortcut] of [['undo','Rückgängig',undoDepth,'Strg+Z'],['redo','Wiederholen',redoDepth,'Strg+Umschalt+Z']])
@@ -69,6 +71,12 @@ add('structure.refile-h1','Teilbaum unter H1 verschieben','Überschriften','Aktu
 for(const [id,name] of [['scheduled','Scheduling bearbeiten'],['deadline','Deadline bearbeiten']])add('planning.'+id,name,'Planung','Datum und optionale Wiederholung (+/++/.+ d/w/m/y) dieser Überschrift bearbeiten; Tagwahl erhält Uhrzeit und Regel.','editor',c=>documentReason(c)||planningContext(c.state).message||'');
 add('todo.status','Aufgabenstatus wählen','Aufgaben','Status dieser H1–H6-Überschrift wählen; wiederholende Aufgaben beim Abschluss mit Log fortschreiben und zurücksetzen. Kinder und Eltern bleiben unabhängig.','editor',c=>documentReason(c)||todoContext(c.state).message||'');
 add('todo.reload','TODO-Regeln neu laden','Aufgaben','Dateilokale SEQ_TODO-Definition laden; Fehler behalten letzte gültige Regeln.','editor',c=>documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':c.state.selection.ranges.length!==1||!c.state.selection.main.empty?'Nur ein Cursor ohne Auswahl.':!todoDefinitionLine(c.state)?'Cursor muss auf der SEQ_TODO-Zeile stehen.':''));
+add('editor.confirm','Kontext bestätigen','Bearbeiten','SEQ_TODO-Regeln laden, Blattcheckbox umschalten oder Fortschrittszähler des aktuellen Headingabschnitts aktualisieren.','editor',c=>documentReason(c)||(todoDefinitionLine(c.state)?c.state.readOnly?'Editor ist schreibgeschützt.':c.state.selection.ranges.length!==1||!c.state.selection.main.empty?'Nur ein Cursor ohne Auswahl.':'':checklistConfirmReason(c.state)));
+for(const [id,name,description] of [
+  ['toggle','Checkbox umschalten','Checkbox auf der ersten Listenpunktzeile abhaken; Eltern und vorhandene Zähler atomar aktualisieren.'],
+  ['marker','Checkbox hinzufügen/entfernen','Checkboxmarker dieses Listenpunkts hinzufügen oder entfernen; Text erhalten.'],
+  ['refresh','Checklisten neu berechnen','Elternzustände und vorhandene Fortschrittszähler der aktuellen Datei nach Rohtexteingabe neu berechnen.']
+])add('checklist.'+id,name,'Checklisten',description,'editor',c=>documentReason(c)||checklistReason(c.state,id));
 for(const [id,name,shortcut] of [['previous','Vorheriger Aufgabenstatus','Umschalt+Links'],['next','Nächster Aufgabenstatus','Umschalt+Rechts']])add('todo.'+id,name,'Aufgaben','Status auf der Aufgabenüberschrift wechseln; wiederholende Aufgaben beim Abschluss fortschreiben. Textauswahl hat Vorrang.','editor',c=>documentReason(c)||todoCycleContext(c.state).message||'',shortcut);
 for(const {id,key,label} of PREFIX_BINDINGS){const command=catalog.find(c=>c.id===id);command.shortcut=[command.shortcut,'C-c '+(label??key)+' (Editor)'].filter(Boolean).join(' / ');}
 for(const id of ['heading-up','heading-down']) Object.assign(catalog.find(c=>c.id==='structure.'+id),{shortcut:id==='heading-up'?'Alt+Oben':'Alt+Unten',orgShortcut:id==='heading-up'?'M-UP':'M-DOWN',compatibility:'Org-Unterbaumtausch nur mit gleichrangigem Geschwister innerhalb derselben Elterngrenze.'});

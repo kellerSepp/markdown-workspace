@@ -22,7 +22,9 @@ export function planLineMove(state,down=false) {
 }
 export function runLineMove(view,down,notify=()=>{}) {
   const result=planLineMove(view.state,down);if(!result.spec){notify(result.message);return false;}
-  view.dispatch(result.spec);
+  const previous=view.state.doc;
+  view.dispatch({...result.spec,userEvent:'move.line-move'});
+  if(previous===view.state.doc)return false;
   view.dispatch({selection:view.state.selection,userEvent:'select.line-move'});
   notify('Zeile verschoben, Ebenenmarker unverändert. Undo/Redo verfügbar.');return true;
 }

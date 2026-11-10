@@ -1,6 +1,7 @@
 import {syntaxTree,syntaxTreeAvailable} from '@codemirror/language';
 import {sectionAt} from './section-folding.mjs';
 import {planStructure,frontmatterEnd} from './structure.mjs';
+import {checklistRepairMapping} from './checklist-transaction.mjs';
 
 // Explicit scopes: the legacy children checkbox never changes an Org command.
 export const ORG_STRUCTURE = Object.freeze([
@@ -37,9 +38,14 @@ export function planOrgStructure(state,id) {
 export function runOrgStructure(view,id,notify=()=>{}) {
   const result=planOrgStructure(view.state,id);
   if(!result.spec) {notify(result.message);return false;}
-  view.dispatch(result.spec);
+  const tr=view.state.update({...result.spec,userEvent:'move.structure'});
+  if(result.spec.changes&&!view.state.changes(result.spec.changes).empty&&!tr.docChanged)return false;
+  view.dispatch(tr);
   view.dispatch({selection:view.state.selection,userEvent:'select.structure'});
-  if(/^list-(indent|outdent)-subtree$/.test(id)) repeatRegions.set(view.state,result.orgRegion);
+  if(/^list-(indent|outdent)-subtree$/.test(id)){
+    const mapping=tr.annotation(checklistRepairMapping),region=result.orgRegion;
+    repeatRegions.set(view.state,mapping&&region?{from:mapping.mapPos(region.from,-1),to:mapping.mapPos(region.to,1)}:region);
+  }
   notify('Org-Struktur geändert. Undo/Redo verfügbar.');return true;
 }
 export function orgShortcutCommand(state,event) {

@@ -133,7 +133,7 @@ function list(state,command,withChildren,prefix,org=false,orgRegion=null) {
   } else if(command==='list-prefix') {
     if(!['-','+','*','1.','- [ ]'].includes(prefix)) return fail('Unbekanntes Listenpräfix.');
     const line=state.doc.lineAt(node.from),tail=state.doc.sliceString(info.mark.to,line.to);
-    const task=/^\s+\[[ xX]\](?=\s|$)/.exec(tail);
+    const task=/^\s+\[[ xX-]\](?=\s|$)/.exec(tail);
     const oldEnd=task?info.mark.to+task[0].length:info.mark.to;
     const delta=(prefix==='- [ ]'?1:prefix.length)-(info.mark.to-info.mark.from);
     let changed=prefix+state.doc.sliceString(oldEnd,info.to);
@@ -229,7 +229,9 @@ export function runStructure(view,command,options,notify=()=>{}) {
   if(!syntaxTreeAvailable(view.state,view.state.doc.length)&&!forceParsing(view,view.state.doc.length,50)) {notify('Dokument noch nicht vollständig analysiert.');return false;}
   const result=planStructure(view.state,command,options);
   if(!result.spec) {notify(result.message);return false;}
-  view.dispatch(result.spec);
+  const previous=view.state.doc;
+  view.dispatch({...result.spec,userEvent:'move.structure'});
+  if(previous===view.state.doc)return false;
   view.dispatch({selection:view.state.selection,userEvent:'select.structure'});
   notify('Struktur geändert. Undo/Redo verfügbar.');return true;
 }

@@ -13,6 +13,7 @@ Bereits verfügbar:
 - Command Registry, durchsuchbare Palette, Kontextmenü und Emacs-artige Tastensequenzen
 - Dateiöffnung und leere Markdown-Dateianlage über eine Pfadeingabe mit Tab-Vervollständigung
 - Dateilokale TODO-Workflows mit offenen und abgeschlossenen Zuständen
+- Checklisten mit Markerklick, C-c C-c, verschachtelten Elternzuständen und Fortschrittszählern ([Bedienung/Probe](docs/CHECKLISTS.md))
 - SCHEDULED und DEADLINE mit Datum, optionalen Uhrzeiten und Zeitfenstern
 - Vaultweiter Agenda-Index, deutsche ISO-Wochenagenda und TODO-Liste mit Quellnavigation
 - Explizites Speichern, Konfliktprüfung, Sicherungen im Vault und Browser-Entwürfe
@@ -50,6 +51,7 @@ Bei `C-c` zuerst **Strg+C** drücken, anschließend **C und Strg loslassen** und
 | `C-c a`, danach `a` | Wochenagenda öffnen |
 | `C-c a`, danach `t` | TODO-Liste öffnen |
 | `C-c t` | Status der aktuellen Aufgabenüberschrift wählen |
+| `C-c C-c` | Checkbox umschalten, Headingzähler aktualisieren oder SEQ_TODO-Regeln laden (zweites C mit Strg) |
 | `C-c s` / `C-c d` | SCHEDULED / DEADLINE bearbeiten |
 | `Alt+X` | Command Palette öffnen |
 | `Strg+S` | Aktuelle Datei ausdrücklich speichern |
@@ -59,6 +61,8 @@ In der Pfadeingabe zeigt die Vorschau **„Öffnen“** oder **„Neue Datei anl
 In der Wochenagenda wechseln `f`/`b` die Woche, `.` springt zur aktuellen Woche. Die Agenda steht im unteren Panel; die Trennlinie verändert den zunächst hälftigen Editor-/Agenda-Split. `Shift+F` oder der Follow-Schalter aktiviert/deaktiviert automatisches Folgen der Auswahl im Editor. Der Fokus bleibt dabei in der Agenda. Der obere Editor bleibt bei sichtbarer Agenda bearbeitbar; Schreiben, Undo/Redo und Speichern sind möglich. Beim Wechsel in den Editor werden ausstehende Follow-Sprünge verworfen. Enter öffnet die Quelle und wechselt in den Editor, `r` liest neu ein und `q`/Escape schließt mit Rückkehr zum Editor. Vor einem Quellsprung oder der Ausführung im Dateidialog ungespeicherte Arbeit ausdrücklich speichern. Die Agenda zeigt weiterhin den gespeicherten Indexstand, keine ungespeicherten Texte. Details und Handprobe: [Agenda Follow](docs/AGENDA_FOLLOW.md).
 
 ## Prüfstand und bekannte Grenzen
+
+Die Checklisten wurden mit 422 Tests und einem erfolgreichen Build geprüft. Alt+Shift+Enter konvertiert den aktuellen Listenpunkt, setzt Überschriften mit einem TODO gleicher Ebene fort oder erstellt auf leerer Zeile ein TODO. Bruch- und Prozentzähler können gemeinsam verwendet werden. [Anleitung mit synthetischem Probevault](docs/CHECKLISTS.md)
 
 Letzter dokumentierter Stand: **324/324 Tests** bei Developer und unabhängiger QA, Build erfolgreich; zusätzlich **13 unabhängige QA-Prüfgruppen** für Alpha/Dateieinstieg. Das sind automatisierte Modell- und Integrationstests. Native Edge-/Permission-/Zoom-/AltGr-/IME- sowie mehrstündige Stabilitätsnachweise sind noch offen.
 

@@ -30,6 +30,11 @@ function createEditorTheme(dark) {
     // Limit this override to status descendants so the title keeps its H1–H6 color.
     '.cm-content .cm-todo-open *':{color:'var(--todo-open)'},
     '.cm-content .cm-todo-closed *':{color:'var(--todo-closed)'},
+    '.cm-content .cm-checklist-marker':{cursor:'pointer',borderRadius:'2px',fontWeight:'bold'},
+    '.cm-content .cm-checklist-open, .cm-content .cm-checklist-open *':{color:'var(--todo-open)'},
+    '.cm-content .cm-checklist-done, .cm-content .cm-checklist-done *':{color:'var(--todo-closed)'},
+    '.cm-content .cm-checklist-partial, .cm-content .cm-checklist-partial *':{color:'var(--accent)'},
+    '.cm-content .cm-checklist-marker:focus':{outline:'2px solid var(--focus)',outlineOffset:'2px'},
     '.cm-content .cm-planning-keyword':{color:'var(--planning-keyword)',fontWeight:'600'},
     '.cm-content .cm-planning-keyword *':{color:'var(--planning-keyword)'},
     '.cm-content .cm-planning-timestamp':{color:'var(--planning-timestamp)',textDecoration:'underline',textUnderlineOffset:'2px'},

@@ -55,5 +55,5 @@ export function runMetaReturn(view,notify=()=>{}){
   const plan=planMetaReturn(view.state);
   if(plan.list)return runListInteraction(view,'insert',notify);
   if(!plan.spec){notify(plan.message);return false;}
-  view.dispatch(plan.spec);return true;
+  const previous=view.state.doc;view.dispatch(plan.spec);return previous!==view.state.doc;
 }

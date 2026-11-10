@@ -152,7 +152,18 @@ Details, Quellen, Listen-Sonderfälle, Konflikte und manuelle Edge-Abnahme: [ORG
 | `list.shift-tab` | Liste: Leerpunkt ausruecken oder globale Sichtbarkeit | Listen | Leerer Punkt: eine Elternebene ausruecken; sonst globale Heading-/Listensichtbarkeit. | Listenpunktzeile | Palette; Kontextmenue; Tastatur | Umschalt+Tab (Liste) | Implementiert | Globaler Zyklus schliesst und oeffnet stufenweise. |
 | `list.newline` | Zeile im Listenpunkt fortsetzen | Listen | Neue passend eingerueckte Zeile im selben Item; kein neuer Marker. | Listenpunkttext oder eingerueckte Fortsetzungszeile | Palette; Kontextmenue; Tastatur | Enter (Liste) | Implementiert | Markdown-Schutz und atomare Undo/Redo erhalten. |
 | `list.insert` | Listenpunkt einfuegen | Listen | Vor dem Body davor, mitten im Text splitten, am Ende nach dem Unterbaum. | Listenpunktzeile oder eingerueckte Fortsetzungszeile | Palette; Kontextmenue; Tastatur | Alt+Enter | Implementiert | Komplexe Splits verweigert; Nummern werden angepasst. |
-| `list.insert-checkbox` | Checkboxpunkt einfuegen | Listen | Neuer ungecheckter Punkt mit `- [ ] `. | Listenpunktzeile | Palette; Kontextmenue; Tastatur | Alt+Umschalt+Enter | Implementiert | Kein Taskworkflow; Markerwechsel kann Markdown-Listen trennen. |
+| `list.insert-checkbox` | Checkbox oder TODO erstellen | Listen | Normalen Listenpunkt zur Checkbox machen; Heading mit neuer TODO-Überschrift gleicher Ebene/Einrückung fortsetzen; leere Textzeile zur TODO-Überschrift auf letzter Headingebene. | Headingzeile, erste Listenpunktzeile oder leere Textzeile | Palette; Kontextmenue; Tastatur | Alt+Umschalt+Enter | Implementiert | Cursor hinter Checkbox/Status; bestehende Position im Listentitel erhalten. Vorhandene Checkbox: neuer offener Geschwisterpunkt. Erster offener Zustand; ohne Heading H1. |
+
+## Checklisten
+
+Checklisten (2026-11-10): lokale Schritte, abgeleitete Eltern und ausdrücklich gesetzte Fortschrittszähler. Details und Probe: [CHECKLISTS.md](CHECKLISTS.md).
+
+| Command-ID | Name | Kategorie | Beschreibung | Kontext | Bedienwege | Tastenkürzel | Status | Grenzen |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `editor.confirm` | Kontext bestätigen | Bearbeiten | TODO-Regeln laden, Blattcheckbox umschalten oder Headingzähler aktualisieren | Einzelcursor im passenden Kontext | Prefix; Palette; Kontextmenü | C-c C-c | Implementiert | Keine Sammelaktion auf Eltern oder Überschriften. |
+| `checklist.toggle` | Checkbox umschalten | Checklisten | Blatt abhaken; Eltern und vorhandene Zähler atomar aktualisieren | Erste Itemzeile | Palette; Kontextmenü; Markerklick; Marker Enter/Space | Über C-c C-c | Implementiert | Eltern werden aus Kindern berechnet. |
+| `checklist.marker` | Checkbox hinzufügen/entfernen | Checklisten | Marker am aktuellen Listenpunkt ändern | Erste Itemzeile | Palette; Kontextmenü | — | Implementiert | Eltern mit Checkboxkindern geschützt. |
+| `checklist.refresh` | Checklisten neu berechnen | Checklisten | Vorhandene Zähler und Elternzustände der Datei aktualisieren | Bearbeitbare Datei, Einzelcursor | Palette; Kontextmenü | — | Implementiert | Nach Rohtextänderung ausdrücklich ausführen. |
 
 ## Wünsche und spätere Ausbaustufen
 

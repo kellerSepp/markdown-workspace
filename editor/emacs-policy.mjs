@@ -6,7 +6,7 @@ export const PREFIX_BINDINGS=Object.freeze([
   Object.freeze({key:'3',id:'fold.open'}),
   Object.freeze({key:'w',label:'w',id:'structure.refile-h1'}),
   Object.freeze({key:'t',id:'todo.status'}),
-  Object.freeze({key:'c',ctrl:true,label:'C-c',id:'todo.reload'}),
+  Object.freeze({key:'c',ctrl:true,label:'C-c',id:'editor.confirm'}),
   Object.freeze({key:'s',label:'s',id:'planning.scheduled'}),
   Object.freeze({key:'d',label:'d',id:'planning.deadline'}),
   Object.freeze({key:'a',id:'agenda.dispatch'}),

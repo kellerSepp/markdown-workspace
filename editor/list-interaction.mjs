@@ -11,7 +11,7 @@ export const LIST_COMMANDS=Object.freeze([
   ['shift-tab','Liste: Leerpunkt ausruecken oder globale Sichtbarkeit','Umschalt+Tab (Liste)'],
   ['newline','Zeile im Listenpunkt fortsetzen','Enter (Liste)'],
   ['insert','Listenpunkt einfuegen','Alt+Enter'],
-  ['insert-checkbox','Checkboxpunkt einfuegen','Alt+Umschalt+Enter']
+  ['insert-checkbox','Checkbox oder TODO erstellen','Alt+Umschalt+Enter']
 ].map(Object.freeze));
 const globalCycles=new WeakMap();
 export const listGlobalContinuation=state=>globalCycles.has(state);
@@ -29,7 +29,7 @@ export function listContext(state,continuation=false) {
   if(!node)return null;
   let root=node.parent;while(root.parent?.name==='ListItem')root=root.parent.parent;
   if(root.parent?.name!=='Document')return null;
-  const firstLine=state.doc.lineAt(node.from),match=/^( *)([-+*]|\d+\.)([ \t]+|$)(\[[ xX]\](?:[ \t]+|$))?/.exec(firstLine.text);
+  const firstLine=state.doc.lineAt(node.from),match=/^( *)([-+*]|\d+\.)([ \t]+|$)(\[[ xX-]\](?:[ \t]+|$))?/.exec(firstLine.text);
   if(!match||match[0].includes('\t'))return null;
   if(line.number!==firstLine.number&&/^ */.exec(line.text)[0].length<match[1].length+match[2].length+match[3].length)return null;
   const body=line.from+(line.number===firstLine.number?match[0].length:/^ */.exec(line.text)[0].length);
@@ -162,7 +162,9 @@ export function planListInteraction(state,id) {
 }
 export function runListInteraction(view,id,notify=()=>{}) {
   const result=planListInteraction(view.state,id);if(!result.spec){notify(result.message);return false;}
-  view.dispatch(result.spec);
+  const previous=view.state.doc;
+  view.dispatch({...result.spec,userEvent:'move.list'});
+  if(result.spec.changes&&previous===view.state.doc)return false;
   if(result.spec.changes)view.dispatch({selection:view.state.selection,userEvent:'select.list'});
   if(result.globalContext)globalCycles.set(view.state,result.globalContext);
   notify(result.notice??'Listenpunkt geaendert. Undo/Redo verfuegbar.');return true;

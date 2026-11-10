@@ -1,5 +1,7 @@
 # Org-Listensteuerung M4b.1a
 
+Nachtrag 2026-11-10: Checkboxworkflow mit `C-c C-c`, Markerklick, Elternzuständen und Zählern implementiert. Die folgenden historischen Grenzen beziehen sich auf den damaligen Listenmeilenstein. Aktuelle Bedienung und verbleibende Schutzgrenzen: [CHECKLISTS.md](CHECKLISTS.md).
+
 Referenzen, geprüft 2026-11-04: [Org Manual: Plain Lists](https://orgmode.org/manual/Plain-Lists.html), [Orgcard 9.8.12](https://orgmode.org/orgcard.pdf). Keine vollständige Org-Dateiformatunterstützung.
 
 - Alt+Oben/Unten tauscht den Punkt samt Fortsetzungszeilen und Unterpunkten mit einem gleich eingerückten Geschwisterpunkt. Nummerierte beteiligte Listen werden neu nummeriert; Startnummer bleibt erhalten.
