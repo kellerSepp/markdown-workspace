@@ -24,7 +24,7 @@ function fixture(doc='# TODO Title\nBody\n## Plain Child',pos=5){
  return {view,todo,registry,prefix,send,emit,context,get options(){return options;}};
 }
 test('Cycle continues through none in both directions for H1–H6, short/empty titles and unknown words',()=>{
- for(let level=1;level<=6;level++)for(const title of ['', ' X', ' UNKNOWN Title']){
+ for(let level=1;level<=6;level++)for(const title of [' ', ' X', ' UNKNOWN Title']){
   const prefix='#'.repeat(level),f=fixture(prefix+' TODO'+title,prefix.length+1),initial=f.view.state.doc.toString();
   for(let i=0;i<12;i++){
    f.send('ArrowLeft');assert.equal(f.view.state.doc.toString(),prefix+' '+title.trimStart());assert.equal(f.registry.availability('todo.next').enabled,true);assert.equal(f.registry.availability('todo.previous').enabled,true);
@@ -39,13 +39,31 @@ test('Unmarked H1–H6 start either direction at every column; undo/redo preserv
   const text='#'.repeat(level)+title;
   for(let pos=0;pos<=text.length;pos++)for(const direction of [-1,1]){
    const f=fixture(text,pos);assert.equal(f.send(direction<0?'ArrowLeft':'ArrowRight').prevented,true);
-   const expected='#'.repeat(level)+' '+(direction<0?'DONE':'TODO')+(title.trim()?' '+title.trim():'');
+   const expected='#'.repeat(level)+' '+(direction<0?'DONE':'TODO')+(title.trim()?' '+title.trim():' ');
    assert.equal(f.view.state.doc.toString(),expected);assert.equal(undoDepth(f.view.state),1);
    assert.equal(undo(f.view),true);assert.equal(f.view.state.doc.toString(),text);
    assert.equal(redo(f.view),true);assert.equal(f.view.state.doc.toString(),expected);
   }
  }
  const f=fixture();f.todo.open();f.options.choose('',{state:f.view.state});assert.equal(f.send().prevented,true);
+});
+
+test('Empty headings place caret after status and space, ready to type; panel and custom states share atomic undo',()=>{
+ for(let level=1;level<=6;level++)for(const suffix of ['', ' ', '   '])for(const mode of ['next','previous','panel']){
+  const original='#'.repeat(level)+suffix,f=fixture(original,original.length);
+  if(mode==='panel'){f.todo.open();f.options.choose('TODO',{state:f.view.state});}
+  else f.send(mode==='next'?'ArrowRight':'ArrowLeft');
+  const expected=original+(suffix?'':' ')+(mode==='previous'?'DONE':'TODO')+' ';
+  assert.equal(f.view.state.doc.toString(),expected);
+  assert.equal(f.view.state.selection.main.head,expected.length);
+  assert.equal(undoDepth(f.view.state),1);
+  assert.equal(undo(f.view),true);assert.equal(f.view.state.doc.toString(),original);assert.equal(f.view.state.selection.main.head,original.length);
+  assert.equal(redo(f.view),true);assert.equal(f.view.state.selection.main.head,expected.length);
+  f.view.dispatch({changes:{from:f.view.state.selection.main.head,insert:'Brot essen'}});
+  assert.equal(f.view.state.doc.toString(),expected+'Brot essen');
+ }
+ const definition='#+SEQ_TODO: NEXT(n) | CLOSED(c)\n',f=fixture(definition+'## ',definition.length+3);
+ f.send();assert.equal(f.view.state.doc.toString(),definition+'## NEXT ');assert.equal(f.view.state.selection.main.head,f.view.state.doc.length);
 });
 
 test('New headings use file-local states and keep selection/body/code and busy guards',()=>{
@@ -70,7 +88,7 @@ test('New headings use file-local states and keep selection/body/code and busy g
 });
 
 test('Every cursor column on H1–H6 including titleless TODO/DONE survives own mapping and parser-only updates',()=>{
- for(let level=1;level<=6;level++)for(const status of ['TODO','DONE'])for(const title of ['', ' Title']){
+ for(let level=1;level<=6;level++)for(const status of ['TODO','DONE'])for(const title of [' ', ' Title']){
   const text='#'.repeat(level)+' '+status+title;
   for(let pos=0;pos<=text.length;pos++){
    const f=fixture(text,pos),direction=status==='TODO'?'ArrowLeft':'ArrowRight';f.send(direction);

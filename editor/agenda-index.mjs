@@ -20,12 +20,21 @@ export async function parseAgendaFile(bytes,path,previousRules,{yieldTask=pause,
   const loaded=readTodoRules(state),rules=loaded.rules??previousRules??DEFAULT_TODO;
   state=state.update({effects:StateEffect.appendConfig.of(todoRules)}).state;
   if(!loaded.rules)state=state.update({effects:reloadTodo.of({rules})}).state;
+  return parseAgendaState(state,path,loaded.message);
+}
+
+// Reuse the actual editor's parser and loaded TODO rules for its RAM-only view.
+export function parseAgendaState(state,path,ruleError=state.field(todoRules,false)?.error){
+  const rules=state.field(todoRules,false)?.rules??DEFAULT_TODO;
   const result=planningRecords(state,path);if(result.message)throw Error(result.message);
-  const diagnostics=loaded.message?[{path,kind:'todo',message:loaded.message+' Letzte gültige Regeln dieser Sitzung, sonst Standardregeln verwendet.'}]:[];
+  const diagnostics=ruleError?[{path,kind:'todo',message:ruleError+' Letzte gültige Regeln dieser Sitzung, sonst Standardregeln verwendet.'}]:[];
   const headings=result.records.filter(record=>{
     let node=syntaxTree(state).resolveInner(record.from,1);while(node&&!/^ATXHeading[1-6]$/.test(node.name))node=node.parent;
     return node?.parent?.name==='Document';
   }).map(record=>{
+    if(state.field(todoRules,false)?.cycleFrom===record.from){
+      record={...record,status:null,closed:null,title:state.doc.lineAt(record.from).text.replace(/^ {0,3}#{1,6}[ \t]*/,'').replace(/[ \t]+#+[ \t]*$/,'')};
+    }
     if(record.error)diagnostics.push({path,line:state.doc.lineAt(record.from).number,kind:'planning',message:record.error});
     const stamp=value=>value?{date:value.date,startTime:value.startTime,endTime:value.endTime,...(value.repeat?{repeat:value.repeat}:{}),from:value.from,to:value.to}:null;
     return {...record,line:state.doc.lineAt(record.from).number,scheduled:stamp(record.scheduled),deadline:stamp(record.deadline)};
@@ -41,14 +50,16 @@ export async function parseAgendaFile(bytes,path,previousRules,{yieldTask=pause,
 
 export function createAgendaIndex({onChange=()=>{},yieldTask=pause}={}){
   let vault=null,epoch=0,revision=0,operation=0,files=new Map(),running=false,scanDiagnostics=[];
+  let editor=null,editorOperation=0;
   let snapshot=freeze({vaultName:null,epoch,revision,running:false,files:0,records:[],diagnostics:[]});
   function publish(){
     revision++;
-    const records=[...files].sort(([a],[b])=>a.localeCompare(b)).flatMap(([path,file])=>file.records.map(record=>{
+    const visible=new Map(files);if(editor)visible.set(editor.path,editor.parsed??{records:[],diagnostics:[]});
+    const records=[...visible].sort(([a],[b])=>a.localeCompare(b)).flatMap(([path,file])=>file.records.map(record=>{
       const id=JSON.stringify([epoch,revision,path,record.from]);
-      return {...record,id,path,file:path.split('/').at(-1),source:{epoch,revision,path,from:record.from,line:record.line,level:record.level,title:record.title}};
+      return {...record,id,path,editor:editor?.path===path,file:path.split('/').at(-1),source:{epoch,revision,path,from:record.from,line:record.line,level:record.level,title:record.title}};
     }));
-    snapshot=freeze({vaultName:vault?.name??null,epoch,revision,running,files:files.size,records,diagnostics:[...scanDiagnostics,...[...files.values()].flatMap(f=>f.diagnostics)]});
+    snapshot=freeze({vaultName:vault?.name??null,epoch,revision,running,editorPath:editor?.path??null,editorPending:!!editor&&!editor.parsed,files:visible.size,records,diagnostics:[...scanDiagnostics,...[...visible.values()].flatMap(f=>f.diagnostics)]});
     onChange(snapshot);return snapshot;
   }
   async function readFile(root,path,previous,current){
@@ -86,7 +97,22 @@ export function createAgendaIndex({onChange=()=>{},yieldTask=pause}={}){
     if(current()){files=next;scanDiagnostics=diagnostics;running=false;return publish();}return snapshot;
   }
   return {
-    selectVault(next){vault=next;epoch++;operation++;files=new Map();scanDiagnostics=[];running=false;publish();return next?rebuild():Promise.resolve(snapshot);},
+    selectVault(next){vault=next;epoch++;operation++;editorOperation++;editor=null;files=new Map();scanDiagnostics=[];running=false;publish();return next?rebuild():Promise.resolve(snapshot);},
+    async setEditor(state,path,sourceVault=vault){
+      if(!vault||sourceVault!==vault||!pathValid(path))return snapshot;
+      if(editor?.path===path&&editor.doc===state.doc&&editor.rules===state.field(todoRules,false))return snapshot;
+      const token=++editorOperation,generation=epoch;
+      const current=()=>token===editorOperation&&generation===epoch&&vault===sourceVault;
+      editor={path,doc:state.doc,rules:state.field(todoRules,false),parsed:null};
+      // Invalidate old positions immediately; incomplete parses never expose disk offsets.
+      try{
+        let pending=false;
+        while(!ensureSyntaxTree(state,state.doc.length,15)){if(!current())return snapshot;if(!pending){publish();pending=true;}await yieldTask();}
+        if(!current())return snapshot;
+        editor.parsed=parseAgendaState(state,path);return publish();
+      }catch(error){if(current()){editor.parsed={records:[],diagnostics:[{path,kind:'editor',message:message(error)}]};return publish();}return snapshot;}
+    },
+    isEditorCurrent(id,state){return !!editor?.parsed&&snapshot.records.some(r=>r.id===id&&r.editor)&&editor.doc===state.doc&&editor.rules===state.field(todoRules,false);},
     rebuild,
     async updateFile(path,sourceVault=vault){
       // Identity is intentional: selected/recovered handles establish a new epoch.

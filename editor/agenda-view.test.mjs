@@ -2,6 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {EditorState} from '@codemirror/state';
+import {markdown,markdownLanguage} from '@codemirror/lang-markdown';
+import {todoRules} from './todo.mjs';
 import {history,undoDepth} from '@codemirror/commands';
 import {createAgendaView,AGENDA_CHOICES} from './agenda-view.mjs';
 import {createAgendaIndex} from './agenda-index.mjs';
@@ -78,6 +80,15 @@ test('Agenda week keyboard/mouse date navigation, selection and source activatio
   f.key('f');assert.match(f.controller.element.textContent,/KW 46\/2026/);f.key('b');assert.match(f.controller.element.textContent,/KW 45\/2026/);f.key('b');f.key('.');assert.match(f.controller.element.textContent,/KW 45\/2026/);
   f.buttons().find(b=>b.textContent==='f →').click();assert.match(f.controller.element.textContent,/KW 46\/2026/);f.key('Escape');assert.equal(f.doc.activeElement,f.origin);
 });
+test('Agenda labels current editor rows and distinguishes saved external paths without taking focus',async()=>{
+ const f=await fixture();
+ await f.index.setEditor(EditorState.create({doc:'# TODO Local draft',extensions:[markdown({base:markdownLanguage}),todoRules]}),'draft.md');
+ f.controller.openTodos();
+ const current=f.rows().find(row=>row.textContent.includes('Local draft')),other=f.rows().find(row=>row.textContent.includes('Open'));
+ assert.match(current.textContent,/draft\.md · aktuelle Datei/);assert.doesNotMatch(other.textContent,/aktuelle Datei/);assert.match(other.textContent,/a\.md/);
+ assert.match(f.controller.element.textContent,/auch ungespeichert/);assert.equal(f.doc.activeElement,f.results());f.controller.destroy();
+});
+
 test('Agenda TODO filter, live snapshots, errors, refresh and vault reset preserve safe modal focus boundary',async()=>{
   const f=await fixture();f.controller.openTodos();assert.equal(f.rows().length,1);const filter=all(f.controller.element,e=>e.tagName==='input')[0];filter.checked=true;filter.emit('change');assert.equal(f.rows().length,2);assert.match(f.rows()[1].textContent,/DONE Closed/);
   f.controller.update({...f.index.snapshot(),diagnostics:[{path:'nested/bad.md',line:2,message:'Permission denied'}]});assert.match(f.controller.element.textContent,/Index unvollständig/);assert.match(f.controller.element.textContent,/nested\/bad.md:2: Permission denied/);

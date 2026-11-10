@@ -49,7 +49,7 @@ $('theme').replaceChildren(...THEMES.map(theme => new Option(theme.name,theme.id
 $('theme').value = activeTheme.id;
 let session, vault, busy = true, syncing = false, timer, persistPending = false;
 const status = message => {$('status').textContent = message;};
-let agenda,agendaSource,filePicker;
+let agenda,agendaSource,filePicker,agendaEditorTimer;
 const agendaIndex=createAgendaIndex({onChange:snapshot=>{
   $('agendaIndexStatus').textContent=`${snapshot.running?'Index wird gelesen … · ':''}${snapshot.files} Dateien · ${snapshot.records.length} Einträge · ${snapshot.diagnostics.length} Hinweise/Fehler · Revision ${snapshot.revision}`;
   $('agendaIndexErrors').replaceChildren(...snapshot.diagnostics.map(item=>{
@@ -68,6 +68,11 @@ const prefix=createPrefixRouter({registry:{get:id=>registry.get(id),availability
   showHelp:(choices,...args)=>prepareWorkPanel()&&workPanel.showPrefix(choices.map(choice=>({...choice,...registry.availability(choice.id)})),...args),moveHelp:delta=>workPanel.moveSelection(delta),activateHelp:()=>workPanel.activateSelection(),hideHelp:()=>workPanel?.close({restore:false}),notify:status});
 const emacs=createEmacsEditing({getContext:editingContext,notify:status,openChooser:()=>prepareWorkPanel()&&(workPanel?.openRing()??false)});
 const extensions = () => [
+  EditorView.updateListener.of(update=>{
+    if(!syncing&&(update.docChanged||update.startState.field(todoRules,false)!==update.state.field(todoRules,false))){
+      clearTimeout(agendaEditorTimer);agendaEditorTimer=setTimeout(syncAgendaEditor,120);
+    }
+  }),
   lineWrapping.extension(),
   planningNormalization,planningHighlight,todoCycleAbortCleanup(),
   prefix.extension(),refileHistory(),
@@ -139,8 +144,15 @@ agendaSource=createAgendaSource({index:agendaIndex,getVault:()=>vault,getSession
   jump:from=>{view.dispatch({selection:{anchor:from},effects:EditorView.scrollIntoView(from,{y:'center'})});syncAgendaFileSelection();}
 });
 agenda=createAgendaView({index:agendaIndex,host:$('workPanel'),workspace:$('editorWorkspace'),view,execute:id=>registry.execute(id),
-  onOpen:()=>{prefix.cancel();workPanel.close({restore:false});emacs.invalidate();},onClose:()=>view.focus(),cancelNavigation:()=>agendaSource.cancel(),
-  navigate:(id,options)=>run(async()=>{try{requireSynthetic();const success=await agendaSource.navigate(id,options);if(success)void agendaIndex.updateFile(session.path,vault);return success;}catch(error){agenda.message(error.message);throw error;}})
+  onOpen:()=>{prefix.cancel();workPanel.close({restore:false});emacs.invalidate();syncAgendaEditor();},onClose:()=>view.focus(),cancelNavigation:()=>agendaSource.cancel(),
+  navigate:async(id,options)=>{
+    const record=agendaIndex.snapshot().records.find(r=>r.id===id);
+    if(record?.editor&&session?.vault===vault&&session.path===record.path){
+      if(busy)return false;
+      requireSynthetic();return agendaSource.navigate(id,options);
+    }
+    return run(async()=>{try{requireSynthetic();const path=session.path;const success=await agendaSource.navigate(id,options);if(success&&session.path!==path)void agendaIndex.updateFile(session.path,vault);return success;}catch(error){agenda.message(error.message);throw error;}});
+  }
 });
 handlers['agenda.dispatch']=()=>agenda.openDispatcher();handlers['agenda.week']=()=>agenda.openWeek();handlers['agenda.todo']=()=>agenda.openTodos();
 filePicker=createFilePicker({getContext:()=>({vault,doc:view.state.doc,path:session?.vault===vault?session.path:'',busy,accepted:$('synthetic').checked}),
@@ -253,6 +265,11 @@ function syncEditor() {
     const error=view.state.field(todoRules).error;if(error)queueMicrotask(()=>status(error));
   } finally {syncing = false;}
   render();
+  syncAgendaEditor();
+}
+function syncAgendaEditor(){
+  clearTimeout(agendaEditorTimer);
+  if(session?.hasDocument&&session.vault===vault)void agendaIndex.setEditor(view.state,session.path,vault);
 }
 async function persistDraft() {
   if (!persistPending || busy || !session?.hasDocument) return;

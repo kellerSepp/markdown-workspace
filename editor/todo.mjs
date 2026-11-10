@@ -82,10 +82,12 @@ export function planTodo(state,name,{now=new Date()}={}){
     recurring=planRecurringCompletion(state,c,name,now);if(recurring.message)return recurring;if(recurring.recurring)name=recurring.status;
   }
   let {from,to}=c,insert=name??'';
+  const startEmptyTitle=!c.status&&name!==null&&from===c.line.to&&state.doc.lineAt(state.selection.main.head).number===c.line.number;
   if(c.status&&name===null){const ws=/^[ \t]+/.exec(state.doc.sliceString(to,c.line.to));to+=ws?.[0].length??0;}
   else if(!c.status&&name!==null){insert+=from<c.line.to?' ':'';if(!/[ \t]$/.test(state.doc.sliceString(c.line.from,from)))insert=' '+insert;}
+  if(startEmptyTitle)insert+=' ';
   const edits=[...(recurring.changes??[])];if(state.doc.sliceString(from,to)!==insert)edits.push({from,to,insert});edits.sort((a,b)=>a.from-b.from);
-  const changes=state.changes(edits);return {warning:recurring.warning,spec:{changes,selection:state.selection.map(changes),annotations:isolateHistory.of('full'),userEvent:'input.todo'}};
+  const changes=state.changes(edits);return {warning:recurring.warning,spec:{changes,selection:startEmptyTitle?{anchor:changes.mapPos(from,-1)+insert.length}:state.selection.map(changes),annotations:isolateHistory.of('full'),userEvent:'input.todo'}};
 }
 export function createTodoController({view,panel,getContext=()=>({}),notify=()=>{},now=()=>new Date()}){
   const ready=()=>{const c=getContext();return !c.busy&&c.hasDocument!==false&&!view.state.readOnly;};

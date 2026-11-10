@@ -11,8 +11,13 @@ export function createAgendaSource({index,getVault,getSession,getState,open,jump
     const current=()=>token===operation&&getVault()===vault&&getSession()===session&&getState()===state&&index.snapshot().epoch===snapshot.epoch&&index.snapshot().revision===snapshot.revision;
     try{
       if(!record||!index.source(id))throw Error('Quelle ist veraltet. Agenda bitte aktualisieren und Eintrag erneut wählen.');
+      const sameFile=session.hasDocument&&session.vault===vault&&session.path===record.path;
+      if(sameFile&&record.editor){
+        if(!index.isEditorCurrent(id,state))throw Error('Editorquelle ist veraltet. Bitte den aktuellen Agendaeintrag erneut wählen.');
+        jump(record.from,{follow});return true;
+      }
       if(snapshot.running)throw Error('Index wird noch gelesen. Bitte das Ende abwarten.');
-      if(session.dirty)throw Error('Ungespeicherte Editoränderungen: Bitte vor dem Quellsprung ausdrücklich speichern. Der Entwurf bleibt unverändert.');
+      if(session.dirty)throw Error('Ungespeicherte Änderungen: Zum Folgen in eine andere Datei bitte die aktuelle Datei zuerst speichern. Der Entwurf bleibt unverändert.');
       await permission();if(!current())return false;
       let dir=vault;const parts=record.path.split('/');
       if(parts.some(p=>!p||p==='.'||p==='..'))throw Error('Ungültiger Quellenpfad.');
@@ -34,7 +39,9 @@ export function createAgendaSource({index,getVault,getSession,getState,open,jump
       // short explicit commit phase rather than promising an ineffective close.
       onCommit(true);
       try{await open({vault,handle,path:record.path});}finally{onCommit(false);}
-      if(token!==operation||getVault()!==vault||getSession()!==session||session.dirty||index.snapshot().epoch!==snapshot.epoch||index.snapshot().revision!==snapshot.revision){notify('Quellnavigation überholt. Bitte Eintrag im aktuellen Index erneut wählen.');return false;}
+      const after=index.snapshot(),openedEditor=after.records.find(r=>r.editor&&r.path===record.path&&sameRecord(r,record));
+      const ownEditorUpdate=openedEditor&&index.isEditorCurrent?.(openedEditor.id,getState());
+      if(token!==operation||getVault()!==vault||getSession()!==session||session.dirty||after.epoch!==snapshot.epoch||after.revision!==snapshot.revision&&!ownEditorUpdate){notify('Quellnavigation überholt. Bitte Eintrag im aktuellen Index erneut wählen.');return false;}
       // session.open reads again; reject a changed second read before selecting.
       if(session.text!==text){notify('Quelle hat sich während des Öffnens geändert. Datei geladen; Agenda aktualisieren, kein Positionssprung.');return false;}
       jump(target.from,{follow});return true;

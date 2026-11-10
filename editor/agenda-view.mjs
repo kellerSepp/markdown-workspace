@@ -72,7 +72,7 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
   }
   function row(entry){
     const button=doc.createElement('button');button.type='button';button.className='agenda-row';button.tabIndex=-1;button.setAttribute('role','option');button.id='agenda-entry-'+rows.length;
-    const source=doc.createElement('span');source.className='agenda-source';source.textContent=entry.record.path+': ';
+    const source=doc.createElement('span');source.className='agenda-source';source.textContent=entry.record.path+(entry.record.editor?' · aktuelle Datei': '')+': ';
     const marks=doc.createElement('span');marks.className='agenda-marks';marks.textContent=entry.marks.map(agendaStampLabel).join(' · ')+(entry.marks.length?' · ':'');
     if(entry.marks.some(m=>m.late))marks.classList.add('agenda-late');
     const state=doc.createElement('span');state.className=entry.record.closed===true?'agenda-closed':entry.record.closed===false?'agenda-open':'agenda-appointment';state.textContent=(entry.record.status??'Termin')+' ';
@@ -103,7 +103,7 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
     }
     errorList.replaceChildren();for(const diagnostic of snapshot.diagnostics){const li=doc.createElement('li');li.textContent=`${diagnostic.path}${diagnostic.line?':'+diagnostic.line:''}: ${diagnostic.message}`;errorList.append(li);}
     errors.hidden=!snapshot.diagnostics.length;
-    message(`${snapshot.running?'Index wird gelesen. ':''}${snapshot.diagnostics.length?'Index unvollständig oder mit Warnungen. ':''}${snapshot.files} Dateien · ${isDispatch?snapshot.records.length:rows.length} Einträge. Gespeicherter Dateistand; ungespeicherte Änderungen nicht enthalten.`);
+    message(`${snapshot.running?'Index wird gelesen. ':''}${snapshot.editorPending?'Editor wird analysiert. ':''}${snapshot.diagnostics.length?'Index unvollständig oder mit Warnungen. ':''}${snapshot.files} Dateien · ${isDispatch?snapshot.records.length:rows.length} Einträge. ${snapshot.editorPath?'Aktuelle Datei: Editorstand, auch ungespeichert. Andere Dateien: gespeicherter Stand.':'Gespeicherter Dateistand; ungespeicherte Änderungen nicht enthalten.'}`);
     if(committing)message(commitMessage);
     results.scrollTop=top;select(Math.max(0,rows.findIndex(r=>r.entry.key===key)));
     if(key!==rows[selected]?.entry.key)scheduleFollow();
