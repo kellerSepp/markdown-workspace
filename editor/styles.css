@@ -1,5 +1,5 @@
 :root{font:16px var(--font-ui,system-ui,sans-serif);color:var(--text,#e8edf5);background:var(--background,#191d24);color-scheme:dark}
-body{max-width:1100px;margin:1.5rem auto;padding:0 1rem}
+body{margin:1.5rem 0;padding:0 1rem}
 h1{font-size:1.4rem}
 button,select{font:inherit;padding:.4rem .6rem;color:var(--text);background:var(--control);border:1px solid var(--border);border-radius:2px}
 option{color:var(--text);background:var(--control)}
@@ -10,7 +10,7 @@ button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visi
 .toolbar{display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin:.6rem 0}
 fieldset{border:1px solid var(--border);margin:.6rem 0;padding:.3rem .6rem}legend{color:var(--muted)}
 select{max-width:35rem}
-#editorWorkspace{--workspace-height:65vh;--workspace-min-height:22rem;--workspace-max-height:44rem;--work-panel-share:45%;display:grid;grid-template-rows:minmax(0,1fr);height:var(--workspace-height);min-height:var(--workspace-min-height);max-height:var(--workspace-max-height);overflow:hidden;overflow-anchor:none}
+#editorWorkspace{--workspace-height:65vh;--workspace-min-height:22rem;--workspace-max-height:none;--work-panel-share:45%;box-sizing:border-box;display:grid;grid-template-rows:minmax(0,1fr);width:min(1100px,100%);min-width:min(20rem,100%);max-width:100%;height:var(--workspace-height);min-height:var(--workspace-min-height);max-height:var(--workspace-max-height);padding-bottom:14px;resize:both;overflow:hidden;overflow-anchor:none;background:var(--control)}
 #editorWorkspace.panel-open{grid-template-rows:minmax(0,1fr) minmax(0,var(--work-panel-share))}
 #editor{box-sizing:border-box;min-height:0;overflow:hidden;border:1px solid var(--border);background:var(--surface)}
 #editor .cm-editor{height:100%;min-height:0}
@@ -80,7 +80,7 @@ code{background:var(--code-background);color:var(--text)}
 .agenda-toolbar input{width:auto;padding:0}
 .agenda-dispatcher{display:grid;grid-template-columns:1fr 1fr;gap:.15rem .5rem;align-content:start}
 .agenda-dispatcher button{text-align:left;white-space:normal;overflow-wrap:anywhere;border:0;background:transparent}
-.agenda-results{position:relative;flex:1;min-height:0;overflow:auto;overflow-anchor:none;outline-offset:-2px}
+.agenda-results{position:relative;flex:1;min-height:0;padding:.2rem .35rem;overflow:auto;overflow-anchor:none;outline-offset:-2px}
 .agenda-results:focus-visible{outline:2px solid var(--focus)}
 .agenda-day{font:inherit;font-weight:bold;color:var(--accent);margin:.12rem 0 0}
 .agenda-weekend{color:var(--planning-timestamp);font-style:italic}
