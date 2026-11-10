@@ -207,3 +207,7 @@ PO-Probe: Nach Strg+F5 langen synthetischen Absatz bei schmalem Fenster öffnen,
 ## Statuszyklus auf neuen Überschriften (2026-11-09)
 
 PO-Korrektur: Shift+Rechts/Links startet jetzt auch auf unmarkierten normalen H1–H6 direkt auf der Überschriftenzeile, an jeder Cursorposition. Rechts wählt den ersten geladenen Zustand, links den letzten; danach umlaufend einschließlich Kein Status. Dateilokale SEQ_TODO-Regeln gelten. Nichtleere Auswahl hat Vorrang; Body, Code, Frontmatter, Container, Readonly, Busy, AltGr und IME bleiben geschützt. Frühere Beschränkungen auf bereits markierte Überschriften sind damit aufgehoben. Native PO-Probe nach Strg+F5 offen.
+
+| `structure.meta-return` | Überschrift oder Listenpunkt einfügen | Überschriften | Gleichrangige Überschrift oder Listenpunkt; Teilung am Cursor, am Zeilenanfang davor beziehungsweise Text zur Überschrift | Einzelcursor, kein Busy/Readonly | Palette; Editor | Alt+Enter | Implementiert | Kein neuer TODO-Status; Tabellen/Code/Frontmatter/Container geschützt; keine Ctrl-/Shift-Enter-Erweiterung. |
+
+Alt+Enter (2026-11-10): nur im Editor. Listen verwenden vorhandene Listenaktion. Überschriften H1–H6: am Anfang davor, sonst Teilung; TODO bleibt links, neue Überschrift ohne Status. Fließtext übernimmt aktuelle Abschnittsebene, ohne Abschnitt H1; am Zeilenanfang wird die Zeile zur Überschrift. Auswahl und Teilung in Statuswörtern/Markdown-Auszeichnung sowie schließende ATX-Marker werden verweigert. Einzelner Undo-Schritt. Native PO-Probe offen. Referenz: https://orgmode.org/org.html#Structure-Editing

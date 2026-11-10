@@ -1,4 +1,5 @@
 import {refileContext} from './refile.mjs';
+import {planMetaReturn} from './meta-return.mjs';
 import {planningContext} from './planning.mjs';
 import {todoContext,todoDefinitionLine,todoCycleContext} from './todo.mjs';
 import {LIST_COMMANDS,planListInteraction} from './list-interaction.mjs';
@@ -19,6 +20,7 @@ const idle=c=>c.busy?'Ein Vorgang läuft.':'';
 const synthetic=c=>idle(c)||(!c.synthetic?'Alpha-Nutzungshinweis zuerst bestätigen.':'');
 const vault=c=>idle(c)||(!c.vault?'Bitte zuerst einen Vault wählen.':'');
 const catalog=[];
+add('structure.meta-return','Überschrift oder Listenpunkt einfügen','Überschriften','Org Meta-Return: gleichrangige Überschrift oder Listenpunkt; Text am Cursor teilen.','editor',c=>documentReason(c)||planMetaReturn(c.state).message||'','Alt+Enter');
 add('view.line-wrap','Zeilenumbruch umschalten','Ansicht','Visuellen Wortumbruch umschalten; aus: horizontal scrollen. Gilt für diesen Tab, ohne Textänderung.','global',idle);
 function add(id,name,category,description,context,unavailable,shortcut='') {catalog.push({id,name,category,description,context,unavailable,shortcut});}
 add('workspace.choose','Vault wählen / wechseln','Datei','Separaten Alpha-Vault wählen; bisherigen Entwurf sichern.','global',synthetic);

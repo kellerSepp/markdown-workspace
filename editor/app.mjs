@@ -8,6 +8,7 @@ import {editorTheme} from './theme-editor.mjs';
 import {markdownFolding,guardedFold,stagedUnfold} from './folding.mjs';
 import {LIST_COMMANDS,runListInteraction} from './list-interaction.mjs';
 import {runStructure} from './structure.mjs';
+import {runMetaReturn} from './meta-return.mjs';
 import {structureKeyboard,withoutOrgArrowConflicts} from './structure-keymap.mjs';
 import {visualStructure,DEFAULT_VISUAL_STRUCTURE,MARKER_STYLES} from './visual-structure.mjs';
 import {runFormat} from './formatting.mjs';
@@ -110,6 +111,7 @@ const extensions = () => [
 ];
 const view = new EditorView({parent:$('editor'), state:EditorState.create({extensions:extensions()})});
 const handlers={};
+handlers['structure.meta-return']=()=>runMetaReturn(view,status);
 handlers['view.line-wrap']=()=>{
   const enabled=lineWrapping.toggle(view);
   $('lineWrap').textContent=`Zeilenumbruch: ${enabled?'an':'aus'}`;
