@@ -23,7 +23,12 @@ function createEditorTheme(dark) {
     '&':{color:'var(--text)',backgroundColor:'var(--surface)'},
     '&.cm-focused':{outline:'2px solid var(--focus)'},
     '.cm-content':{caretColor:'var(--cursor)'},
-    '.cm-content .cm-heading-tags, .cm-content .cm-heading-tags *':{color:'var(--accent)',fontWeight:'600'},
+    '.cm-content .cm-heading-tag-gap':{display:'inline-block',width:'0',minWidth:'2ch',height:'1px',pointerEvents:'none'},
+    '.cm-content .cm-heading-tags':{display:'inline-block',maxWidth:'calc(100% - 2ch)',overflowWrap:'anywhere'},
+    ...Object.fromEntries(Array.from({length:6},(_,n)=>[
+      `.cm-content .cm-heading-tags-level${n+1}, .cm-content .cm-heading-tags-level${n+1} *`,
+      {color:`var(--syntax-heading${n+1})`,fontWeight:n<2?'600':n<4?'550':'500'}
+    ])),
     '.cm-content .cm-todo-open':{color:'var(--todo-open)',fontWeight:'bold',textDecoration:'underline',textDecorationStyle:'dotted'},
     '.cm-content .cm-todo-closed':{color:'var(--todo-closed)',fontWeight:'bold',textDecoration:'line-through'},
     // Syntax highlighting may be nested INSIDE the task mark. Its explicit
