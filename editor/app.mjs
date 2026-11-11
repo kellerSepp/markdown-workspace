@@ -204,7 +204,7 @@ for(const [id] of LIST_COMMANDS) handlers['list.'+id]=()=>{const result=id==='in
 for(const [id] of ORG_STRUCTURE) handlers['structure.'+id]=()=>{runOrgStructure(view,id,status);view.focus();};
 for(const [id,down] of [['line-up',false],['line-down',true]]) handlers['edit.'+id]=()=>{runLineMove(view,down,status);view.focus();};
 for(const [id,global] of [['org-local-cycle',false],['org-global-cycle',true]]) handlers['fold.'+id]=()=>{cycleOrgVisibility(view,global,status);view.focus();};
-handlers['view.org-tab']=()=>{$('orgTab').checked=!$('orgTab').checked;status($('orgTab').checked?'Org-Tab aktiv: Heading-Tab faltet; Shift+Tab außerhalb Liste/Code faltet global. Escape, dann Tab verlässt den Editor.':'Struktur-Tab aktiv: bisheriges Ein-/Ausrücken bleibt Standard.');};
+handlers['view.org-tab']=()=>{$('orgTab').checked=!$('orgTab').checked;status($('orgTab').checked?'Org-Tab aktiv: Tab auf Überschriften und Listenpunktzeilen faltet; Shift+Tab außerhalb Liste/Code faltet global. Escape, dann Tab verlässt den Editor.':'Struktur-Tab aktiv: bisheriges Ein-/Ausrücken bleibt Standard.');};
 $('orgTab').addEventListener('change',()=>{$('orgTab').checked=!$('orgTab').checked;registry.execute('view.org-tab');});
 for(const kind of ['bold','italic','underline','strike','code']) handlers['format.'+kind]=()=>{runFormat(view,kind,status);view.focus();};
 for(let n=1;n<=5;n++) {

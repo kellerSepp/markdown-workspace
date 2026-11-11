@@ -7,6 +7,7 @@ import {orgVisibilityPlans} from './org-folding.mjs';
 import {frontmatterEnd} from './structure.mjs';
 
 export const LIST_COMMANDS=Object.freeze([
+  ['fold','Listenpunktinhalt ein-/ausklappen','Tab (Org-Tab, Liste)'],
   ['tab','Liste: Leerpunkt einruecken oder Kinder falten','Tab (Liste)'],
   ['shift-tab','Liste: Leerpunkt ausruecken oder globale Sichtbarkeit','Umschalt+Tab (Liste)'],
   ['newline','Zeile im Listenpunkt fortsetzen','Enter (Liste)'],
@@ -98,8 +99,8 @@ function listRanges(state){
     for(const range of childRanges(state,ref.node))result.push({...range,depth});
   }});return result;
 }
-function visibility(state,c,global) {
-  const children=global?[]:childRanges(state,c.node),current=[];
+function visibility(state,c,global,wholeItem=false) {
+  const children=global?[]:wholeItem?(c.node.to>c.line.to?[{from:c.line.to,to:c.node.to}]:[]):childRanges(state,c.node),current=[];
   foldedRanges(state).between(0,state.doc.length,(from,to)=>{
     if(global||children.some(r=>from>=r.from&&to<=r.to))current.push({from,to});
   });
@@ -151,6 +152,7 @@ export function planListInteraction(state,id) {
   if(!LIST_COMMANDS.some(c=>c[0]===id))return fail('Unbekannter Listenbefehl.');
   if(!syntaxTreeAvailable(state,state.doc.length))return fail('Dokument noch nicht vollstaendig analysiert.');
   const c=listContext(state,['newline','insert','insert-checkbox'].includes(id))??(id==='shift-tab'?globalCycles.get(state):null);if(!c)return fail('Einzelnen Cursor auf einer Listenpunktzeile verwenden.');
+  if(id==='fold')return visibility(state,c,false,true);
   if(id==='tab'||id==='shift-tab')return c.empty?emptyTab(state,c,id==='shift-tab'):visibility(state,c,id==='shift-tab');
   if(id==='newline'){
     const pos=state.selection.main.head;

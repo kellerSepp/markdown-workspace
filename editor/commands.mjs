@@ -62,7 +62,7 @@ for(const [id,name,global,shortcut,orgShortcut] of [['org-local-cycle','Org: lok
   add('fold.'+id,name,'Folding','Org-Sichtbarkeitszyklus; Legacy-Faltbefehle bleiben erhalten.','editor',c=>documentReason(c)||orgFoldReason(c.state,global),shortcut);
   Object.assign(catalog.at(-1),{orgShortcut,compatibility:global?'OVERVIEW → CONTENTS → SHOW ALL; Listen-/Code-Tab hat Vorrang.':'FOLDED → CHILDREN → SUBTREE; nur Überschriften, keine leeren Eintragszyklen.'});
 }
-add('view.org-tab','Org-Tab-Modus umschalten','Ansicht','Sitzungsoption: Heading-Tab faltet, Shift+Tab außerhalb Liste/Code faltet global. Standard bleibt Struktur-Tab; Escape aktiviert Fokusnavigation.','global',idle);
+add('view.org-tab','Org-Tab-Modus umschalten','Ansicht','Sitzungsoption, standardmäßig an: Tab faltet Überschriften und Listenpunktinhalt; Shift+Tab außerhalb Liste/Code faltet global. Escape aktiviert Fokusnavigation.','global',idle);
 for(const [id,name,down,shortcut,orgShortcut] of [['line-up','Zeile nach oben',false,'Alt+Umschalt+Oben','M-S-UP'],['line-down','Zeile nach unten',true,'Alt+Umschalt+Unten','M-S-DOWN']]) {
   add('edit.'+id,name,'Bearbeiten','Aktuelle physische Zeile tauschen, unabhängig von Hierarchie und Unterstrukturwahl. Marker werden nicht geändert. Code/Fences/Frontmatter sind geschützt.','editor',c=>documentReason(c)||planLineMove(c.state,down).message||'',shortcut);
   Object.assign(catalog.at(-1),{orgShortcut,compatibility:'Org/Emacs-Zeilenbewegung bei einzelnem Cursor; Code-/Frontmatter-Grenzen zusätzlich geschützt, keine Regionen.'});

@@ -12,7 +12,7 @@ const pendingAlt = new WeakSet();
 export function enableFocusNavigation(view,notify=()=>{}) {
   clearListGlobalContinuation(view.state);
   navigation.add(view);view.setTabFocusMode(true);
-  notify('Fokusnavigation aktiv: Tab/Shift+Tab verlässt den Editor. Beim erneuten Fokussieren gilt wieder Struktur-Tab.');
+  notify('Fokusnavigation aktiv: Tab/Shift+Tab verlässt den Editor. Beim erneuten Fokussieren gilt wieder der gewählte Tab-Modus.');
   return false; // Keep CodeMirror's ordinary Escape selection behavior.
 }
 export function resetFocusNavigation(view) {navigation.delete(view);view.setTabFocusMode(false);}
@@ -89,8 +89,12 @@ export function withoutOrgArrowConflicts(bindings) {
 export function orgTab(view,outdent,getOrgTab,execute,notify) {
   if(!getOrgTab()||navigation.has(view)||outdent&&listGlobalContinuation(view.state)) return null;
   const context=tabContext(view.state);
-  // Code indentation and legacy list structure keep their established meaning.
-  if(context==='code'||context==='list') return null;
+  if(context==='code') return null;
+  if(context==='list'){
+    if(outdent)return null;
+    if(execute)execute('list.fold');else runListInteraction(view,'fold',notify);
+    return true;
+  }
   if(!outdent&&context!=='heading') return false;
   if(execute) execute(outdent?'fold.org-global-cycle':'fold.org-local-cycle');
   else cycleOrgVisibility(view,outdent,notify);
