@@ -55,6 +55,9 @@ export function structuralTab(view,outdent=false,getChildren=()=>true,notify=()=
 }
 export function handleOrgShortcut(event,view,execute) {
   if(!execute) return false;
+  if(view.hasFocus&&event.key==='Enter'&&event.ctrlKey&&!event.altKey&&!event.shiftKey&&!event.metaKey&&!event.isComposing&&event.keyCode!==229&&!event.getModifierState?.('AltGraph')){
+    if(!event.repeat)execute('structure.subtree-return');event.preventDefault();return true;
+  }
   if(view.hasFocus&&event.key==='Enter'&&event.altKey&&event.shiftKey&&!event.ctrlKey&&!event.metaKey&&!event.isComposing&&event.keyCode!==229&&!event.getModifierState?.('AltGraph')){
     if(!event.repeat)execute('list.insert-checkbox');event.preventDefault();return true;
   }

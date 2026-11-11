@@ -9,6 +9,7 @@ import {markdownFolding,guardedFold,stagedUnfold} from './folding.mjs';
 import {LIST_COMMANDS,runListInteraction} from './list-interaction.mjs';
 import {runStructure} from './structure.mjs';
 import {runMetaReturn} from './meta-return.mjs';
+import {runSubtreeReturn} from './subtree-return.mjs';
 import {runTaskInsert} from './task-insert.mjs';
 import {structureKeyboard,withoutOrgArrowConflicts} from './structure-keymap.mjs';
 import {visualStructure,DEFAULT_VISUAL_STRUCTURE,MARKER_STYLES} from './visual-structure.mjs';
@@ -120,6 +121,7 @@ const extensions = () => [
 ];
 const view = new EditorView({parent:$('editor'), state:EditorState.create({extensions:extensions()})});
 const handlers={};
+handlers['structure.subtree-return']=()=>runSubtreeReturn(view,status);
 handlers['structure.meta-return']=()=>runMetaReturn(view,status);
 handlers['view.line-wrap']=()=>{
   const enabled=lineWrapping.toggle(view);
