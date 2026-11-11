@@ -1,3 +1,4 @@
+import {confirmAction} from './context-confirm.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EditorState,EditorSelection} from '@codemirror/state';
@@ -106,14 +107,14 @@ test('Actual app confirmation handler routes prefix between checkbox, heading st
   const app=await readFile(new URL('./app.mjs',import.meta.url),'utf8');
   const source=app.match(/handlers\['editor.confirm'\]=\(\)=>[^\n]+/)[0];
   const doc='#+SEQ_TODO: NEXT(n) | DONE(d)\n# NEXT A [0/1]\n- [ ] A',v=view(doc,doc.length),handlers={},notices=[];
-  const todo=createTodoController({view:v,notify:m=>notices.push(m)});
-  new Function('handlers','view','todo','todoDefinitionLine','runChecklist','status',source)(handlers,v,todo,todoDefinitionLine,runChecklist,m=>notices.push(m));
+  const todo=createTodoController({view:v,notify:m=>notices.push(m)});let tagCalls=0;handlers['tags.edit']=()=>{tagCalls++;return true;};
+  new Function('handlers','view','todo','todoDefinitionLine','runChecklist','status','confirmAction','registry',source)(handlers,v,todo,todoDefinitionLine,runChecklist,m=>notices.push(m),confirmAction,{execute:id=>id==='todo.reload'?todo.reload():handlers[id]?.()});
   v.hasFocus=true;
   const registry=createCommandRegistry(commandDefinitions(handlers),()=>({state:v.state,hasDocument:true}));
   const prefix=createPrefixRouter({registry});const confirm=()=>{prefix.keyDown({key:'c',ctrlKey:true,preventDefault(){}},v);prefix.keyUp({key:'c'});prefix.keyDown({key:'c',ctrlKey:true,preventDefault(){}},v);};
   confirm();assert.equal(text(v),doc.replace('[0/1]','[1/1]').replace('- [ ]','- [x]'));assert.equal(prefix.active,false);
   v.dispatch({selection:{anchor:3},changes:{from:12,to:16,insert:'WAIT'}});confirm();assert.equal(v.state.field(todoRules).rules[0].name,'WAIT');
-  const current=text(v);v.dispatch({selection:{anchor:current.indexOf('# NEXT')},changes:{from:current.indexOf('[1/1]'),to:current.indexOf('[1/1]')+5,insert:'[/]'}});confirm();assert.match(text(v),/# NEXT A \[1\/1\]/);assert.ok(!text(v).includes('DONE A'));
+  const current=text(v);v.dispatch({selection:{anchor:current.indexOf('# NEXT')},changes:{from:current.indexOf('[1/1]'),to:current.indexOf('[1/1]')+5,insert:'[/]'}});confirm();assert.equal(tagCalls,1);assert.match(text(v),/# NEXT A \[\/\]/);assert.equal(runChecklist(v,'section'),true);assert.match(text(v),/# NEXT A \[1\/1\]/);assert.ok(!text(v).includes('DONE A'));
   assert.match(app,/checklistNormalization\(status\)/);assert.match(app,/checklistView\(id=>registry.execute\(id\),editingContext\)/);
 });
 test('Adding a checkbox to a bare empty marker keeps a valid Markdown list',()=>{

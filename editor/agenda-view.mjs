@@ -77,7 +77,9 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
     if(entry.marks.some(m=>m.late))marks.classList.add('agenda-late');
     const state=doc.createElement('span');state.className=entry.record.closed===true?'agenda-closed':entry.record.closed===false?'agenda-open':'agenda-appointment';state.textContent=(entry.record.status??'Termin')+' ';
     const title=doc.createElement('span');title.textContent=entry.record.title||'(ohne Titel)';
-    button.append(source,marks,state,title);button.addEventListener('click',()=>{if(committing){message(commitMessage);return;}select(rows.findIndex(r=>r.button===button),follow);if(follow)results.focus();else void activate(entry);});
+    button.append(source,marks,state,title);
+    if(entry.record.effectiveTags?.length){const tags=doc.createElement('span');tags.className='agenda-tags';tags.textContent=(entry.record.tags?.length?' :'+entry.record.tags.join(':')+':':'')+(entry.record.inheritedTags?.length?' · geerbt: '+entry.record.inheritedTags.join(', '):'');button.append(tags);}
+    button.addEventListener('click',()=>{if(committing){message(commitMessage);return;}select(rows.findIndex(r=>r.button===button),follow);if(follow)results.focus();else void activate(entry);});
     results.append(button);rows.push({button,entry});
   }
   function render(){

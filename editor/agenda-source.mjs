@@ -1,7 +1,7 @@
 import {parseAgendaFile} from './agenda-index.mjs';
 import {TextCodec} from './text-codec.mjs';
 
-const sameRecord=(a,b)=>a.from===b.from&&a.level===b.level&&a.title===b.title&&a.status===b.status&&a.closed===b.closed&&JSON.stringify(a.scheduled)===JSON.stringify(b.scheduled)&&JSON.stringify(a.deadline)===JSON.stringify(b.deadline);
+const sameRecord=(a,b)=>a.from===b.from&&a.level===b.level&&a.title===b.title&&a.status===b.status&&a.closed===b.closed&&JSON.stringify(a.scheduled)===JSON.stringify(b.scheduled)&&JSON.stringify(a.deadline)===JSON.stringify(b.deadline)&&JSON.stringify(a.tags??[])===JSON.stringify(b.tags??[])&&JSON.stringify(a.effectiveTags??[])===JSON.stringify(b.effectiveTags??[]);
 // Source adapter performs reads and delegates opening to the established session.
 // No source IDs are guessed from titles, and no dirty editor is replaced.
 export function createAgendaSource({index,getVault,getSession,getState,open,jump,permission=async()=>{},onCommit=()=>{},notify=()=>{}}){

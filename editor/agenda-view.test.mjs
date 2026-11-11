@@ -88,6 +88,13 @@ test('Agenda labels current editor rows and distinguishes saved external paths w
  assert.match(current.textContent,/draft\.md · aktuelle Datei/);assert.doesNotMatch(other.textContent,/aktuelle Datei/);assert.match(other.textContent,/a\.md/);
  assert.match(f.controller.element.textContent,/auch ungespeichert/);assert.equal(f.doc.activeElement,f.results());f.controller.destroy();
 });
+test('Agenda renders own and inherited tags separately from the task title',async()=>{
+ const f=await fixture();
+ await f.index.setEditor(EditorState.create({doc:'# Project :WORK:\n## TODO Tagged :URGENT:',extensions:[markdown({base:markdownLanguage}),todoRules]}),'a.md');
+ f.controller.openTodos();const row=f.rows()[0];
+ assert.match(row.textContent,/Tagged :URGENT:/);assert.match(row.textContent,/geerbt: WORK/);
+ assert.equal(f.index.query()[0].title,'Tagged');f.controller.destroy();
+});
 
 test('Agenda TODO filter, live snapshots, errors, refresh and vault reset preserve safe modal focus boundary',async()=>{
   const f=await fixture();f.controller.openTodos();assert.equal(f.rows().length,1);const filter=all(f.controller.element,e=>e.tagName==='input')[0];filter.checked=true;filter.emit('change');assert.equal(f.rows().length,2);assert.match(f.rows()[1].textContent,/DONE Closed/);

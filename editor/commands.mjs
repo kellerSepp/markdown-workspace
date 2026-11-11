@@ -17,12 +17,17 @@ import {PREFIX_BINDINGS} from './emacs-policy.mjs';
 import {agendaCommandReason} from './agenda-command-policy.mjs';
 import {checklistReason,checklistConfirmReason} from './checklists.mjs';
 import {planTaskInsert} from './task-insert.mjs';
+import {tagContext} from './tag-model.mjs';
+import {tagDefinitionLine} from './tag-rules.mjs';
+import {confirmReason} from './context-confirm.mjs';
 
 const documentReason=c=>c.busy?'Ein Vorgang läuft.':!c.hasDocument?'Bitte zuerst eine Datei öffnen.':'';
 const idle=c=>c.busy?'Ein Vorgang läuft.':'';
 const synthetic=c=>idle(c)||(!c.synthetic?'Alpha-Nutzungshinweis zuerst bestätigen.':'');
 const vault=c=>idle(c)||(!c.vault?'Bitte zuerst einen Vault wählen.':'');
 const catalog=[];
+add('tags.edit','Tags bearbeiten','Tags','Eigene Tags wählen oder frei ergänzen; geerbte Tags getrennt anzeigen.','editor',c=>documentReason(c)||tagContext(c.state).message||'');
+add('tags.reload','Tagvorlagen neu laden','Tags','Dateilokale TAGS-Vorgaben laden; bei Fehler letzte gültige Auswahl erhalten.','editor',c=>documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':c.state.selection.ranges.length!==1||!c.state.selection.main.empty?'Nur ein Cursor ohne Auswahl.':!tagDefinitionLine(c.state)?'Cursor muss auf der TAGS-Zeile stehen.':''));
 add('structure.subtree-return','Überschrift nach Unterbaum einfügen','Überschriften','Gleichrangige leere Überschrift nach dem gesamten aktuellen Unterbaum einfügen; Cursor bereit für den Titel.','editor',c=>documentReason(c)||planSubtreeReturn(c.state).message||'','Strg+Enter');
 add('structure.meta-return','Überschrift oder Listenpunkt einfügen','Überschriften','Org Meta-Return: gleichrangige Überschrift oder Listenpunkt; Text am Cursor teilen.','editor',c=>documentReason(c)||planMetaReturn(c.state).message||'','Alt+Enter');
 add('view.line-wrap','Zeilenumbruch umschalten','Ansicht','Visuellen Wortumbruch umschalten; aus: horizontal scrollen. Gilt für diesen Tab, ohne Textänderung.','global',idle);
@@ -73,8 +78,9 @@ add('structure.refile-h1','Teilbaum unter H1 verschieben','Überschriften','Aktu
 for(const [id,name] of [['scheduled','Scheduling bearbeiten'],['deadline','Deadline bearbeiten']])add('planning.'+id,name,'Planung','Datum und optionale Wiederholung (+/++/.+ d/w/m/y) dieser Überschrift bearbeiten; Tagwahl erhält Uhrzeit und Regel.','editor',c=>documentReason(c)||planningContext(c.state).message||'');
 add('todo.status','Aufgabenstatus wählen','Aufgaben','Status dieser H1–H6-Überschrift wählen; wiederholende Aufgaben beim Abschluss mit Log fortschreiben und zurücksetzen. Kinder und Eltern bleiben unabhängig.','editor',c=>documentReason(c)||todoContext(c.state).message||'');
 add('todo.reload','TODO-Regeln neu laden','Aufgaben','Dateilokale SEQ_TODO-Definition laden; Fehler behalten letzte gültige Regeln.','editor',c=>documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':c.state.selection.ranges.length!==1||!c.state.selection.main.empty?'Nur ein Cursor ohne Auswahl.':!todoDefinitionLine(c.state)?'Cursor muss auf der SEQ_TODO-Zeile stehen.':''));
-add('editor.confirm','Kontext bestätigen','Bearbeiten','SEQ_TODO-Regeln laden, Blattcheckbox umschalten oder Fortschrittszähler des aktuellen Headingabschnitts aktualisieren.','editor',c=>documentReason(c)||(todoDefinitionLine(c.state)?c.state.readOnly?'Editor ist schreibgeschützt.':c.state.selection.ranges.length!==1||!c.state.selection.main.empty?'Nur ein Cursor ohne Auswahl.':'':checklistConfirmReason(c.state)));
+add('editor.confirm','Kontext bestätigen','Bearbeiten','Auf Überschrift Tags bearbeiten, TAGS-/SEQ_TODO-Vorgaben laden oder Blattcheckbox umschalten.','editor',c=>documentReason(c)||confirmReason(c.state));
 for(const [id,name,description] of [
+  ['section','Abschnittszähler aktualisieren','Vorhandene Fortschrittszähler des aktuellen Headings aktualisieren, Tags erhalten.'],
   ['toggle','Checkbox umschalten','Checkbox auf der ersten Listenpunktzeile abhaken; Eltern und vorhandene Zähler atomar aktualisieren.'],
   ['marker','Checkbox hinzufügen/entfernen','Checkboxmarker dieses Listenpunkts hinzufügen oder entfernen; Text erhalten.'],
   ['refresh','Checklisten neu berechnen','Elternzustände und vorhandene Fortschrittszähler der aktuellen Datei nach Rohtexteingabe neu berechnen.']

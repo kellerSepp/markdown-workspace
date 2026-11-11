@@ -13,6 +13,7 @@ Bereits verfügbar:
 - Command Registry, durchsuchbare Palette, Kontextmenü und Emacs-artige Tastensequenzen
 - Dateiöffnung und leere Markdown-Dateianlage über eine Pfadeingabe mit Tab-Vervollständigung
 - Dateilokale TODO-Workflows mit offenen und abgeschlossenen Zuständen
+- Heading-Tags mit Vererbung, dateilokalen Vorlagen und Mehrfachauswahl ([Bedienung/Probe](docs/TAGS.md))
 - Checklisten mit Markerklick, C-c C-c, verschachtelten Elternzuständen und Fortschrittszählern ([Bedienung/Probe](docs/CHECKLISTS.md))
 - SCHEDULED und DEADLINE mit Datum, optionalen Uhrzeiten und Zeitfenstern
 - Vaultweiter Agenda-Index, deutsche ISO-Wochenagenda und TODO-Liste mit Quellnavigation
@@ -51,7 +52,8 @@ Bei `C-c` zuerst **Strg+C** drücken, anschließend **C und Strg loslassen** und
 | `C-c a`, danach `a` | Wochenagenda öffnen |
 | `C-c a`, danach `t` | TODO-Liste öffnen |
 | `C-c t` | Status der aktuellen Aufgabenüberschrift wählen |
-| `C-c C-c` | Checkbox umschalten, Headingzähler aktualisieren oder SEQ_TODO-Regeln laden (zweites C mit Strg) |
+| `C-c C-c` | Auf Heading Tags bearbeiten; auf TAGS/SEQ_TODO Vorgaben laden; Checkbox umschalten (zweites C mit Strg) |
+| `C-c q` | Tags bearbeiten: eigene/geerbte Tags, Schnelltasten und freie Eingabe |
 | `C-c s` / `C-c d` | SCHEDULED / DEADLINE bearbeiten |
 | `Alt+X` | Command Palette öffnen |
 | `Strg+S` | Aktuelle Datei ausdrücklich speichern |

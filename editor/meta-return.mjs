@@ -4,6 +4,7 @@ import {frontmatterEnd} from './structure.mjs';
 import {sectionAt} from './section-folding.mjs';
 import {todoContext} from './todo.mjs';
 import {listContext,planListInteraction,runListInteraction} from './list-interaction.mjs';
+import {headingSuffix} from './heading-suffix.mjs';
 
 export function planMetaReturn(state){
   const fail=message=>({message});
@@ -47,8 +48,19 @@ export function planMetaReturn(state){
       insert='\n'+marker;
     }
   }
+  let edits;
+  const suffix=heading?headingSuffix(line.text,line.from):null;
+  if(suffix?.error)return fail(suffix.error);
+  if(suffix?.tagFrom!=null&&!insert.endsWith('\n')){
+    if(pos>=suffix.tagFrom&&pos<suffix.end)return fail('Tagblock nicht in der Mitte teilen.');
+    if(pos>=suffix.removeFrom){from=to=line.to;insert='\n'+marker;}
+    else {
+      insert=' '+state.doc.sliceString(suffix.tagFrom,suffix.end)+'\n'+marker;
+      edits=[{from,to,insert},{from:suffix.removeFrom,to:suffix.end,insert:''}];
+    }
+  }
   const anchor=insert.endsWith('\n')?from+marker.length:from+insert.length;
-  return {spec:{changes:{from,to,insert},selection:{anchor},annotations:isolateHistory.of('full'),userEvent:'input.meta-return',scrollIntoView:true}};
+  return {spec:{changes:edits??{from,to,insert},selection:{anchor},annotations:isolateHistory.of('full'),userEvent:'input.meta-return',scrollIntoView:true}};
 }
 
 export function runMetaReturn(view,notify=()=>{}){

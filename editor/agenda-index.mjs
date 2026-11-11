@@ -4,6 +4,8 @@ import {ensureSyntaxTree,syntaxTree} from '@codemirror/language';
 import {TextCodec} from './text-codec.mjs';
 import {todoRules,reloadTodo,readTodoRules,DEFAULT_TODO} from './todo.mjs';
 import {planningRecords,parseDate} from './planning.mjs';
+import {headingSuffix} from './heading-suffix.mjs';
+import {readTags} from './tag-model.mjs';
 
 const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
 const message=error=>`${error?.name??'Error'}: ${error?.message??error}`;
@@ -28,12 +30,13 @@ export function parseAgendaState(state,path,ruleError=state.field(todoRules,fals
   const rules=state.field(todoRules,false)?.rules??DEFAULT_TODO;
   const result=planningRecords(state,path);if(result.message)throw Error(result.message);
   const diagnostics=ruleError?[{path,kind:'todo',message:ruleError+' Letzte gültige Regeln dieser Sitzung, sonst Standardregeln verwendet.'}]:[];
+  for(const item of readTags(state).diagnostics??[])diagnostics.push({path,kind:'tags',...item});
   const headings=result.records.filter(record=>{
     let node=syntaxTree(state).resolveInner(record.from,1);while(node&&!/^ATXHeading[1-6]$/.test(node.name))node=node.parent;
     return node?.parent?.name==='Document';
   }).map(record=>{
     if(state.field(todoRules,false)?.cycleFrom===record.from){
-      record={...record,status:null,closed:null,title:state.doc.lineAt(record.from).text.replace(/^ {0,3}#{1,6}[ \t]*/,'').replace(/[ \t]+#+[ \t]*$/,'')};
+      record={...record,status:null,closed:null,title:headingSuffix(state.doc.lineAt(record.from).text)?.content??record.title};
     }
     if(record.error)diagnostics.push({path,line:state.doc.lineAt(record.from).number,kind:'planning',message:record.error});
     const stamp=value=>value?{date:value.date,startTime:value.startTime,endTime:value.endTime,...(value.repeat?{repeat:value.repeat}:{}),from:value.from,to:value.to}:null;

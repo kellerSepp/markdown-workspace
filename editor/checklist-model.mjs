@@ -1,6 +1,7 @@
 import {syntaxTree,syntaxTreeAvailable} from '@codemirror/language';
 import {frontmatterEnd} from './structure.mjs';
 import {planningDrawerRanges,inPlanningDrawer} from './planning-drawers.mjs';
+import {headingSuffix} from './heading-suffix.mjs';
 
 const cache=new WeakMap();
 const complete=state=>syntaxTree(state).length>=state.doc.length&&syntaxTreeAvailable(state,state.doc.length);
@@ -19,7 +20,9 @@ function inlineOverlap(state,node,from,to,references){
   return found;
 }
 function cookie(state,node,line,references){
-  const matches=[...line.text.matchAll(/\[(?:\d*\/\d*|\d*%)\]/g)];
+  const heading=/^ATXHeading/.test(node.name)?headingSuffix(line.text,line.from):null;
+  const content=heading?line.text.slice(0,heading.contentEnd-line.from):line.text;
+  const matches=[...content.matchAll(/\[(?:\d*\/\d*|\d*%)\]/g)];
   if(!matches.length)return {};
   if(matches.length>2||new Set(matches.map(m=>m[0].includes('%'))).size!==matches.length)return {error:'Pro Zeile höchstens einen Bruch- und einen Prozentzähler verwenden.'};
   const cookies=[];
@@ -28,7 +31,7 @@ function cookie(state,node,line,references){
     if(inlineOverlap(state,node,from,to,references))return {error:'Fortschrittszähler in Code oder Links bleiben unverändert.'};
     cookies.push({from,to,percent:match[0].includes('%')});
   }
-  if(line.text.slice(matches.at(-1).index+matches.at(-1)[0].length).trim())return {};
+  if(content.slice(matches.at(-1).index+matches.at(-1)[0].length).trim())return {};
   if(matches.length===2&&!/^[ \t]+$/.test(line.text.slice(matches[0].index+matches[0][0].length,matches[1].index)))return {error:'Fortschrittszähler am Zeilenende durch Leerraum trennen.'};
   return {cookie:cookies[0],cookies};
 }

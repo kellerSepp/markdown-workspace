@@ -6,6 +6,7 @@ import {headingSections,sectionAt} from './section-folding.mjs';
 import {setEmacsMark,emacsMark} from './emacs-editing.mjs';
 import {refileSelection} from './refile-history.mjs';
 import {frontmatterEnd} from './structure.mjs';
+import {headingSuffix} from './heading-suffix.mjs';
 
 const fail=message=>({message});
 function header(state,h){let n=syntaxTree(state).resolveInner(h.from,1);while(n&&!/^(ATX|Setext)Heading/.test(n.name))n=n.parent;return n;}
@@ -21,7 +22,7 @@ export function refileContext(state){
   if(children.some(h=>!plain(state,h)))return fail('Teilbaum enthält Setext-/Containerüberschriften; Refile verweigert.');
   if(children.some(h=>h.level+2-source.level>6))return fail('Gesamter Teilbaum würde H6 überschreiten.');
   const targets=all.filter(h=>h.level===1&&h.from>=fm&&plain(state,h)&&!(h.from>=source.from&&h.from<source.limit))
-    .map(h=>({id:h.from,text:state.doc.lineAt(h.from).text.replace(/^\s*#\s*/, '').replace(/\s+#+\s*$/,''),line:state.doc.lineAt(h.from).number}));
+    .map(h=>({id:h.from,text:headingSuffix(state.doc.lineAt(h.from).text)?.content??state.doc.lineAt(h.from).text,line:state.doc.lineAt(h.from).number}));
   if(!targets.length)return fail('Kein sicheres H1-Ziel außerhalb des eigenen Teilbaums.');
   return {source,children,targets};
 }

@@ -1,5 +1,15 @@
 # Projektstatus
 
+## Tags implementiert — PO-Probe, 2026-11-11
+
+PO hat nach Screenshot-/Org-Abgleich und Plan die Implementierung ausdrücklich freigegeben. H1–H6 mit lokalen Tagblöcken, dateilokalen TAGS-Vorlagen und Schnelltasten, dynamischen Vorschlägen, freier wiederholbarer Tab/Enter-Eingabe und lesender Elternvererbung sind implementiert. Gemeinsamer Suffixparser, getrennte Regeln/Modell/Schreibplaner/Panelansicht und vorhandene Registry/Panelhülle wiederverwendet. Eigene/geerbte Tags in Agenda, bereinigte Titel, Tagprüfung beim Quellsprung; ungespeicherter Editorstand bleibt berücksichtigt. Zähler, TODO/Wiederholungen, Refile und Headingeinfügen erhalten Tags.
+
+C-c q öffnet Tags. C-c C-c auf Headings öffnet ausdrücklich Tags statt Zählerreparatur; auf TAGS/SEQ_TODO lädt es Vorgaben, auf Checkboxzeilen toggelt es weiterhin den Zustand. Neuer gezielter Paletten-/Kontextmenübefehl **Abschnittszähler aktualisieren**, dateiweite Checklistenreparatur bleibt erhalten. Enter im freien Feld fügt hinzu und kehrt ins Menü zurück; erst Enter im Menü übernimmt atomar mit Undo/Redo. Geerbte Tags werden nicht in Kindtext kopiert.
+
+443/443 Tests im seriellen Gesamtlauf, Build, neun Modul-Syntaxprüfungen und Diffcheck grün; vierzehn neue Testgruppen einschließlich echtem gemeinsamem Panel, wiederholter freier Eingabe, Abbruch/Stale/IME/Modifier und sechzig Modell-Lifecycle-Zyklen. Zwei synthetische Dateien mit echtem Parser geprüft: vier/ein Agenda-Records, jeweils null Diagnosen. Keine unabhängige QA-Rollenabnahme oder native Browser-/Langzeitabnahme behauptet.
+
+Handprobe [TAGS.md](TAGS.md), synthetischer Probevault `test-vault/tags`; Vorschlag/PO-Klärung [PLAN_TAGS.md](PLAN_TAGS.md). Nächste Aktion: PO-Probe nach Strg+F5. Agenda-Match, Filter, Taggruppen, FILETAGS und rechte Ausrichtung bleiben außerhalb dieses Pakets. Keine Dependencies, Storage-/Backup-/Konfliktänderung, Commit, Merge, Push oder Veröffentlichung. Nutzerreferenzbilder erhalten.
+
 ## Checklisten zur Integration freigegeben
 
 Der PO meldet die praktische Probe positiv und gibt Commit, Merge nach `main` und Push frei. Die folgenden Einträge halten den Stand vor der Freigabe fest.

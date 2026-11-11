@@ -12,6 +12,7 @@ function scope(context){
 export function checklistReason(state,id){
   const c=checklistContext(state);if(c.message)return c.message;
   if(id==='refresh')return '';
+  if(id==='section')return c.heading?.error??(c.heading?.cookie?'':'Überschrift hat keinen Fortschrittszähler.');
   if(!c.item)return 'Cursor muss auf der ersten Listenpunktzeile stehen.';
   if(c.item.error)return c.item.error;
   if(id==='marker')return c.item.children.some(child=>child.mark)?'Elterncheckbox mit Unterpunkten: Marker unverändert lassen.':'';

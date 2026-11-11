@@ -2,6 +2,7 @@ import {EMACS_POLICY} from './emacs-policy.mjs';
 import {createPanelLayout,revealPanelRow} from './panel-layout.mjs';
 import {panelMove} from './panel-navigation.mjs';
 import {createPlanningForm} from './planning-calendar.mjs';
+import {createTagForm} from './tag-form.mjs';
 
 // Search remains substring-based. Tab completes only matching single-line
 // prefixes, never an arbitrary substring hit or an entire multiline entry.
@@ -56,7 +57,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
   const results=doc.createElement('div');results.className='work-panel-results';results.id='kill-ring-results';results.setAttribute('role','listbox');results.setAttribute('aria-label','Gespeicherte Ringtexte');
   const message=doc.createElement('p');message.className='hint';message.setAttribute('role','status');
   root.append(search,hint,results,message);
-  let target=null,rows=[],index=0,destroyed=false,prefixCancel=null,choiceMode=null,planningForm=null;
+  let target=null,rows=[],index=0,destroyed=false,prefixCancel=null,choiceMode=null,detailForm=null;
   const disposers=[],rowDisposers=[];
   function clearRows(){
     for(const dispose of rowDisposers.splice(0))dispose();
@@ -67,7 +68,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
   function ready(){const c=getContext();return !c.busy&&c.hasDocument!==false&&!view.state.readOnly;}
   function valid(){return target&&target.state===view.state&&ready();}
   function close({restore=true}={}){
-    planningForm?.destroy();planningForm=null;
+    detailForm?.destroy();detailForm=null;
     const cancel=prefixCancel;prefixCancel=null;choiceMode=null;cancel?.();
     const focus=restore&&valid();target=null;
     layout.setOpen(false,()=>{
@@ -100,7 +101,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     message.textContent='Aktion wurde verworfen; Dokument bleibt unverändert.';return false;
   }
   function render(){
-    if(destroyed||root.hidden||prefixCancel||planningForm)return;
+    if(destroyed||root.hidden||prefixCancel||detailForm)return;
     return layout.preserve(()=>{
     clearRows();
     const query=search.value.toLocaleLowerCase('de');
@@ -129,27 +130,37 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     target={state:view.state,head:view.state.selection.main.head};search.value='';
     layout.setOpen(true,()=>{shell.show('Kill-Ring');search.setAttribute('aria-expanded','true');render();search.focus({preventScroll:true});});return true;
   }
+  function openTags(options){
+    if(destroyed||!ready())return false;close({restore:false});
+    choiceMode={tags:true};target={state:view.state,head:view.state.selection.main.head};const saved=target;
+    detailForm=createTagForm({document:doc,...options,cancel:()=>close(),commit:names=>{
+      if(!valid()){notify('Tagziel geändert; bitte erneut öffnen.');close({restore:false});return;}
+      if(options.choose(names,saved)){close({restore:false});view.focus();}
+    }});
+    search.hidden=true;hint.hidden=true;results.hidden=true;message.hidden=true;root.append(detailForm.root);
+    layout.setOpen(true,()=>{shell.show('Tags bearbeiten');detailForm.focus();});return true;
+  }
   function openPlanning({kind,value,choose}){
     if(destroyed||!ready())return false;close({restore:false});
     choiceMode={};target={state:view.state,head:view.state.selection.main.head};const saved=target;
-    planningForm=createPlanningForm({document:doc,kind,value,cancel:()=>close(),commit:value=>{
+    detailForm=createPlanningForm({document:doc,kind,value,cancel:()=>close(),commit:value=>{
       if(!valid()){notify('Planungsziel geändert; erneut öffnen.');close({restore:false});return;}
       if(choose(value,saved)){close({restore:false});view.focus();}
     }});
-    search.hidden=true;hint.hidden=true;results.hidden=true;message.hidden=true;root.setAttribute('data-planning','');root.append(planningForm.root);
-    layout.setOpen(true,()=>{shell.show(kind==='SCHEDULED'?'Scheduling bearbeiten':'Deadline bearbeiten');planningForm.focus();});return true;
+    search.hidden=true;hint.hidden=true;results.hidden=true;message.hidden=true;root.setAttribute('data-planning','');root.append(detailForm.root);
+    layout.setOpen(true,()=>{shell.show(kind==='SCHEDULED'?'Scheduling bearbeiten':'Deadline bearbeiten');detailForm.focus();});return true;
   }
   listen(search,'input',render);
-  listen(root,'compositionstart',()=>{if(choiceMode)close();});
+  listen(root,'compositionstart',()=>{if(choiceMode&&!choiceMode.tags)close();});
   const inside=element=>{for(let n=element;n;n=n.parentNode??n.parent)if(n===root)return true;return false;};
-  listen(root,'focusout',event=>{if(choiceMode&&!(planningForm&&!event.relatedTarget)&&!inside(event.relatedTarget))close({restore:false});});
+  listen(root,'focusout',event=>{if(choiceMode&&!(detailForm&&!event.relatedTarget)&&!inside(event.relatedTarget))close({restore:false});});
   if(doc.defaultView?.addEventListener)listen(doc.defaultView,'blur',()=>{if(choiceMode)close({restore:false});});
   // Prefix help leaves the editor focused, including pointer activation.
   listen(root,'mousedown',event=>{if(prefixCancel)event.preventDefault();});
   listen(closeButton,'click',()=>close());
   listen(root,'keydown',event=>{
     if(prefixCancel)return;
-    if(planningForm){
+    if(detailForm){
       if(event.isComposing||event.keyCode===229||event.metaKey||event.altKey||event.shiftKey||event.getModifierState?.('AltGraph'))return;
       if(event.key==='Escape'&&!event.ctrlKey||event.ctrlKey&&event.key.toLowerCase()==='g'){
         event.preventDefault();event.stopPropagation();close();
@@ -178,7 +189,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     layout.setOpen(true,()=>{
       shell.show('C-c · Folgebefehl');search.hidden=true;
       root.setAttribute('data-prefix-help','');
-      hint.textContent='C und Strg loslassen · 1 / 2 / 3 / w / t / s (Scheduling) / d (Deadline) / a (Agenda) / f (Datei); Strg+C: Regeln · Alt+↑/↓ wählen · Enter · Escape/Strg+G · Alt+W kopiert';
+      hint.textContent='C und Strg loslassen · 1 / 2 / 3 / w / t / q (Tags) / s (Scheduling) / d (Deadline) / a (Agenda) / f (Datei); Strg+C: Kontext bestätigen · Alt+↑/↓ wählen · Enter · Escape/Strg+G · Alt+W kopiert';
       message.textContent='';
       for(const choice of choices){
         const row=doc.createElement('button');row.type='button';row.className='work-panel-row';
@@ -192,7 +203,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     });return true;
   }
   const unsubscribe=ring.subscribe(()=>{if(!prefixCancel)render();});
-  return {invalidateStale(){if(choiceMode&&!valid())close({restore:false});},openPlanning,openChoices,openRing,showPrefix,moveSelection,activateSelection,close,get isOpen(){return !root.hidden;},refresh:render,preserveViewport:layout.preserve,
+  return {invalidateStale(){if(choiceMode&&!valid())close({restore:false});},openTags,openPlanning,openChoices,openRing,showPrefix,moveSelection,activateSelection,close,get isOpen(){return !root.hidden;},refresh:render,preserveViewport:layout.preserve,
     destroy(){if(destroyed)return;close({restore:false});destroyed=true;unsubscribe();for(const dispose of disposers)dispose();clearRows();shell.destroy();layout.destroy();}
   };
 }

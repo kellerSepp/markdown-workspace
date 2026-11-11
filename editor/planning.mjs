@@ -1,4 +1,6 @@
 import {isolateHistory} from '@codemirror/commands';
+import {headingSuffix} from './heading-suffix.mjs';
+import {readTags} from './tag-model.mjs';
 import {headingSections} from './section-folding.mjs';
 import {frontmatterEnd} from './structure.mjs';
 import {todoRules,readTodoRules} from './todo.mjs';
@@ -25,12 +27,14 @@ export function planningRecords(state,file=''){
   if(!safeTree(state))return fail('Dokument noch nicht vollständig analysiert.');
   const loaded=state.field(todoRules,false)?.rules??readTodoRules(state).rules;if(!loaded)return fail('TODO-Regeln ungültig.');
   const headings=headingSections(state).filter(h=>h.from>=frontmatterEnd(state)&&plain(state,h.from));
+  const tags=new Map((readTags(state).headings??[]).map(h=>[h.line.from,h]));
   return {records:headings.map((h,index)=>{
     const c=planningContext(state,h,headings[index+1]?.from??state.doc.length);
-    const raw=state.doc.lineAt(h.from).text.replace(/^ {0,3}#{1,6}[ \t]*/,'').replace(/[ \t]+#+[ \t]*$/,'');
+    const line=state.doc.lineAt(h.from),raw=headingSuffix(line.text,line.from)?.content??line.text.replace(/^ {0,3}#{1,6}[ \t]*/,'').replace(/[ \t]+#+[ \t]*$/,'');
     const firstWord=/^([^\s]+)(?=\s|$)/u.exec(raw)?.[1];
     const status=loaded.find(r=>r.name===firstWord)??null;
-    return {file,from:h.from,to:h.limit,level:h.level,parentFrom:h.parent?.from??null,title:status?raw.slice(status.name.length).trimStart():raw,status:status?.name??null,closed:status?.closed??null,scheduled:c.entries?.SCHEDULED??null,deadline:c.entries?.DEADLINE??null,error:c.message??null};
+    const tagged=tags.get(line.from);
+    return {file,from:h.from,to:h.limit,level:h.level,parentFrom:h.parent?.from??null,title:status?raw.slice(status.name.length).trimStart():raw,tags:tagged?.tags??[],inheritedTags:tagged?.inherited??[],effectiveTags:tagged?.effectiveTags??[],status:status?.name??null,closed:status?.closed??null,scheduled:c.entries?.SCHEDULED??null,deadline:c.entries?.DEADLINE??null,error:c.message??null};
   })};
 }
 export function createPlanningController({view,panel,getContext=()=>({}),notify=()=>{}}){

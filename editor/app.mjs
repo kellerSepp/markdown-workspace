@@ -10,6 +10,10 @@ import {LIST_COMMANDS,runListInteraction} from './list-interaction.mjs';
 import {runStructure} from './structure.mjs';
 import {runMetaReturn} from './meta-return.mjs';
 import {runSubtreeReturn} from './subtree-return.mjs';
+import {tagRules} from './tag-rules.mjs';
+import {tagHighlight} from './tag-highlight.mjs';
+import {createTagsController} from './tags.mjs';
+import {confirmAction} from './context-confirm.mjs';
 import {runTaskInsert} from './task-insert.mjs';
 import {structureKeyboard,withoutOrgArrowConflicts} from './structure-keymap.mjs';
 import {visualStructure,DEFAULT_VISUAL_STRUCTURE,MARKER_STYLES} from './visual-structure.mjs';
@@ -72,6 +76,7 @@ const prefix=createPrefixRouter({registry:{get:id=>registry.get(id),availability
   showHelp:(choices,...args)=>prepareWorkPanel()&&workPanel.showPrefix(choices.map(choice=>({...choice,...registry.availability(choice.id)})),...args),moveHelp:delta=>workPanel.moveSelection(delta),activateHelp:()=>workPanel.activateSelection(),hideHelp:()=>workPanel?.close({restore:false}),notify:status});
 const emacs=createEmacsEditing({getContext:editingContext,notify:status,openChooser:()=>prepareWorkPanel()&&(workPanel?.openRing()??false)});
 const extensions = () => [
+  tagRules,tagHighlight,
   EditorView.updateListener.of(update=>{
     if(!syncing&&(update.docChanged||update.startState.field(todoRules,false)!==update.state.field(todoRules,false))){
       clearTimeout(agendaEditorTimer);agendaEditorTimer=setTimeout(syncAgendaEditor,120);
@@ -131,7 +136,7 @@ handlers['view.line-wrap']=()=>{
 };
 handlers['agenda.refresh']=()=>{void agendaIndex.rebuild();return true;};
 // The historical synthetic field/id now means acknowledged Alpha conditions.
-const registry=createCommandRegistry(commandDefinitions(handlers,id=>!usesSharedWorkPanel(id)||prepareWorkPanel()),()=>({busy,agendaActive:!!agenda?.active,agendaDocked:!!agenda?.docked,agendaFocused:!!agenda?.active&&agenda.element.contains(document.activeElement),filePickerActive:!!filePicker?.active,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
+const registry=createCommandRegistry(commandDefinitions(handlers,id=>!(usesSharedWorkPanel(id)||id==='editor.confirm'&&confirmAction(view.state)==='tags.edit')||prepareWorkPanel()),()=>({busy,agendaActive:!!agenda?.active,agendaDocked:!!agenda?.docked,agendaFocused:!!agenda?.active&&agenda.element.contains(document.activeElement),filePickerActive:!!filePicker?.active,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
 const surfaces=createCommandSurfaces({registry,view,notify:status,blocked:()=>!!filePicker?.active||!!agenda?.active&&(!agenda.docked||agenda.element.contains(document.activeElement))});
 workPanel=createWorkPanel({host:$('workPanel'),workspace:$('editorWorkspace'),view,ring:emacs.ring,getContext:editingContext,insert:(id,target)=>emacs.insertRingEntry(view,id,target),notify:status});
 function syncAgendaFileSelection(){
@@ -193,8 +198,10 @@ const refile=createRefileController({view,panel:workPanel,getContext:editingCont
 handlers['structure.refile-h1']=()=>refile.open();
 const todo=createTodoController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['todo.status']=()=>todo.open();handlers['todo.reload']=()=>todo.reload();
-handlers['editor.confirm']=()=>todoDefinitionLine(view.state)?todo.reload():runChecklist(view,'confirm',status);
-for(const id of ['toggle','marker','refresh'])handlers['checklist.'+id]=()=>{const result=runChecklist(view,id,status);view.focus();return result;};
+const tags=createTagsController({view,panel:workPanel,getContext:editingContext,notify:status});
+handlers['tags.edit']=()=>tags.open();handlers['tags.reload']=()=>tags.reload();
+handlers['editor.confirm']=()=>{const action=confirmAction(view.state);return action==='checklist.confirm'?runChecklist(view,'confirm',status):registry.execute(action);};
+for(const id of ['toggle','marker','section','refresh'])handlers['checklist.'+id]=()=>{const result=runChecklist(view,id,status);view.focus();return result;};
 handlers['todo.previous']=()=>todo.cycle(-1);handlers['todo.next']=()=>todo.cycle(1);
 const planning=createPlanningController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['planning.scheduled']=()=>planning.open('SCHEDULED');handlers['planning.deadline']=()=>planning.open('DEADLINE');

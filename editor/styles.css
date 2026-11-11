@@ -109,3 +109,10 @@ code{background:var(--code-background);color:var(--text)}
 .file-row[aria-selected=true]{background:var(--hover);outline:2px solid var(--focus);outline-offset:-2px}
 .file-target{margin:.2rem 0;overflow-wrap:anywhere;color:var(--accent)}
 @media(max-width:600px){.file-dialog{font-size:12px}}
+
+.tag-form{min-height:0;overflow:auto;display:flex;flex-direction:column;gap:.25rem;padding:.25rem}
+.tag-form p{margin:.15rem 0}.tag-inherited{color:var(--muted)}
+.tag-choices{display:flex;flex-wrap:wrap;gap:.25rem;overflow:auto;min-height:2rem}
+.tag-choices button{font:inherit;padding:.2rem .4rem}.tag-choices [aria-selected="true"]{background:var(--hover);font-weight:bold}
+.tag-form input{font:inherit;color:var(--text);background:var(--control);border:1px solid var(--border);padding:.25rem;max-width:100%}
+.tag-form:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}.agenda-tags{color:var(--accent);font-size:.9em}

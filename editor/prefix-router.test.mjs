@@ -23,7 +23,7 @@ function fixture(){
 }
 
 test('Approved plain and modifier sequences route to existing Registry IDs after keyup; start preserves exact state/history',()=>{
-  for(const binding of PREFIX_BINDINGS){const f=fixture();if(binding.id==='structure.refile-h1'||binding.id==='todo.status')f.view.state=EditorState.create({doc:'# Source\nBody\n# Target',selection:{anchor:3},extensions:[history(),markdown()]});if(binding.id==='editor.confirm')f.view.state=EditorState.create({doc:'#+SEQ_TODO: TODO(t) | DONE(d)\n# TODO Task',selection:{anchor:3},extensions:[history(),markdown()]});const before=f.view.state;
+  for(const binding of PREFIX_BINDINGS){const f=fixture();if(binding.id==='structure.refile-h1'||binding.id==='todo.status'||binding.id==='tags.edit')f.view.state=EditorState.create({doc:'# Source\nBody\n# Target',selection:{anchor:3},extensions:[history(),markdown()]});if(binding.id==='editor.confirm')f.view.state=EditorState.create({doc:'#+SEQ_TODO: TODO(t) | DONE(d)\n# TODO Task',selection:{anchor:3},extensions:[history(),markdown()]});const before=f.view.state;
     if(binding.id.startsWith('planning.'))f.view.state=EditorState.create({doc:'# Heading',extensions:[history(),markdown()]});
     const expectedState=f.view.state;
     assert.equal(f.start().defaultPrevented,true);assert.equal(f.view.state,expectedState);assert.equal(undoDepth(f.view.state),0);
