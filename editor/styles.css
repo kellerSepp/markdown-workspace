@@ -89,6 +89,7 @@ code{background:var(--code-background);color:var(--text)}
 .agenda-panel .agenda-row.agenda-active{background:var(--hover);outline:2px solid var(--focus);outline-offset:-2px}
 .agenda-source{color:var(--muted);display:inline-block;min-width:12ch}
 .agenda-marks{color:var(--planning-keyword);display:inline-block;min-width:16ch}
+.agenda-deadline-warning{color:var(--warning)}
 .agenda-late{color:var(--warning)}
 .agenda-open{color:var(--todo-open);text-decoration:underline dotted}
 .agenda-closed{color:var(--todo-closed);text-decoration:line-through}

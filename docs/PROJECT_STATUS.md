@@ -1,5 +1,11 @@
 # Projektstatus
 
+## Agenda-Deadline-Vorwarnungen — PO-Probe, 2026-11-12
+
+PO gibt gezielt „In x d“-Hinweise aus dem Org-Video frei. Offene Aufgaben zeigen unter Heute die Deadline in 1–14 Kalendertagen, auch bei SCHEDULED und über die Wochengrenze. Reine Vorwarnungen am Tagesende nach verbleibenden Tagen; vorhandene Bündelung pro Aufgabe/Tag, tatsächlicher Fälligkeitstag und Überfälligkeit bleiben erhalten. Abgeschlossene und statuslose Einträge ohne zusätzliche Vorwarnung. Zentrale Ansichts-Policy, keine Format-/Parser-/Storageänderung, keine neue Indexierung. Vorhandene Tag-Fixes aus dem anderen Chat erhalten.
+
+453/453 Tests im seriellen Gesamtlauf, Build, drei Syntaxprüfungen und Diffcheck grün. Vier gezielte neue Gruppen für Grenzen/Kombination/Sortierung/Kalenderfälle sowie tatsächliche Ansicht mit Tags, Follow und ungespeichertem Editorupdate. Native Probe offen. Details [AGENDA_DEADLINE_WARNINGS.md](AGENDA_DEADLINE_WARNINGS.md), synthetischer Probevault `test-vault/agenda-deadline-warning`. Nach Bericht stoppen; weitere Videofunktionen/Match/Suche nicht implementiert, kein Commit/Push/Deploy.
+
 ## Tags implementiert — PO-Probe, 2026-11-11
 
 PO hat nach Screenshot-/Org-Abgleich und Plan die Implementierung ausdrücklich freigegeben. H1–H6 mit lokalen Tagblöcken, dateilokalen TAGS-Vorlagen und Schnelltasten, dynamischen Vorschlägen, freier wiederholbarer Tab/Enter-Eingabe und lesender Elternvererbung sind implementiert. Gemeinsamer Suffixparser, getrennte Regeln/Modell/Schreibplaner/Panelansicht und vorhandene Registry/Panelhülle wiederverwendet. Eigene/geerbte Tags in Agenda, bereinigte Titel, Tagprüfung beim Quellsprung; ungespeicherter Editorstand bleibt berücksichtigt. Zähler, TODO/Wiederholungen, Refile und Headingeinfügen erhalten Tags.

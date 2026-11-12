@@ -95,6 +95,17 @@ test('Agenda renders own and inherited tags separately from the task title',asyn
  assert.match(row.textContent,/Tagged :URGENT:/);assert.match(row.textContent,/geerbt: WORK/);
  assert.equal(f.index.query()[0].title,'Tagged');f.controller.destroy();
 });
+test('Today prewarning renders remaining days with original source identity and follows editor updates',async()=>{
+ const timers=timerModel(),f=await fixture({timers});
+ const state=EditorState.create({doc:'# Parent :WORK:\n## TODO Upcoming :URGENT:\nSCHEDULED: <2026-11-16 Mo> DEADLINE: <2026-11-10 Di>',extensions:[markdown({base:markdownLanguage}),todoRules]});
+ await f.index.setEditor(state,'a.md');f.controller.openWeek();
+ assert.equal(f.rows().length,1);assert.match(f.rows()[0].textContent,/DEADLINE · in 2 Tagen \(2026-11-10\)/);assert.match(f.rows()[0].textContent,/Upcoming/);
+ assert.match(f.rows()[0].textContent,/URGENT/);assert.match(f.rows()[0].textContent,/geerbt: WORK/);
+ assert.ok(all(f.rows()[0],e=>e.classList.contains('agenda-deadline-warning')).length);
+ const target=f.index.query()[0];f.key('F',{shiftKey:true});timers.flush();await Promise.resolve();assert.deepEqual(f.navigation,[target.id]);assert.equal(f.doc.activeElement,f.results());
+ const changed=state.update({changes:{from:state.doc.toString().indexOf('TODO'),to:state.doc.toString().indexOf('TODO')+4,insert:'DONE'}}).state;
+ await f.index.setEditor(changed,'a.md');f.controller.update(f.index.snapshot());assert.equal(f.rows().length,0);f.controller.destroy();
+});
 
 test('Agenda TODO filter, live snapshots, errors, refresh and vault reset preserve safe modal focus boundary',async()=>{
   const f=await fixture();f.controller.openTodos();assert.equal(f.rows().length,1);const filter=all(f.controller.element,e=>e.tagName==='input')[0];filter.checked=true;filter.emit('change');assert.equal(f.rows().length,2);assert.match(f.rows()[1].textContent,/DONE Closed/);

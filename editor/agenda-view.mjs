@@ -75,6 +75,7 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
     const source=doc.createElement('span');source.className='agenda-source';source.textContent=entry.record.path+(entry.record.editor?' · aktuelle Datei': '')+': ';
     const marks=doc.createElement('span');marks.className='agenda-marks';marks.textContent=entry.marks.map(agendaStampLabel).join(' · ')+(entry.marks.length?' · ':'');
     if(entry.marks.some(m=>m.late))marks.classList.add('agenda-late');
+    if(entry.marks.some(m=>m.warning))marks.classList.add('agenda-deadline-warning');
     const state=doc.createElement('span');state.className=entry.record.closed===true?'agenda-closed':entry.record.closed===false?'agenda-open':'agenda-appointment';state.textContent=(entry.record.status??'Termin')+' ';
     const title=doc.createElement('span');title.textContent=entry.record.title||'(ohne Titel)';
     button.append(source,marks,state,title);

@@ -28,3 +28,37 @@ test('Agenda exact timestamps sort by local clock string then stable source posi
   const index=await indexOf('# TODO Noon\nSCHEDULED: <2026-11-08 So 12:00>\n# TODO Early\nSCHEDULED: <2026-11-08 So 15:00> DEADLINE: <2026-11-08 So 08:00>\n# TODO Deadline time\nSCHEDULED: <2026-11-08 So> DEADLINE: <2026-11-08 So 09:00>\n# TODO Untimed\nDEADLINE: <2026-11-08 So>');
   assert.deepEqual(projectAgendaWeek(index,{date:'2026-11-08',today:'2026-11-08'}).days[6].entries.map(e=>e.record.title),['Early','Deadline time','Noon','Untimed']);
 });
+
+test('Deadline prewarnings appear only today within fourteen days, including next weeks and scheduled tasks',async()=>{
+ const index=await indexOf('# TODO Tomorrow\nDEADLINE: <2026-11-13 Fr>\n# TODO Boundary\nDEADLINE: <2026-11-26 Do>\n# TODO Outside\nDEADLINE: <2026-11-27 Fr>\n# TODO Scheduled future\nSCHEDULED: <2026-11-20 Fr> DEADLINE: <2026-11-23 Mo>\n# DONE Closed\nDEADLINE: <2026-11-13 Fr>\n# Plain\nDEADLINE: <2026-11-13 Fr>');
+ const snapshot=index.snapshot(),week=projectAgendaWeek(index,{date:'2026-11-12',today:'2026-11-12'}),today=week.days[3].entries;
+ assert.deepEqual(today.map(entry=>entry.record.title),['Tomorrow','Scheduled future','Boundary']);
+ assert.deepEqual(today.map(entry=>entry.marks[0].daysUntil),[1,11,14]);
+ assert.equal(agendaStampLabel(today[0].marks[0]),'DEADLINE · in 1 Tag (2026-11-13)');assert.match(agendaStampLabel(today[2].marks[0]),/in 14 Tagen/);
+ assert.ok(today.every(entry=>entry.marks.every(mark=>mark.warning&&!mark.late)));
+ assert.deepEqual(week.days[4].entries.map(entry=>entry.record.title),['Tomorrow','Closed','Plain']);
+ assert.equal(week.days[4].entries[0].marks[0].warning,undefined);assert.equal(index.snapshot(),snapshot);
+ const otherWeek=projectAgendaWeek(index,{date:'2026-11-23',today:'2026-11-12'});assert.equal(otherWeek.days[0].entries[0].record.title,'Scheduled future');assert.ok(otherWeek.days.flatMap(day=>day.entries).every(entry=>entry.marks.every(mark=>!mark.warning)));
+ assert.equal(projectAgendaWeek(index,{date:'2026-11-12',today:'2026-11-12',deadlineWarningDays:0}).days[3].entries.length,0);
+ assert.throws(()=>projectAgendaWeek(index,{date:'2026-11-12',today:'2026-11-12',deadlineWarningDays:-1}));
+});
+
+test('Due today stays one entry; schedule and deadline warning combine, warning-only rows sort last by urgency',async()=>{
+ const index=await indexOf('# TODO Warning fourteen\nDEADLINE: <2026-11-26 Do 08:00>\n# TODO Due today\nDEADLINE: <2026-11-12 Do 12:00>\n# TODO Both today\nSCHEDULED: <2026-11-12 Do 09:00> DEADLINE: <2026-11-12 Do 17:00>\n# TODO Warning one\nDEADLINE: <2026-11-13 Fr>\n# TODO Scheduled today\nSCHEDULED: <2026-11-12 Do 10:00> DEADLINE: <2026-11-15 So>\n# TODO Backlog plus warning\nSCHEDULED: <2026-11-10 Di> DEADLINE: <2026-11-16 Mo>');
+ const today=projectAgendaWeek(index,{date:'2026-11-12',today:'2026-11-12'}).days[3].entries;
+ assert.deepEqual(today.map(entry=>entry.record.title),['Both today','Scheduled today','Due today','Backlog plus warning','Warning one','Warning fourteen']);
+ assert.equal(today.find(e=>e.record.title==='Both today').marks.length,2);assert.ok(today.find(e=>e.record.title==='Both today').marks.every(m=>!m.warning));
+ const mixed=today.find(e=>e.record.title==='Scheduled today');assert.equal(mixed.marks.length,2);assert.equal(mixed.marks[1].daysUntil,3);
+ const backlog=today.find(e=>e.record.title==='Backlog plus warning');assert.equal(backlog.marks[0].late,true);assert.equal(backlog.marks[1].warning,true);
+ assert.equal(today.filter(e=>e.record.title==='Scheduled today').length,1);
+});
+
+test('Warning day counts use civil dates across DST, leap days, years and supported bounds; repeats remain the stored occurrence',async()=>{
+ for(const [today,date,days] of [['2026-03-28','2026-03-30',2],['2026-10-24','2026-10-26',2],['2028-02-28','2028-03-01',2],['2026-12-31','2027-01-02',2],['0001-01-01','0001-01-02',1],['9999-12-30','9999-12-31',1]]){
+  const index=await indexOf('# TODO Test\nDEADLINE: <'+date+'>'),week=projectAgendaWeek(index,{date:today,today});
+  assert.equal(week.days.find(day=>day.date===today).entries[0].marks[0].daysUntil,days,today);
+ }
+ const index=await indexOf('# TODO Repeating\nDEADLINE: <2026-11-13 Fr +1d>');
+ const week=projectAgendaWeek(index,{date:'2026-11-12',today:'2026-11-12'});
+ assert.equal(week.days[3].entries[0].marks[0].daysUntil,1);assert.equal(week.days[5].entries.length,0);
+});

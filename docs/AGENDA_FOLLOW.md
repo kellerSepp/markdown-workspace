@@ -1,5 +1,7 @@
 # Agenda unten und Follow — 2026-11-09
 
+Nachtrag 2026-11-12: Offene Aufgaben mit naher Deadline erscheinen unter Heute zusätzlich mit „in N Tagen“, standardmäßig bis 14 Tage voraus. Quellen/Follow unverändert; Details und Handprobe [AGENDA_DEADLINE_WARNINGS.md](AGENDA_DEADLINE_WARNINGS.md).
+
 PO-Freigabe: kompakte untere Agenda statt überlagernder Ansicht, ungefähr 50:50 geteilt, mit Maus verstellbar; Follow ausdrücklich **Shift+F**, nicht Alt+F. Keine Feiertagsfunktion, Dependencies, Storageänderung, Commit, Push oder Veröffentlichung.
 
 ## Bedienung
