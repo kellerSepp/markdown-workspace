@@ -48,7 +48,7 @@ export function createPanelShell({host,document:doc=globalThis.document}){
 }
 
 // Ring view owns filtering/target selection, reusing the independent shell.
-export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>({}),notify=()=>{},document:doc=globalThis.document,previewLength=EMACS_POLICY.previewLength,completionMaxCharacters=EMACS_POLICY.completionMaxCharacters,layoutPolicy={}}){
+export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>({}),notify=()=>{},sameTarget=(a,b)=>a===b,onClose=()=>{},focusAfterClose=()=>view.focus(),document:doc=globalThis.document,previewLength=EMACS_POLICY.previewLength,completionMaxCharacters=EMACS_POLICY.completionMaxCharacters,layoutPolicy={}}){
   const layout=createPanelLayout({workspace,host,view,document:doc,policy:layoutPolicy});
   const shell=createPanelShell({host,document:doc}),{root,closeButton}=shell;
   const search=doc.createElement('input');search.type='search';search.placeholder='Ringtext suchen';search.setAttribute('aria-label','Kill-Ring durchsuchen');
@@ -66,8 +66,14 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
   }
   function listen(element,type,fn){element.addEventListener(type,fn);disposers.push(()=>element.removeEventListener(type,fn));}
   function ready(){const c=getContext();return !c.busy&&c.hasDocument!==false&&!view.state.readOnly;}
-  function valid(){return target&&target.state===view.state&&ready();}
+  function valid(){
+    if(!target||!ready()||!sameTarget(target.state,view.state))return false;
+    // A caller may explicitly accept a parser-only state update. The controller
+    // must then receive that current state, never an obsolete transaction base.
+    target.state=view.state;return true;
+  }
   function close({restore=true}={}){
+    const wasOpen=!root.hidden;
     detailForm?.destroy();detailForm=null;
     const cancel=prefixCancel;prefixCancel=null;choiceMode=null;cancel?.();
     const focus=restore&&valid();target=null;
@@ -75,7 +81,8 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
       hint.hidden=false;results.hidden=false;message.hidden=false;root.removeAttribute('data-planning');
       shell.hide();root.removeAttribute('data-prefix-help');search.setAttribute('aria-expanded','false');clearRows();search.value='';message.textContent='';
       // CodeMirror focus() uses preventScroll; no state transaction is needed.
-      if(focus)view.focus();
+      if(wasOpen)onClose();
+      if(focus)focusAfterClose();
     });
   }
   function select(next){
@@ -97,7 +104,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
   function choose(id){
     if(!valid()){message.textContent='Ziel hat sich geändert. Auswahl am gewünschten Cursor erneut öffnen.';notify(message.textContent);return false;}
     const saved=target;
-    if((choiceMode?.choose??insert)(id,saved)){close({restore:false});view.focus();return true;}
+    if((choiceMode?.choose??insert)(id,saved)){close({restore:false});focusAfterClose();return true;}
     message.textContent='Aktion wurde verworfen; Dokument bleibt unverändert.';return false;
   }
   function render(){
@@ -135,7 +142,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     choiceMode={tags:true};target={state:view.state,head:view.state.selection.main.head};const saved=target;
     detailForm=createTagForm({document:doc,...options,cancel:()=>close(),commit:names=>{
       if(!valid()){notify('Tagziel geändert; bitte erneut öffnen.');close({restore:false});return;}
-      if(options.choose(names,saved)){close({restore:false});view.focus();}
+      if(options.choose(names,saved)){close({restore:false});focusAfterClose();}
     }});
     search.hidden=true;hint.hidden=true;results.hidden=true;message.hidden=true;root.append(detailForm.root);
     layout.setOpen(true,()=>{shell.show('Tags bearbeiten');detailForm.focus();});return true;
@@ -145,7 +152,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     choiceMode={};target={state:view.state,head:view.state.selection.main.head};const saved=target;
     detailForm=createPlanningForm({document:doc,kind,value,cancel:()=>close(),commit:value=>{
       if(!valid()){notify('Planungsziel geändert; erneut öffnen.');close({restore:false});return;}
-      if(choose(value,saved)){close({restore:false});view.focus();}
+      if(choose(value,saved)){close({restore:false});focusAfterClose();}
     }});
     search.hidden=true;hint.hidden=true;results.hidden=true;message.hidden=true;root.setAttribute('data-planning','');root.append(detailForm.root);
     layout.setOpen(true,()=>{shell.show(kind==='SCHEDULED'?'Scheduling bearbeiten':'Deadline bearbeiten');detailForm.focus();});return true;

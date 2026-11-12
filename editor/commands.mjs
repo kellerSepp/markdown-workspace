@@ -39,6 +39,7 @@ add('agenda.refresh','Agenda-Index neu einlesen','Datei','Alle Markdown-Dateien 
 add('agenda.dispatch','Agenda öffnen','Agenda','Kompakten Dispatcher für Wochenagenda und TODO-Liste öffnen.','vault',c=>synthetic(c)||vault(c));
 add('agenda.week','Wochenagenda öffnen','Agenda','Gespeicherte Termine und Aufgaben von Montag bis Sonntag anzeigen.','vault',c=>synthetic(c)||vault(c));
 add('agenda.todo','TODO-Liste öffnen','Agenda','Offene Überschriftenaufgaben im Vault anzeigen; abgeschlossene Zustände optional einblenden.','vault',c=>synthetic(c)||vault(c));
+add('agenda.status','Agenda: Aufgabenstatus ändern','Agenda','Status oberhalb der Agenda ändern; bereits geöffnete Datei als Entwurf, zuvor fremde Datei nach Änderung geprüft speichern.','agenda',c=>idle(c)||(!c.agendaCanStatus?'Agendaeintrag auswählen und Statusauswahl schließen.':''),'C-c t (Agenda)');
 add('file.open','Ausgewählte Datei öffnen','Datei','Datei aus der Dateiauswahl laden; Undo-Grenze neu beginnen.','vault',c=>synthetic(c)||vault(c)||(!c.file?'Bitte eine Markdown-Datei in der Dateiauswahl wählen.':''));
 add('file.find','Datei öffnen/anlegen','Datei','Vault-relativen Markdown-Pfad vervollständigen und öffnen oder eine fehlende Datei leer anlegen.','vault',c=>synthetic(c)||vault(c));
 add('file.save','Datei speichern','Datei','Explizit mit vorhandener Sicherungs- und Konfliktprüfung speichern.','document',c=>synthetic(c)||documentReason(c),'Strg+S');
@@ -90,7 +91,7 @@ for(const {id,key,label} of PREFIX_BINDINGS){const command=catalog.find(c=>c.id=
 for(const id of ['heading-up','heading-down']) Object.assign(catalog.find(c=>c.id==='structure.'+id),{shortcut:id==='heading-up'?'Alt+Oben':'Alt+Unten',orgShortcut:id==='heading-up'?'M-UP':'M-DOWN',compatibility:'Org-Unterbaumtausch nur mit gleichrangigem Geschwister innerhalb derselben Elterngrenze.'});
 export const COMMAND_METADATA=Object.freeze(catalog.map(c=>Object.freeze(c)));
 export function commandDefinitions(handlers,beforeExecute=()=>true) {
-  return COMMAND_METADATA.map(command=>({...command,unavailable:context=>context.filePickerActive?'Dateidialog zuerst schließen.':agendaCommandReason(command,context)||command.unavailable(context),execute:(_context,args)=>{
+  return COMMAND_METADATA.map(command=>({...command,unavailable:context=>context.filePickerActive?'Dateidialog zuerst schließen.':context.agendaStatusActive?'Statusauswahl zuerst bestätigen oder abbrechen.':agendaCommandReason(command,context)||command.unavailable(context),execute:(_context,args)=>{
     if(beforeExecute(command.id)===false)return false;
     const handler=handlers[command.id];
     if(!handler) throw Error('Command-Handler fehlt: '+command.id);

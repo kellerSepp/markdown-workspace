@@ -67,6 +67,18 @@ test('Slow editor parsing cannot publish a previous vault after reset',async()=>
  const state=make(Array.from({length:12000},(_,i)=>`# TODO Task ${i}\nBody ${'text '.repeat(20)}\n`).join(''));
  blocked=true;const pending=index.setEditor(state,'large.md',root);
  assert.ok(yields>0);assert.equal(index.snapshot().editorPending,true);
+ const joined=index.setEditor(state,'large.md',root);assert.equal(joined,pending,'Repeated callers must await the actual outstanding parse');
+ let finished=false;joined.then(()=>{finished=true;});await Promise.resolve();assert.equal(finished,false);
  await index.selectVault(null);release();await pending;
  assert.equal(index.snapshot().editorPath,null);assert.equal(index.query().length,0);
+});
+
+test('Opening a long editor file retains all tasks beyond the initial parser viewport',async()=>{
+ const f=await fixture();
+ const text='Introduction '.repeat(400)+'\n\n# TODO Inbox task\nSCHEDULED: <2026-11-12 Do>\n';
+ f.view.state=make(text);
+ await f.index.setEditor(f.view.state,'b.md',f.root);
+ assert.deepEqual(f.index.query().filter(r=>r.path==='b.md').map(r=>r.title),['Inbox task']);
+ assert.equal(f.index.snapshot().editorPending,false);
+ assert.equal(f.index.query().filter(r=>r.path==='a.md').length,3);
 });

@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createAgendaSource} from './agenda-source.mjs';
 import {createAgendaIndex} from './agenda-index.mjs';
+import {EditorState,StateEffect} from '@codemirror/state';
+import {markdown} from '@codemirror/lang-markdown';
+import {todoRules,reloadTodo} from './todo.mjs';
 const bytes=t=>new TextEncoder().encode(t);
 const deferred=()=>{let resolve;return {promise:new Promise(r=>resolve=r),resolve};};
 async function fixture(){
@@ -58,4 +61,16 @@ test('Agenda source rejects a newer revision/dirty session after the awaited ope
 test('Agenda source keeps same-file editor on external change and reports isolated read errors',async()=>{
   const f=await fixture();f.session.hasDocument=true;f.session.path='a.md';f.session.vault=f.vault;f.session.text='old';assert.equal(await f.source.navigate(f.index.query()[0].id),false);assert.equal(f.opened,0);assert.match(f.notices[0],/extern/);
   f.vault.getFileHandle=async()=>{throw Error('denied a.md');};assert.equal(await f.source.navigate(f.index.query()[0].id),false);assert.match(f.notices.at(-1),/denied/);
+});
+test('Awaited source reads tolerate parser-only states but reject actual doc, selection, workflow and readonly changes',async()=>{
+ for(const change of ['parser','doc','selection','rules','readonly']){
+  const f=await fixture(),gate=deferred(),state=EditorState.create({doc:f.text,extensions:[markdown(),todoRules]});f.state=state;f.permissionGate=gate;
+  const pending=f.source.navigate(f.index.query()[0].id);
+  if(change==='parser')f.state=state.update({}).state;
+  if(change==='doc')f.state=state.update({changes:{from:0,insert:'x'}}).state;
+  if(change==='selection')f.state=state.update({selection:{anchor:1}}).state;
+  if(change==='rules')f.state=state.update({effects:reloadTodo.of({rules:[{name:'NEXT',key:'n',closed:false},{name:'FIN',key:'f',closed:true}]})}).state;
+  if(change==='readonly')f.state=state.update({effects:StateEffect.appendConfig.of(EditorState.readOnly.of(true))}).state;
+  gate.resolve();assert.equal(await pending,change==='parser',change);assert.equal(f.opened,change==='parser'?1:0,change);
+ }
 });

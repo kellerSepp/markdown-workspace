@@ -27,6 +27,11 @@ export async function parseAgendaFile(bytes,path,previousRules,{yieldTask=pause,
 
 // Reuse the actual editor's parser and loaded TODO rules for its RAM-only view.
 export function parseAgendaState(state,path,ruleError=state.field(todoRules,false)?.error){
+  // ensureSyntaxTree advances the mutable parser context, but syntaxTree(state)
+  // still reads the tree captured by the immutable language field. Adopt the
+  // completed context in a derived state before the existing parsers read it.
+  // The real editor document, selection, workflow and history remain untouched.
+  state=state.update({}).state;
   const rules=state.field(todoRules,false)?.rules??DEFAULT_TODO;
   const result=planningRecords(state,path);if(result.message)throw Error(result.message);
   const diagnostics=ruleError?[{path,kind:'todo',message:ruleError+' Letzte gültige Regeln dieser Sitzung, sonst Standardregeln verwendet.'}]:[];
@@ -101,19 +106,20 @@ export function createAgendaIndex({onChange=()=>{},yieldTask=pause}={}){
   }
   return {
     selectVault(next){vault=next;epoch++;operation++;editorOperation++;editor=null;files=new Map();scanDiagnostics=[];running=false;publish();return next?rebuild():Promise.resolve(snapshot);},
-    async setEditor(state,path,sourceVault=vault){
-      if(!vault||sourceVault!==vault||!pathValid(path))return snapshot;
-      if(editor?.path===path&&editor.doc===state.doc&&editor.rules===state.field(todoRules,false))return snapshot;
+    setEditor(state,path,sourceVault=vault){
+      if(!vault||sourceVault!==vault||!pathValid(path))return Promise.resolve(snapshot);
+      if(editor?.path===path&&editor.doc===state.doc&&editor.rules===state.field(todoRules,false))return editor.parsed?Promise.resolve(snapshot):editor.task??Promise.resolve(snapshot);
       const token=++editorOperation,generation=epoch;
       const current=()=>token===editorOperation&&generation===epoch&&vault===sourceVault;
-      editor={path,doc:state.doc,rules:state.field(todoRules,false),parsed:null};
+      const job=editor={path,doc:state.doc,rules:state.field(todoRules,false),parsed:null};
       // Invalidate old positions immediately; incomplete parses never expose disk offsets.
-      try{
+      job.task=(async()=>{try{
         let pending=false;
         while(!ensureSyntaxTree(state,state.doc.length,15)){if(!current())return snapshot;if(!pending){publish();pending=true;}await yieldTask();}
         if(!current())return snapshot;
         editor.parsed=parseAgendaState(state,path);return publish();
-      }catch(error){if(current()){editor.parsed={records:[],diagnostics:[{path,kind:'editor',message:message(error)}]};return publish();}return snapshot;}
+      }catch(error){if(current()){editor.parsed={records:[],diagnostics:[{path,kind:'editor',message:message(error)}]};return publish();}return snapshot;}})();
+      return job.task;
     },
     isEditorCurrent(id,state){return !!editor?.parsed&&snapshot.records.some(r=>r.id===id&&r.editor)&&editor.doc===state.doc&&editor.rules===state.field(todoRules,false);},
     rebuild,

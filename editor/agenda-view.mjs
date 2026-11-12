@@ -2,6 +2,7 @@ import {createPanelShell} from './work-panel.mjs';
 import {revealPanelRow} from './panel-layout.mjs';
 import {panelMove} from './panel-navigation.mjs';
 import {createAgendaSplit} from './agenda-split.mjs';
+import {createPrefixRouter} from './prefix-router.mjs';
 import {localToday,agendaWeek,moveAgendaWeek,projectAgendaWeek,projectAgendaTodos,agendaStampLabel} from './agenda-model.mjs';
 
 export const AGENDA_CHOICES=Object.freeze([
@@ -11,19 +12,20 @@ export const AGENDA_CHOICES=Object.freeze([
   {key:'s',label:'Suche · geplant',disabled:true}
 ].map(Object.freeze));
 
-export function createAgendaView({index,execute,navigate,host,workspace,view,onOpen=()=>{},onClose=()=>{},onActiveChange=()=>{},cancelNavigation=()=>{},now=()=>new Date(),document:doc=globalThis.document,timers=globalThis}){
+export function createAgendaView({index,execute,navigate,onStatus=async()=>false,cancelStatus=()=>{},host,workspace,view,onOpen=()=>{},onClose=()=>{},onActiveChange=()=>{},cancelNavigation=()=>{},now=()=>new Date(),document:doc=globalThis.document,timers=globalThis}){
   const dialog=doc.createElement('dialog');dialog.className='agenda-dialog';dialog.setAttribute('aria-label','Agenda');doc.body.append(dialog);
   const split=createAgendaSplit({host,workspace,view,document:doc});
   const shell=createPanelShell({host:dialog,document:doc}),{root}=shell;root.className='work-panel agenda-panel';
   const toolbar=doc.createElement('div');toolbar.className='agenda-toolbar';
   const makeButton=(text,fn)=>{const b=doc.createElement('button');b.type='button';b.textContent=text;b.addEventListener('click',fn);return b;};
   const previous=makeButton('← b',()=>shift(-1)),next=makeButton('f →',()=>shift(1)),current=makeButton('Heute .',()=>goToday());
-  const refresh=makeButton('Neu einlesen r',()=>{if(!committing)execute('agenda.refresh');});
+  const refresh=makeButton('Neu einlesen r',()=>{if(!committing&&!statusEditing){message('');execute('agenda.refresh');}});
   const filter=doc.createElement('label'),includeClosed=doc.createElement('input');includeClosed.type='checkbox';filter.append(includeClosed,doc.createTextNode(' Abgeschlossene einblenden'));
-  includeClosed.addEventListener('change',()=>{if(committing){includeClosed.checked=closedBeforeCommit;return;}render();});
+  includeClosed.addEventListener('change',()=>{if(committing||statusEditing){includeClosed.checked=closedBeforeCommit;return;}message('');render();});
   const followButton=makeButton('Follow: aus · Shift+F',()=>toggleFollow());
+  const statusButton=makeButton('Status · C-c t',()=>execute('agenda.status'));
   followButton.setAttribute('aria-pressed','false');
-  toolbar.append(previous,next,current,refresh,followButton,filter);
+  toolbar.append(previous,next,current,refresh,followButton,statusButton,filter);
   const dispatcher=doc.createElement('div');dispatcher.className='agenda-dispatcher';
   for(const choice of AGENDA_CHOICES){const button=makeButton(`[${choice.key}] ${choice.label}`,()=>execute(choice.id));button.disabled=!!choice.disabled;dispatcher.append(button);}
   const hint=doc.createElement('p');hint.className='hint';
@@ -32,13 +34,18 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
   const errors=doc.createElement('details'),summary=doc.createElement('summary'),errorList=doc.createElement('ul');summary.textContent='Betroffene Quellen';errors.append(summary,errorList);
   root.append(toolbar,dispatcher,hint,results,notice,errors);
   let mode=null,date=null,snapshot=index.snapshot(),rows=[],selected=0,savedFocus=null,opening=false,disposed=false,committing=false,closedBeforeCommit=false;
-  let follow=false,followTimer=null,followVersion=0,pendingFollow=null;
-  const commitMessage='Quelldatei wird geöffnet. Bitte kurz warten; Schließen ist während dieses Schritts gesperrt.';
+  let follow=false,followTimer=null,followVersion=0,pendingFollow=null,selectedKey=null;
+  let statusEditing=false,statusVersion=0,feedback='',summaryText='';
+  const statusPrefixHelp='C und Strg loslassen, dann t: Status des gewählten Agendaeintrags.';
+  const prefixView={get hasFocus(){return !!mode&&mode!=='dispatch'&&dialog.contains(doc.activeElement);},get state(){return rows[selected]?.entry.record;},setTabFocusMode(){}};
+  const statusPrefix=createPrefixRouter({bindings:[{key:'t',id:'agenda.status'}],registry:{get:()=>({name:'Aufgabenstatus ändern'}),availability:()=>({enabled:!committing&&!opening&&!statusEditing&&!!rows[selected]}),execute:()=>execute('agenda.status')},getContext:()=>({busy:committing||opening||statusEditing,hasDocument:!!rows[selected]}),showHelp:()=>message(statusPrefixHelp),hideHelp:()=>{if(feedback===statusPrefixHelp)message('');},notify:message});
+  const sourceCommitMessage='Quelldatei wird geöffnet. Bitte kurz warten; Schließen ist während dieses Schritts gesperrt.';
+  let commitMessage=sourceCommitMessage;
   const disposers=[];
   function listen(el,name,fn){el.addEventListener(name,fn);disposers.push(()=>el.removeEventListener(name,fn));}
   function stopFollow(){if(followTimer!==null)timers.clearTimeout(followTimer);followTimer=null;pendingFollow=null;followVersion++;cancelNavigation();}
   function scheduleFollow(){
-    stopFollow();if(!follow||!mode||mode==='dispatch'||!rows[selected])return;
+    stopFollow();if(!follow||!mode||mode==='dispatch'||statusEditing||!rows[selected])return;
     const version=followVersion,key=rows[selected].entry.key;
     followTimer=timers.setTimeout(()=>{followTimer=null;pendingFollow={key,version};void runFollow();},140);
   }
@@ -47,28 +54,41 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
     const {key,version}=pendingFollow;pendingFollow=null;
     if(!follow||!mode||version!==followVersion||key!==rows[selected]?.entry.key||!dialog.contains(doc.activeElement))return;
     const id=rows[selected].entry.record.id;opening=true;let retry=false;
-    try{const success=await navigate(id,{follow:true});retry=!success&&version===followVersion&&key===rows[selected]?.entry.key&&id!==rows[selected]?.entry.record.id;}
+    try{const success=await navigate(id,{follow:true});if(success&&version===followVersion)message('');retry=!success&&version===followVersion&&key===rows[selected]?.entry.key&&id!==rows[selected]?.entry.record.id;}
     catch(error){if(mode&&version===followVersion)message(error.message??String(error));}
-    finally{opening=false;if(retry)scheduleFollow();else if(pendingFollow)void runFollow();}
+    finally{opening=false;if(selected<0&&!snapshot.editorPending&&!snapshot.running)render();else updateStatusButton();if(retry)scheduleFollow();else if(pendingFollow)void runFollow();}
   }
   function toggleFollow(){
-    if(committing||mode==='dispatch')return;
+    if(committing||statusEditing||mode==='dispatch')return;
+    message('');
     follow=!follow;followButton.textContent=`Follow: ${follow?'an':'aus'} · Shift+F`;followButton.setAttribute('aria-pressed',String(follow));
     if(follow)scheduleFollow();else stopFollow();
   }
   function select(position,followSelection=false){
-    if(!rows.length){results.removeAttribute('aria-activedescendant');return;}
+    if(followSelection)message('');
+    if(!rows.length){if(followSelection)selectedKey=null;results.removeAttribute('aria-activedescendant');return;}
     selected=Math.max(0,Math.min(position,rows.length-1));
+    selectedKey=rows[selected].entry.key;
     for(let n=0;n<rows.length;n++){rows[n].button.setAttribute('aria-selected',String(n===selected));rows[n].button.classList.toggle('agenda-active',n===selected);}
     results.setAttribute('aria-activedescendant',rows[selected].button.id);revealPanelRow(results,rows[selected].button);
     if(followSelection)scheduleFollow();
   }
-  function message(text){notice.textContent=text;}
+  function message(text){if(committing&&text===commitMessage){notice.textContent=text;return;}feedback=text;notice.textContent=feedback||summaryText;}
+  function updateStatusButton(){statusButton.disabled=committing||opening||statusEditing||!rows[selected];}
+  async function openStatus(){
+    if(!mode||mode==='dispatch'||statusEditing||opening||committing||!rows[selected])return false;
+    statusPrefix.cancel();message('');stopFollow();const id=rows[selected].entry.record.id,activeMode=mode,version=++statusVersion;
+    statusEditing=true;render();
+    const current=()=>!disposed&&statusEditing&&version===statusVersion&&mode===activeMode;
+    try{const opened=await onStatus(id,{current});if(!opened&&current())endStatus();return opened;}
+    catch(error){if(current()){endStatus();message(error.message??String(error));}return false;}
+  }
+  function endStatus(){statusEditing=false;statusVersion++;render();if(mode&&mode!=='dispatch')results.focus();}
   async function activate(entry=rows[selected]?.entry){
-    if(!entry||opening||committing)return false;stopFollow();opening=true;const activeMode=mode,version=followVersion;
+    if(!entry||opening||committing||statusEditing)return false;message('');stopFollow();opening=true;const activeMode=mode,version=followVersion;
     try{if(await navigate(entry.record.id,{follow:false})&&mode===activeMode&&version===followVersion){close({restore:false});onClose();return true;}return false;}
     catch(error){if(mode===activeMode&&version===followVersion)message(error.message??String(error));return false;}
-    finally{opening=false;if(pendingFollow)void runFollow();}
+    finally{opening=false;updateStatusButton();if(pendingFollow)void runFollow();}
   }
   function row(entry){
     const button=doc.createElement('button');button.type='button';button.className='agenda-row';button.tabIndex=-1;button.setAttribute('role','option');button.id='agenda-entry-'+rows.length;
@@ -80,15 +100,19 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
     const title=doc.createElement('span');title.textContent=entry.record.title||'(ohne Titel)';
     button.append(source,marks,state,title);
     if(entry.record.effectiveTags?.length){const tags=doc.createElement('span');tags.className='agenda-tags';tags.textContent=(entry.record.tags?.length?' :'+entry.record.tags.join(':')+':':'')+(entry.record.inheritedTags?.length?' · geerbt: '+entry.record.inheritedTags.join(', '):'');button.append(tags);}
-    button.addEventListener('click',()=>{if(committing){message(commitMessage);return;}select(rows.findIndex(r=>r.button===button),follow);if(follow)results.focus();else void activate(entry);});
+    button.addEventListener('click',()=>{if(committing||statusEditing){message(statusEditing?'Statusauswahl zuerst bestätigen oder abbrechen.':commitMessage);return;}message('');select(rows.findIndex(r=>r.button===button),follow);if(follow)results.focus();else void activate(entry);});
     results.append(button);rows.push({button,entry});
   }
   function render(){
     if(!mode||disposed)return;
     dialog.setAttribute('data-mode',mode);
-    const key=rows[selected]?.entry.key,top=results.scrollTop;rows=[];results.replaceChildren();
+    // Removing a focused row causes native focusout(null). Move focus within
+    // the agenda first so its own redraw cannot cancel pending source reads.
+    if(rows.some(row=>row.button===doc.activeElement))results.focus({preventScroll:true});
+    statusPrefix.cancel();const key=selectedKey??rows[selected]?.entry.key,oldSelected=selected,top=results.scrollTop;rows=[];results.replaceChildren();
     const isDispatch=mode==='dispatch',isWeek=mode==='week';
-    current.disabled=refresh.disabled=includeClosed.disabled=followButton.disabled=committing;
+    current.disabled=refresh.disabled=includeClosed.disabled=followButton.disabled=committing||statusEditing;
+    statusButton.disabled=committing||opening||statusEditing;
     for(let n=0;n<AGENDA_CHOICES.length;n++)dispatcher.children[n].disabled=committing||!!AGENDA_CHOICES[n].disabled;
     dispatcher.hidden=!isDispatch;toolbar.hidden=isDispatch;results.hidden=isDispatch;
     for(const b of [previous,next,current])b.hidden=!isWeek;filter.hidden=mode!=='todo';
@@ -96,27 +120,34 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
     else if(isWeek){
       const today=localToday(now()),projected=projectAgendaWeek(index,{date,today});
       shell.show(`Wochenagenda · KW ${String(projected.week).padStart(2,'0')}/${projected.year}`);
-      hint.textContent='f/b: Woche · .: heute · ↑ ↓: wählen · Shift+F: Follow · Enter: Editor · r: einlesen · q/Escape: schließen';
-      previous.disabled=committing||moveAgendaWeek(projected.monday,-1)===projected.monday;next.disabled=committing||moveAgendaWeek(projected.monday,1)===projected.monday;
+      hint.textContent='f/b: Woche · .: heute · ↑ ↓: wählen · C-c t: Status · Shift+F: Follow · Enter: Editor · r: einlesen · q/Escape: schließen';
+      previous.disabled=committing||statusEditing||moveAgendaWeek(projected.monday,-1)===projected.monday;next.disabled=committing||statusEditing||moveAgendaWeek(projected.monday,1)===projected.monday;
       for(const [dayIndex,day] of projected.days.entries()){const h=doc.createElement('h3');h.className='agenda-day';if(dayIndex>=5)h.classList.add('agenda-weekend');if(day.date===today)h.classList.add('agenda-today');h.textContent=day.label;results.append(h);for(const entry of day.entries)row(entry);}
     }else{
-      shell.show(includeClosed.checked?'TODO-Liste · alle Zustände':'TODO-Liste · offen');hint.textContent='↑ ↓: wählen · Shift+F: Follow · Enter: Editor · r: einlesen · q/Escape: schließen';
+      shell.show(includeClosed.checked?'TODO-Liste · alle Zustände':'TODO-Liste · offen');hint.textContent='↑ ↓: wählen · C-c t: Status · Shift+F: Follow · Enter: Editor · r: einlesen · q/Escape: schließen';
       for(const entry of projectAgendaTodos(index,{includeClosed:includeClosed.checked}))row(entry);
       if(!rows.length){const empty=doc.createElement('p');empty.className='hint';empty.textContent='Keine passenden Aufgaben im gespeicherten Indexstand.';results.append(empty);}
     }
     errorList.replaceChildren();for(const diagnostic of snapshot.diagnostics){const li=doc.createElement('li');li.textContent=`${diagnostic.path}${diagnostic.line?':'+diagnostic.line:''}: ${diagnostic.message}`;errorList.append(li);}
     errors.hidden=!snapshot.diagnostics.length;
-    message(`${snapshot.running?'Index wird gelesen. ':''}${snapshot.editorPending?'Editor wird analysiert. ':''}${snapshot.diagnostics.length?'Index unvollständig oder mit Warnungen. ':''}${snapshot.files} Dateien · ${isDispatch?snapshot.records.length:rows.length} Einträge. ${snapshot.editorPath?'Aktuelle Datei: Editorstand, auch ungespeichert. Andere Dateien: gespeicherter Stand.':'Gespeicherter Dateistand; ungespeicherte Änderungen nicht enthalten.'}`);
-    if(committing)message(commitMessage);
-    results.scrollTop=top;select(Math.max(0,rows.findIndex(r=>r.entry.key===key)));
-    if(key!==rows[selected]?.entry.key)scheduleFollow();
+    summaryText=`${snapshot.running?'Index wird gelesen. ':''}${snapshot.editorPending?'Editor wird analysiert. ':''}${snapshot.diagnostics.length?'Index unvollständig oder mit Warnungen. ':''}${snapshot.files} Dateien · ${isDispatch?snapshot.records.length:rows.length} Einträge. ${snapshot.editorPath?'Aktuelle Datei: Editorstand, auch ungespeichert. Andere Dateien: gespeicherter Stand.':'Gespeicherter Dateistand; ungespeicherte Änderungen nicht enthalten.'}`;
+    notice.textContent=committing?commitMessage:feedback||summaryText;
+    const found=rows.findIndex(r=>r.entry.key===key);results.scrollTop=top;
+    if(found<0&&key&&(opening||committing||snapshot.editorPending||snapshot.running)){
+      // The selected source may be absent while its editor overlay is parsed.
+      // Keep its identity, show no substitute, and never follow a fallback row.
+      selectedKey=key;selected=-1;results.removeAttribute('aria-activedescendant');
+    }else if(rows.length)select(found>=0?found:Math.max(0,Math.min(oldSelected,rows.length-1)));
+    else{selected=-1;selectedKey=null;results.removeAttribute('aria-activedescendant');}
+    updateStatusButton();
   }
   function open(nextMode){
-    if(disposed||committing)return false;
+    if(disposed||committing||statusEditing)return false;
+    feedback='';
     const wasActive=!!mode;
     if(!mode){savedFocus=doc.activeElement;onOpen();}
     stopFollow();follow=false;followButton.textContent='Follow: aus · Shift+F';followButton.setAttribute('aria-pressed','false');
-    mode=nextMode;snapshot=index.snapshot();selected=0;
+    mode=nextMode;snapshot=index.snapshot();selected=0;selectedKey=null;
     if(!wasActive)onActiveChange(true);
     if(nextMode==='week')date=agendaWeek(localToday(now())).monday;
     if(nextMode==='todo')includeClosed.checked=false;
@@ -127,19 +158,25 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
     if(nextMode==='dispatch')dispatcher.children[0]?.focus();else results.focus();return true;
   }
   function close({restore=true,force=false}={}){
-    if(!mode)return;if(committing&&!force){message(commitMessage);return false;}mode=null;onActiveChange(false);stopFollow();follow=false;split.setOpen(false);shell.hide();if(dialog.open)dialog.close();rows=[];results.replaceChildren();
+    if(!mode)return;if(committing&&!force){message(commitMessage);return false;}mode=null;statusPrefix.cancel();selectedKey=null;statusEditing=false;statusVersion++;cancelStatus();onActiveChange(false);stopFollow();follow=false;split.setOpen(false);shell.hide();if(dialog.open)dialog.close();rows=[];results.replaceChildren();
     const target=savedFocus;savedFocus=null;
     if(restore){if(target?.isConnected)target.focus({preventScroll:true});onClose();}
   }
-  function shift(delta){if(mode!=='week'||committing)return;date=moveAgendaWeek(agendaWeek(date).monday,delta);render();results.focus();}
-  function goToday(){if(mode!=='week'||committing)return;date=agendaWeek(localToday(now())).monday;render();results.focus();}
+  function shift(delta){if(mode!=='week'||committing)return;message('');date=moveAgendaWeek(agendaWeek(date).monday,delta);render();scheduleFollow();results.focus();}
+  function goToday(){if(mode!=='week'||committing)return;message('');date=agendaWeek(localToday(now())).monday;render();scheduleFollow();results.focus();}
   listen(shell.closeButton,'click',()=>close());
   listen(dialog,'cancel',event=>{event.preventDefault();close();});
-  listen(dialog,'focusout',event=>{if(!dialog.contains(event.relatedTarget))stopFollow();});
+  listen(dialog,'focusout',event=>{if(!dialog.contains(event.relatedTarget)){stopFollow();statusPrefix.cancel();}});
+  listen(dialog,'keyup',event=>statusPrefix.keyUp(event));
+  listen(dialog,'compositionstart',()=>statusPrefix.cancel());
+  listen(dialog,'mousedown',()=>statusPrefix.cancel());
+  if(doc.defaultView?.addEventListener)listen(doc.defaultView,'blur',()=>{statusPrefix.cancel();stopFollow();});
   listen(dialog,'keydown',event=>{
+    if(mode!=='dispatch'&&(event.target===results||rows.some(r=>r.button===event.target))&&statusPrefix.keyDown(event,prefixView)){event.stopPropagation();return;}
     if(event.isComposing||event.keyCode===229||event.ctrlKey||event.altKey||event.metaKey||event.getModifierState?.('AltGraph'))return;
     if(event.shiftKey){if(event.key==='F'&&mode!=='dispatch'){event.preventDefault();event.stopPropagation();if(!event.repeat)toggleFollow();}return;}
     const key=event.key.toLowerCase(),move=panelMove(event,{plain:true});
+    if(statusEditing){if(committing){event.preventDefault();event.stopPropagation();message(commitMessage);return;}if(event.key==='Escape'){event.preventDefault();event.stopPropagation();cancelStatus();endStatus();}return;}
     if(!['Escape','q','r','f','b','.','Enter','ArrowUp','ArrowDown','a','t','m','s'].includes(event.key)&&!['q','r','f','b','a','t','m','s'].includes(key))return;
     if(event.key==='Escape'||key==='q'){event.preventDefault();event.stopPropagation();if(!event.repeat)close();return;}
     if(committing){event.preventDefault();event.stopPropagation();message(commitMessage);return;}
@@ -154,13 +191,20 @@ export function createAgendaView({index,execute,navigate,host,workspace,view,onO
     }
     if(key==='r'||mode==='week'&&['f','b','.'].includes(key)){
       event.preventDefault();event.stopPropagation();if(event.repeat)return;
-      if(key==='r')execute('agenda.refresh');else if(key==='.')goToday();else shift(key==='f'?1:-1);
+      if(key==='r'){message('');execute('agenda.refresh');}else if(key==='.')goToday();else shift(key==='f'?1:-1);
     }
   });
-  return {openDispatcher:()=>open('dispatch'),openWeek:()=>open('week'),openTodos:()=>open('todo'),close,message,
+  return {openDispatcher:()=>open('dispatch'),openWeek:()=>open('week'),openTodos:()=>open('todo'),openStatus,endStatus,focusSelection(){if(mode&&mode!=='dispatch')results.focus();},close,message,
     update(next){const switched=snapshot.epoch!==next.epoch;snapshot=next;if(switched){close({restore:false,force:true});return;}render();},
-    setCommitting(value){if(disposed)return;if(value)closedBeforeCommit=includeClosed.checked;committing=value;render();},
+    setCommitting(value,detail=sourceCommitMessage){
+      if(disposed)return;
+      // Disabling the focused Follow/status button blurs it in native browsers.
+      // Keep the focus in this agenda before touching those controls.
+      if(value&&mode&&mode!=='dispatch'&&dialog.contains(doc.activeElement)&&doc.activeElement!==results)results.focus({preventScroll:true});
+      if(value)closedBeforeCommit=includeClosed.checked;commitMessage=detail;committing=value;render();
+    },
     get active(){return !!mode;},get docked(){return mode==='week'||mode==='todo';},get element(){return dialog;},
+    get canStatus(){return !!mode&&mode!=='dispatch'&&!committing&&!opening&&!statusEditing&&!!rows[selected];},
     destroy(){if(disposed)return;close({restore:false,force:true});disposed=true;for(const dispose of disposers)dispose();shell.destroy();dialog.remove();split.destroy();}
   };
 }

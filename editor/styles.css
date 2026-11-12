@@ -117,3 +117,6 @@ code{background:var(--code-background);color:var(--text)}
 .tag-choices button{font:inherit;padding:.2rem .4rem}.tag-choices [aria-selected="true"]{background:var(--hover);font-weight:bold}
 .tag-form input{font:inherit;color:var(--text);background:var(--control);border:1px solid var(--border);padding:.25rem;max-width:100%}
 .tag-form:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}.agenda-tags{color:var(--accent);font-size:.9em}
+
+#agendaStatusHost{min-width:0;min-height:0;overflow:hidden;border:1px solid var(--border);background:var(--surface)}
+#agendaStatusHost[hidden],#editor[hidden]{display:none}

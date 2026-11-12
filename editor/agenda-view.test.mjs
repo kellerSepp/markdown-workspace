@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {EditorState} from '@codemirror/state';
+import {EditorState,Compartment} from '@codemirror/state';
 import {markdown,markdownLanguage} from '@codemirror/lang-markdown';
 import {todoRules} from './todo.mjs';
 import {history,undoDepth} from '@codemirror/commands';
@@ -34,7 +34,7 @@ function rootOf(entries){return {name:'synthetic',async queryPermission(){return
 async function fixture(extra={}){
   const doc=dom(),origin=doc.createElement('div');doc.body.append(origin);origin.focus();const entries={'a.md':'# TODO Open\nSCHEDULED: <2026-11-08 So 09:00-10:00> DEADLINE: <2026-11-08 So 11:00>\n# DONE Closed\n# Other\nSCHEDULED: <2026-11-08 So 14:00>'},index=createAgendaIndex({yieldTask:async()=>{}});await index.selectVault(rootOf(entries));
   const commands=[],navigation=[],notices=[];let controller;
-  controller=createAgendaView({index,document:doc,now:()=>new Date(2026,10,8,12),execute:id=>{commands.push(id);if(id==='agenda.week')return controller.openWeek();if(id==='agenda.todo')return controller.openTodos();if(id==='agenda.refresh')return index.rebuild();},navigate:async id=>{navigation.push(id);return false;},onClose:()=>origin.focus(),...extra});
+  controller=createAgendaView({index,document:doc,now:()=>new Date(2026,10,8,12),execute:id=>{commands.push(id);if(id==='agenda.week')return controller.openWeek();if(id==='agenda.todo')return controller.openTodos();if(id==='agenda.status')return controller.openStatus();if(id==='agenda.refresh')return index.rebuild();},navigate:async id=>{navigation.push(id);return false;},onClose:()=>origin.focus(),...extra});
   return {doc,origin,index,controller,commands,navigation,notices,rows:()=>all(controller.element,e=>e.className==='agenda-row'),results:()=>all(controller.element,e=>e.className==='agenda-results')[0],buttons:()=>all(controller.element,e=>e.tagName==='button'),key:(key,patch={})=>doc.activeElement.emit('keydown',{key,...patch})};
 }
 test('Agenda dispatcher two active choices and disabled plans use plain keys/mouse, modifier and IME guards',async()=>{
@@ -46,6 +46,98 @@ test('Agenda dispatcher two active choices and disabled plans use plain keys/mou
 });
 
 function timerModel(){let next=0;const tasks=new Map();return {setTimeout(fn){const id=++next;tasks.set(id,fn);return id;},clearTimeout(id){tasks.delete(id);},flush(){for(const [id,fn] of [...tasks]){tasks.delete(id);fn();}},get size(){return tasks.size;}};}
+test('Agenda C-c t uses released local prefix, selected record and upper status lifecycle without closing agenda',async()=>{
+ const calls=[],f=await fixture({onStatus:async(id,options)=>{assert.equal(options.current(),true);calls.push(id);return true;}});
+ f.controller.openWeek();f.key('ArrowDown');const target=f.index.query().find(r=>r.title==='Other');
+ f.key('c',{ctrlKey:true});f.results().emit('keyup',{key:'c'});f.key('t');await Promise.resolve();
+ assert.deepEqual(calls,[target.id]);assert.equal(f.controller.active,true);assert.equal(f.controller.canStatus,false);
+ f.key('ArrowUp');assert.equal(f.navigation.length,0);f.controller.endStatus();assert.equal(f.controller.canStatus,true);assert.equal(f.doc.activeElement,f.results());
+ f.buttons().find(b=>b.textContent==='Status · C-c t').click();await Promise.resolve();assert.equal(calls.length,2);f.controller.destroy();
+});
+test('Agenda status prefix protects early/repeated/modifier/IME keys and stale selection; loading cancels before source commit',async()=>{
+ let calls=0,cancelled=0,resolve,valid;
+ const f=await fixture({onStatus:async(_id,options)=>{calls++;valid=options.current;await new Promise(r=>{resolve=r;});return options.current();},cancelStatus:()=>cancelled++});
+ f.controller.openWeek();
+ for(const patch of [{altKey:true},{metaKey:true},{shiftKey:true},{isComposing:true},{keyCode:229},{getModifierState:()=>true}])f.key('c',{ctrlKey:true,...patch});
+ assert.equal(calls,0);f.key('c',{ctrlKey:true});f.key('t');assert.equal(calls,0);
+ f.key('c',{ctrlKey:true});f.results().emit('keyup',{key:'c'});f.key('t',{repeat:true});assert.equal(calls,0);f.key('t');await Promise.resolve();assert.equal(calls,1);
+ f.key('Escape');assert.equal(valid(),false);assert.equal(cancelled,1);resolve();await Promise.resolve();await Promise.resolve();assert.equal(f.controller.canStatus,true);
+ f.key('c',{ctrlKey:true});f.results().emit('keyup',{key:'c'});f.controller.update(f.index.snapshot());f.key('t');assert.equal(calls,1);f.controller.destroy();
+});
+test('Failed status source keeps feedback and agenda visible; actual commit phase blocks premature cancellation',async()=>{
+ let f;f=await fixture({onStatus:async()=>{f.controller.message('Bitte zuerst speichern.');return false;}});f.controller.openWeek();await f.controller.openStatus();assert.match(f.controller.element.textContent,/Bitte zuerst speichern/);assert.equal(f.controller.active,true);
+ let resolve;const g=await fixture({onStatus:async()=>new Promise(r=>{resolve=r;})});g.controller.openWeek();const pending=g.controller.openStatus();g.controller.setCommitting(true);g.key('Escape');assert.equal(g.controller.active,true);assert.equal(g.controller.canStatus,false);g.controller.setCommitting(false);resolve(false);await pending;assert.equal(g.controller.canStatus,true);g.controller.destroy();f.controller.destroy();
+});
+test('Follow reads and opens alternate real sessions repeatedly despite parser-only editor updates after the first file',async()=>{
+ const doc=dom(),timers=timerModel(),entries={'a.md':'# TODO Alpha','b.md':'#+SEQ_TODO: NEXT(n) | FIN(f)\n# NEXT Beta'},vault=rootOf(entries),origin=doc.createElement('div');doc.body.append(origin);origin.focus();
+ let controller,attempt=0;const jumps=[],notices=[],editable=new Compartment();
+ const index=createAgendaIndex({onChange:next=>controller?.update(next),yieldTask:async()=>{}});await index.selectVault(vault);
+ const session=createSession({store:{put:async()=>{}}});await session.open({vault,handle:await vault.getFileHandle('a.md'),path:'a.md'});
+ const make=()=>EditorState.create({doc:session.text,extensions:[markdown({base:markdownLanguage}),todoRules,history(),editable.of([])]});
+ const view={state:make()};view.dispatch=spec=>{view.state=view.state.update(spec).state;};await index.setEditor(view.state,'a.md',vault);
+ const source=createAgendaSource({index,getVault:()=>vault,getSession:()=>session,getState:()=>view.state,
+  permission:async()=>{await Promise.resolve();if(attempt>1)view.dispatch({});},
+  onCommit:value=>controller.setCommitting(value),notify:message=>{notices.push(message);controller.message(message);},
+  open:async target=>{await session.open(target);view.state=make();await index.setEditor(view.state,session.path,vault);},jump:from=>{view.dispatch({selection:{anchor:from}});jumps.push(session.path);}});
+ controller=createAgendaView({index,document:doc,timers,execute:()=>{},navigate:async(id,options)=>{
+  attempt++;const path=session.path;view.dispatch({effects:editable.reconfigure(EditorState.readOnly.of(true))});
+  try{const success=await source.navigate(id,options);if(success&&session.path!==path)void index.updateFile(session.path,vault);return success;}
+  finally{view.dispatch({effects:editable.reconfigure(EditorState.readOnly.of(false))});}
+ },cancelNavigation:()=>source.cancel()});
+ controller.openTodos();const results=all(controller.element,e=>e.className==='agenda-results')[0];results.emit('keydown',{key:'F',shiftKey:true});
+ for(const path of ['b.md','a.md','b.md','a.md']){
+  const row=all(controller.element,e=>e.className==='agenda-row').find(row=>row.textContent.startsWith(path));assert.ok(row);row.click();timers.flush();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(session.path,path);assert.equal(session.dirty,false);assert.equal(doc.activeElement,results);assert.equal(controller.active,true);
+ }
+ assert.deepEqual(jumps,['b.md','a.md','b.md','a.md']);assert.deepEqual(notices,[]);controller.destroy();
+});
+test('Navigation errors survive passive index/commit publications and clear only for a new explicit action',async()=>{
+ const f=await fixture();f.controller.openWeek();f.controller.message('Ungespeicherte Änderungen: zuerst speichern.');
+ f.controller.update(f.index.snapshot());assert.match(f.controller.element.textContent,/Ungespeicherte Änderungen: zuerst speichern/);
+ f.controller.setCommitting(true);f.key('Escape');f.controller.setCommitting(false);assert.match(f.controller.element.textContent,/Ungespeicherte Änderungen: zuerst speichern/);
+ f.key('ArrowDown');assert.doesNotMatch(f.controller.element.textContent,/Ungespeicherte Änderungen: zuerst speichern/);assert.match(f.controller.element.textContent,/Dateien/);f.controller.destroy();
+});
+test('Opening a source after mouse Follow keeps agenda focus before disabling the focused toolbar button',async()=>{
+ const timers=timerModel();let f,inFlight=false,cancelled=0;
+ f=await fixture({timers,cancelNavigation:()=>{if(inFlight)cancelled++;},navigate:async()=>{inFlight=true;f.controller.setCommitting(true);await Promise.resolve();f.controller.setCommitting(false);inFlight=false;return cancelled===0;}});
+ f.controller.openWeek();const button=f.buttons().find(b=>b.textContent.startsWith('Follow:'));
+ let disabled=false;Object.defineProperty(button,'disabled',{get:()=>disabled,set:value=>{disabled=value;if(value&&f.doc.activeElement===button){f.doc.activeElement=f.doc.body;button.emit('focusout',{relatedTarget:null});}}});
+ button.focus();button.click();timers.flush();await Promise.resolve();await Promise.resolve();
+ assert.equal(cancelled,0);assert.equal(f.doc.activeElement,f.results());assert.equal(f.controller.active,true);f.controller.destroy();
+});
+test('A temporary missing source during editor indexing cannot replace Friday selection with Saturday and follow back',async()=>{
+ const timers=timerModel(),calls=[];let f,hidden=false,inFlight=false,cancelled=0;
+ f=await fixture({timers,cancelNavigation:()=>{if(inFlight)cancelled++;},navigate:async id=>{
+  const record=f.index.query().find(r=>r.id===id);calls.push(record.path);inFlight=true;
+  hidden=true;f.controller.update({...f.index.snapshot(),editorPending:true,editorPath:'friday.md'});await Promise.resolve();
+  hidden=false;f.controller.update(f.index.snapshot());inFlight=false;return true;
+ }});
+ await f.index.selectVault(rootOf({'friday.md':'# TODO Friday\nSCHEDULED: <2026-11-06 Fr>','saturday.md':'# TODO Saturday\nSCHEDULED: <2026-11-07 Sa>'}));
+ const query=f.index.query;f.index.query=options=>query(options).filter(r=>!hidden||r.path!=='friday.md');
+ f.controller.openWeek();f.key('ArrowDown');f.key('F',{shiftKey:true});f.key('ArrowUp');timers.flush();await Promise.resolve();await Promise.resolve();
+ const selected=f.rows().find(row=>row.attributes['aria-selected']==='true');assert.match(selected.textContent,/Friday/);assert.equal(cancelled,0);assert.deepEqual(calls,['friday.md']);assert.equal(timers.size,0);f.controller.destroy();
+});
+test('Passive removal of selected task chooses a fallback without initiating a source-opening follow loop',async()=>{
+ const timers=timerModel(),calls=[],f=await fixture({timers,navigate:async id=>{calls.push(id);return true;}});f.controller.openWeek();f.key('F',{shiftKey:true});timers.flush();await Promise.resolve();await Promise.resolve();const before=calls.length;
+ const original=f.index.query;f.index.query=options=>original(options).filter(record=>record.title!=='Open');f.controller.update(f.index.snapshot());timers.flush();await Promise.resolve();
+ assert.equal(calls.length,before);assert.equal(f.rows().some(row=>row.attributes['aria-selected']==='true'),true);f.controller.destroy();
+});
+test('Actual app source-open callback waits for editor indexing before reporting completion',async()=>{
+ const app=(await readFile(new URL('./app.mjs',import.meta.url),'utf8')).replaceAll('\r\n','\n');
+ const start=app.indexOf('agendaSource=createAgendaSource({'),end=app.indexOf('\n});',start)+4;let release,entered=false,finished=false;
+ const gate=new Promise(resolve=>{release=resolve;}),session={vault:{},async open(target){this.path=target.path;}};
+ const context={createAgendaSource:options=>options,agendaIndex:{},vault:session.vault,session,view:{},permission:async()=>{},agenda:{setCommitting(){},message(){}},status(){},syncAgendaFileSelection(){},useRingVault:async()=>{},syncEditor:()=>{entered=true;return gate;}};
+ const source=new Function(...Object.keys(context),'let agendaSource,persistPending=true;'+app.slice(start,end)+';return agendaSource;')(...Object.values(context));
+ const pending=source.open({path:'b.md'}).then(()=>{finished=true;});await Promise.resolve();await Promise.resolve();await Promise.resolve();assert.equal(entered,true);assert.equal(finished,false);release();await pending;assert.equal(finished,true);
+});
+test('Passive redraw moves focus off removed rows; actual outside focus/window blur still cancels navigation',async()=>{
+ let cancelled=0;const timers=timerModel(),f=await fixture({timers,cancelNavigation:()=>cancelled++,navigate:async()=>true});f.controller.openWeek();
+ const results=f.results(),row=f.rows()[0],replace=results.replaceChildren.bind(results);
+ results.replaceChildren=(...children)=>{if(f.rows().includes(f.doc.activeElement)){const old=f.doc.activeElement;f.doc.activeElement=f.doc.body;old.emit('focusout',{relatedTarget:null});}replace(...children);};
+ row.focus();const before=cancelled;f.controller.update(f.index.snapshot());assert.equal(f.doc.activeElement,results);assert.equal(cancelled,before);
+ f.key('F',{shiftKey:true});assert.equal(timers.size,1);results.emit('focusout',{relatedTarget:f.origin});f.origin.focus();assert.equal(timers.size,0);assert.ok(cancelled>before);
+ results.focus();f.key('ArrowDown');assert.equal(timers.size,1);f.doc.defaultView.emit('blur');assert.equal(timers.size,0);f.controller.destroy();
+});
 test('Follow debounces to latest row, keeps focus, and never repeats from unchanged index publication',async()=>{
   const timers=timerModel(),calls=[],f=await fixture({timers,navigate:async(...args)=>{calls.push(args);return true;}});f.controller.openWeek();
   f.key('F',{shiftKey:true});assert.equal(timers.size,1);f.key('ArrowDown');assert.equal(timers.size,1);timers.flush();await Promise.resolve();

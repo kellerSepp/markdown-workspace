@@ -36,6 +36,7 @@ import {planningHighlight} from './planning-highlight.mjs';
 import {planningNormalization} from './planning-normalization.mjs';
 import {createAgendaIndex} from './agenda-index.mjs';
 import {createAgendaView} from './agenda-view.mjs';
+import {createAgendaStatus} from './agenda-status.mjs';
 import {createAgendaSource} from './agenda-source.mjs';
 import {createFilePicker} from './file-picker.mjs';
 import {executeVaultFile} from './vault-files.mjs';
@@ -57,7 +58,8 @@ $('theme').replaceChildren(...THEMES.map(theme => new Option(theme.name,theme.id
 $('theme').value = activeTheme.id;
 let session, vault, busy = true, syncing = false, timer, persistPending = false;
 const status = message => {$('status').textContent = message;};
-let agenda,agendaSource,filePicker,agendaEditorTimer;
+let agenda,agendaSource,agendaStatus,filePicker,agendaEditorTimer;
+const agendaStatusHost=document.createElement('div');agendaStatusHost.id='agendaStatusHost';agendaStatusHost.hidden=true;$('editor').after(agendaStatusHost);
 const agendaIndex=createAgendaIndex({onChange:snapshot=>{
   $('agendaIndexStatus').textContent=`${snapshot.running?'Index wird gelesen … · ':''}${snapshot.files} Dateien · ${snapshot.records.length} Einträge · ${snapshot.diagnostics.length} Hinweise/Fehler · Revision ${snapshot.revision}`;
   $('agendaIndexErrors').replaceChildren(...snapshot.diagnostics.map(item=>{
@@ -86,7 +88,7 @@ const extensions = () => [
   planningNormalization,planningHighlight,todoCycleAbortCleanup(),checklistNormalization(status),
   checklistView(id=>registry.execute(id),editingContext),
   prefix.extension(),refileHistory(),
-  EditorView.updateListener.of(()=>{workPanel?.invalidateStale();filePicker?.invalidate();}),
+  EditorView.updateListener.of(()=>{workPanel?.invalidateStale();agendaStatus?.invalidateStale();filePicker?.invalidate();}),
   // TASK Shift arrows outrank empty active-mark navigation; nonempty selections
   // and every non-task context still pass through to Emacs/ordinary selection.
   todoKeyboard(id=>registry.execute(id),editingContext),
@@ -136,8 +138,8 @@ handlers['view.line-wrap']=()=>{
 };
 handlers['agenda.refresh']=()=>{void agendaIndex.rebuild();return true;};
 // The historical synthetic field/id now means acknowledged Alpha conditions.
-const registry=createCommandRegistry(commandDefinitions(handlers,id=>!(usesSharedWorkPanel(id)||id==='editor.confirm'&&confirmAction(view.state)==='tags.edit')||prepareWorkPanel()),()=>({busy,agendaActive:!!agenda?.active,agendaDocked:!!agenda?.docked,agendaFocused:!!agenda?.active&&agenda.element.contains(document.activeElement),filePickerActive:!!filePicker?.active,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
-const surfaces=createCommandSurfaces({registry,view,notify:status,blocked:()=>!!filePicker?.active||!!agenda?.active&&(!agenda.docked||agenda.element.contains(document.activeElement))});
+const registry=createCommandRegistry(commandDefinitions(handlers,id=>!(usesSharedWorkPanel(id)||id==='editor.confirm'&&confirmAction(view.state)==='tags.edit')||prepareWorkPanel()),()=>({busy,agendaActive:!!agenda?.active,agendaDocked:!!agenda?.docked,agendaFocused:!!agenda?.active&&agenda.element.contains(document.activeElement),agendaCanStatus:!!agenda?.canStatus,agendaStatusActive:!!agendaStatus?.active,filePickerActive:!!filePicker?.active,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
+const surfaces=createCommandSurfaces({registry,view,notify:status,blocked:()=>!!filePicker?.active||!!agendaStatus?.active||!!agenda?.active&&(!agenda.docked||agenda.element.contains(document.activeElement))});
 workPanel=createWorkPanel({host:$('workPanel'),workspace:$('editorWorkspace'),view,ring:emacs.ring,getContext:editingContext,insert:(id,target)=>emacs.insertRingEntry(view,id,target),notify:status});
 function syncAgendaFileSelection(){
   if(!session?.hasDocument||session.vault!==vault)return;
@@ -149,22 +151,37 @@ agendaSource=createAgendaSource({index:agendaIndex,getVault:()=>vault,getSession
   permission,
   onCommit:value=>agenda.setCommitting(value),
   notify:message=>{status(message);agenda.message(message);},
-  open:async target=>{await session.open(target);syncAgendaFileSelection();await useRingVault(session.vault);syncEditor();persistPending=false;},
+  open:async target=>{await session.open(target);syncAgendaFileSelection();await useRingVault(session.vault);await syncEditor();persistPending=false;},
   // Focus belongs to the agenda lifecycle: Follow keeps it below; explicit
   // activation closes the panel before onClose focuses the source editor.
   jump:from=>{view.dispatch({selection:{anchor:from},effects:EditorView.scrollIntoView(from,{y:'center'})});syncAgendaFileSelection();}
 });
 agenda=createAgendaView({index:agendaIndex,host:$('workPanel'),workspace:$('editorWorkspace'),view,execute:id=>registry.execute(id),
+  onStatus:(id,options)=>agendaStatus.open(id,options),cancelStatus:()=>agendaStatus?.close(),
   onOpen:()=>{prefix.cancel();workPanel.close({restore:false});emacs.invalidate();syncAgendaEditor();},onClose:()=>view.focus(),cancelNavigation:()=>agendaSource.cancel(),
-  navigate:async(id,options)=>{
-    const record=agendaIndex.snapshot().records.find(r=>r.id===id);
-    if(record?.editor&&session?.vault===vault&&session.path===record.path){
-      if(busy)return false;
-      requireSynthetic();return agendaSource.navigate(id,options);
-    }
-    return run(async()=>{try{requireSynthetic();const path=session.path;const success=await agendaSource.navigate(id,options);if(success&&session.path!==path)void agendaIndex.updateFile(session.path,vault);return success;}catch(error){agenda.message(error.message);throw error;}});
-  }
+  navigate:navigateAgenda
 });
+agendaStatus=createAgendaStatus({host:agendaStatusHost,editor:$('editor'),view,ring:emacs.ring,getContext:editingContext,
+  getSource:()=>session?.hasDocument?{session,vault:session.vault,path:session.path}:null,
+  saveForeign:async({source,doc})=>{
+    const current=()=>session===source.session&&vault===source.vault&&session.vault===source.vault&&session.path===source.path&&view.state.doc===doc;
+    if(!current())throw Error('Speicherziel hat sich geändert.');
+    let result,failure,started=false;
+    await run(async()=>{started=true;try{if(!current())throw Error('Speicherziel hat sich geändert.');result=await save();}catch(error){failure=error;}});
+    if(!started||failure)throw failure??Error('Speichervorgang konnte nicht gestartet werden.');
+    return result;
+  },
+  onSaving:value=>agenda.setCommitting(value,'Status wird gespeichert und geprüft. Bitte kurz warten.'),
+  navigate:navigateAgenda,cancelNavigation:()=>agendaSource.cancel(),isActive:()=>!!agenda?.docked,onClose:()=>agenda.endStatus(),focusAgenda:()=>agenda.focusSelection(),notify:message=>{status(message);agenda.message(message);}});
+async function navigateAgenda(id,options){
+  const record=agendaIndex.snapshot().records.find(r=>r.id===id);
+  if(record?.editor&&session?.vault===vault&&session.path===record.path){
+    if(busy)return false;
+    requireSynthetic();return agendaSource.navigate(id,options);
+  }
+  return run(async()=>{try{requireSynthetic();const path=session.path;const success=await agendaSource.navigate(id,options);if(success&&session.path!==path)void agendaIndex.updateFile(session.path,vault);return success;}catch(error){agenda.message(error.message);throw error;}});
+}
+handlers['agenda.status']=()=>agenda.openStatus();
 handlers['agenda.dispatch']=()=>agenda.openDispatcher();handlers['agenda.week']=()=>agenda.openWeek();handlers['agenda.todo']=()=>agenda.openTodos();
 filePicker=createFilePicker({getContext:()=>({vault,doc:view.state.doc,path:session?.vault===vault?session.path:'',busy,accepted:$('synthetic').checked}),
   onOpen:()=>{prefix.cancel();workPanel.close({restore:false});emacs.invalidate();},onClose:()=>view.focus(),
@@ -280,11 +297,11 @@ function syncEditor() {
     const error=view.state.field(todoRules).error;if(error)queueMicrotask(()=>status(error));
   } finally {syncing = false;}
   render();
-  syncAgendaEditor();
+  return syncAgendaEditor();
 }
 function syncAgendaEditor(){
   clearTimeout(agendaEditorTimer);
-  if(session?.hasDocument&&session.vault===vault)void agendaIndex.setEditor(view.state,session.path,vault);
+  if(session?.hasDocument&&session.vault===vault)return agendaIndex.setEditor(view.state,session.path,vault);
 }
 async function persistDraft() {
   if (!persistPending || busy || !session?.hasDocument) return;
@@ -366,6 +383,7 @@ async function save() {
   const result = await session.save(); persistPending = false;
   if(await sameVault(session.vault,vault))void agendaIndex.updateFile(session.path,vault);
   status(result.unchanged ? 'Bytegleich: Datei nicht neu geschrieben.' : `Gespeichert und geprüft. Sicherung: ${result.backupName}`);
+  return result;
 }
 bind('save',save);
 bind('check', async () => {const result = await session.check(); status(result.conflict ? 'Externe Änderung erkannt. Speichern blockiert; Entwurf bleibt erhalten.' : 'Datei unverändert; Ordnerrechte gültig.');});

@@ -1,5 +1,6 @@
 import {parseAgendaFile} from './agenda-index.mjs';
 import {TextCodec} from './text-codec.mjs';
+import {sameAgendaEditorTarget} from './agenda-editor-target.mjs';
 
 const sameRecord=(a,b)=>a.from===b.from&&a.level===b.level&&a.title===b.title&&a.status===b.status&&a.closed===b.closed&&JSON.stringify(a.scheduled)===JSON.stringify(b.scheduled)&&JSON.stringify(a.deadline)===JSON.stringify(b.deadline)&&JSON.stringify(a.tags??[])===JSON.stringify(b.tags??[])&&JSON.stringify(a.effectiveTags??[])===JSON.stringify(b.effectiveTags??[]);
 // Source adapter performs reads and delegates opening to the established session.
@@ -8,7 +9,7 @@ export function createAgendaSource({index,getVault,getSession,getState,open,jump
   let operation=0;
   return {cancel(){operation++;},async navigate(id,{follow=false}={}){
     const token=++operation,snapshot=index.snapshot(),record=snapshot.records.find(r=>r.id===id),vault=getVault(),session=getSession(),state=getState();
-    const current=()=>token===operation&&getVault()===vault&&getSession()===session&&getState()===state&&index.snapshot().epoch===snapshot.epoch&&index.snapshot().revision===snapshot.revision;
+    const current=()=>token===operation&&getVault()===vault&&getSession()===session&&sameAgendaEditorTarget(state,getState())&&index.snapshot().epoch===snapshot.epoch&&index.snapshot().revision===snapshot.revision;
     try{
       if(!record||!index.source(id))throw Error('Quelle ist veraltet. Agenda bitte aktualisieren und Eintrag erneut wählen.');
       const sameFile=session.hasDocument&&session.vault===vault&&session.path===record.path;
@@ -41,7 +42,8 @@ export function createAgendaSource({index,getVault,getSession,getState,open,jump
       try{await open({vault,handle,path:record.path});}finally{onCommit(false);}
       const after=index.snapshot(),openedEditor=after.records.find(r=>r.editor&&r.path===record.path&&sameRecord(r,record));
       const ownEditorUpdate=openedEditor&&index.isEditorCurrent?.(openedEditor.id,getState());
-      if(token!==operation||getVault()!==vault||getSession()!==session||session.dirty||after.epoch!==snapshot.epoch||after.revision!==snapshot.revision&&!ownEditorUpdate){notify('Quellnavigation überholt. Bitte Eintrag im aktuellen Index erneut wählen.');return false;}
+      const reason=token!==operation?'Navigation wurde abgebrochen':getVault()!==vault?'Vault wurde gewechselt':getSession()!==session?'Sitzung wurde gewechselt':session.dirty?'Editor wurde geändert':after.epoch!==snapshot.epoch?'Vaultindex wurde gewechselt':after.revision!==snapshot.revision&&!ownEditorUpdate?'Quellindex hat sich während des Öffnens geändert':'';
+      if(reason){notify(`Quellnavigation überholt: ${reason}. Bitte Eintrag im aktuellen Index erneut wählen.`);return false;}
       // session.open reads again; reject a changed second read before selecting.
       if(session.text!==text){notify('Quelle hat sich während des Öffnens geändert. Datei geladen; Agenda aktualisieren, kein Positionssprung.');return false;}
       jump(target.from,{follow});return true;

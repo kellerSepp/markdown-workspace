@@ -1,5 +1,51 @@
 # Projektstatus
 
+## Follow: Einträge der geöffneten längeren Datei erhalten — PO-Probe
+
+PO meldet erfolgreiche Quellenwechsel, aber verschwindende Agendaeinträge der aktuellen Datei. Synthetisch mit Aufgabe hinter dem initialen Parserbereich reproduziert: vollständiger Parserkontext und unveränderlicher Language-State enthielten unterschiedliche Baumstände. Der Editorindex las den alten Baum und ersetzte damit die gespeicherten Einträge durch eine leere Auswertung. Vor der gemeinsamen Agenda-Auswertung übernimmt eine abgeleitete No-op-Transaktion den fertigen Parserbaum. Echter Editor, Dokument, Auswahl und History werden nicht verändert; vorhandene Parser und Indexschichten bleiben erhalten.
+
+Neue Regression war vorher rot, danach grün. 476/476 Tests im seriellen Gesamtlauf, Build, Modul-Syntaxprüfung und Diffcheck grün. Native Browserbestätigung bleibt offen; nach Strg+F5 insbesondere längere Datei mit Aufgaben unterhalb des anfänglichen sichtbaren Bereichs öffnen und vollständige Eintragsliste prüfen. Keine Dependencies, Storageänderung oder Git-Integration.
+
+## Follow: Auswahlrücksprung beim Indexaufbau korrigiert — PO-Probe
+
+Der erneute PO-Bericht grenzt den Fall auf kurz geöffnete fremde Datei und zurückspringende Tagesauswahl ein. Genau dies reproduziert eine neue Regression: Während des Editorindexaufbaus fehlt Freitag vorübergehend, die alte Positionsauswahl fällt auf Samstag zurück und startet einen zweiten Follow-Sprung. Die früheren Parser-/Fokuskorrekturen allein deckten diese Rückkopplung nicht ab.
+
+Agenda hält die ausgewählte Quellenidentität während laufender Öffnung/Indexierung fest. Passive Neuzeichnung startet keinen neuen Follow-Sprung; echte Entfernung erlaubt eine Nachbarauswahl ohne automatische Quellenöffnung. Explizite Auswahl/Wochennavigation bleibt bedienbar. Quellenöffnung wartet auf den Editorindex, wiederholte identische Indexanfragen teilen die laufende Promise. Dirty-, Quellen-, Abbruch- und Fokusgrenzen bleiben erhalten.
+
+475/475 Tests im seriellen Gesamtlauf, Build, drei Syntaxprüfungen und Diffcheck grün. Drei neue Gruppen: Freitag/Samstag-Rücksprung, echte passive Entfernung ohne Follow-Schleife und tatsächlicher App-Opencallback mit verzögertem Editorindex. Bestehende langsame Indexprobe um gemeinsame Pending-Promise erweitert. Keine native Browserprobe oder unabhängige QA-Abnahme behauptet. PO-Probe nach Strg+F5 gemäß AGENDA_FOLLOW.md; keine Dependencies, Änderung am Storagekern oder Git-Integration.
+
+## Follow: Selbstabbruch durch fokussierten Knopf korrigiert — PO-Probe
+
+PO meldet unverändertes Verhalten und liefert den unteren Hinweis „Quellnavigation überholt“. Die vorherige Parserkorrektur allein löste seinen Fall nicht. Zweite Ursache als Fokusereignis reproduziert: Commit-Neuzeichnung deaktiviert den noch fokussierten Followknopf, Browser-Fokusverlust wird als Verlassen der Agenda behandelt und storniert die eigene Quellenöffnung. Regression war vor dem Fix rot (ein unbeabsichtigter Navigationsabbruch), danach grün. Fokus vor Deaktivieren in die Ergebnisliste verlagert; gleiches vor Entfernen fokussierter Ergebniszeilen. Echte Fokuswechsel und Fenster-Blur brechen weiter ab, keine Aufweichung der Quellprüfung.
+
+Quellenadapter ergänzt konkrete Gründe zur Sammelmeldung nach Öffnung, damit verbleibende Fälle unterscheidbar sind. 472/472 Tests im seriellen Gesamtlauf, Build, zwei Syntaxprüfungen und Diffcheck grün. Zwei neue Gruppen mit browserähnlichem Fokusverlust beim Deaktivieren/Entfernen plus echtem Außenfokus/Window-Blur; keine tatsächliche native Browserprobe oder unabhängige QA-Rollenabnahme behauptet. PO-Probe nach Strg+F5, bevorzugt Follow zunächst per Mausknopf aktivieren und mehrfach zwischen zwei Dateien wechseln. Keine Storageänderung, Dependencies oder Git-Integration.
+
+## Follow-Dateiwechsel nach Parserupdate korrigiert — PO-Probe
+
+PO meldet Follow springt in eine Datei, danach trotz unverändertem Editor/Save kein Wechsel zurück; die angezeigte „2 Dateien …“-Zeile war der allgemeine Status. Reproduziert als A→B→A→B mit echter Session, zwei Dateien und dateilokalen TODO-Regeln: eine Parser-only-Transaktion während der asynchronen Quellenprüfung brach die bisherige vollständige State-Identitätsprüfung ab. Gemeinsamer relevanter Zielvergleich für Statuspanel und Navigation eingeführt (Dokument, Auswahl, Readonly, TODO-Regeln). Echte Änderungen und vorhandene Token-/Vault-/Session-/Index-/Dirty-Grenzen bleiben geschützt.
+
+Agenda trennt dauerhafte Aktionshinweise von der allgemeinen Zusammenfassung. Passive Index-/Commit-Neuzeichnungen erhalten den eigentlichen Fehler; neue explizite Agendaaktionen löschen alte Hinweise, erfolgreiche Follow-Sprünge ebenfalls. Der Statusknopf wird nach abgeschlossener Navigation ohne zusätzliche Neuzeichnung wieder korrekt freigegeben.
+
+470/470 Tests im seriellen Gesamtlauf, Build, vier Syntaxprüfungen und Diffcheck grün. Drei neue Gruppen: echter Session-Dateiwechsel hin/zurück mit Parserupdates; Hinweislebensdauer; Parser-only gegenüber echten Text-/Cursor-/Workflow-/Readonly-Änderungen während Quellenreads. Keine native Reprobestätigung oder unabhängige QA-Rollenabnahme behauptet. Probe nach Strg+F5 gemäß AGENDA_FOLLOW.md; kein neuer Speicherpfad, keine Dependencies/Git-Integration.
+
+## Agenda-Status: Custom-Workflow und gezieltes Autosave korrigiert
+
+PO meldet Dateisprung ohne bleibende Auswahl bei fremder SEQ_TODO-Datei und verlangt automatisches Speichern einer beim Aufruf noch nicht geöffneten Statusquelle. Reproduzierbare zu strenge Zielprüfung korrigiert: reine Parser-/interne Stateupdates dürfen die obere Statusauswahl erhalten, solange Dokument, Auswahl, Readonly, geladene TODO-Regeln und Quellenidentität gleich bleiben. Tatsächliche Zieländerungen schließen weiter sicher. Controller erhält bei zugelassenem Update den aktuellen Transaktionszustand statt der veralteten Statebasis. Vorlagen werden weiterhin aus der tatsächlichen Quelle geladen.
+
+Nach wirklicher Statusänderung einer vor C-c t fremden Datei wird ausschließlich diese gebundene Quelle über den vorhandenen App-/Session-Savepfad gespeichert. Bereits offene Quelle bleibt Entwurf; Abbruch/No-op ohne Speichern. Während des Save kurze sichtbare Sperre; Fehler bestätigen keinen Erfolg, Editorstand bleibt zur Prüfung/Wiederholung erhalten. Undo nach Save bleibt eine neue Entwurfsänderung. Kein neuer Storageadapter, keine Änderung am Backup-/Konfliktmodell oder am bekannten externen Schreibfenster.
+
+467/467 Tests im seriellen Gesamtlauf, Build, vier Modul-Syntaxprüfungen und Diffcheck grün. Fünf neue Gruppen: Custom-Workflow mit Parserupdate, Autosave-/Nicht-Speicherfälle, echte Stale-Ziele, Savefehler/Serialisierung sowie tatsächlicher Appcallback mit echter Session und synthetischen Backup-/Konflikt-/Rechte-/Schreibfehlerfällen. Native Reprobestätigung bleibt PO-Probe nach Strg+F5. [AGENDA_STATUS.md](AGENDA_STATUS.md) aktualisiert. Keine Dependencies oder Git-Integration.
+
+## Statuswechsel aus der Agenda — PO-Probe
+
+PO gibt C-c t im Wochen-/TODO-Agendafokus frei: bestehende Aufgabenstatusauswahl oberhalb der Agenda, statt des vorübergehend ausgeblendeten Editors. Sichtbarer Statusknopf als zweiter Zugang. Keine zweite Editorinstanz; eigener oberer Host für denselben Panel-/TODO-Controller, bestehender Prefixrouter mit begrenzter lokaler Bindung. Nach Auswahl/Abbruch Editor wieder sichtbar und Fokus zur Agenda; Agenda-Modus und Filter bleiben erhalten. Während der Auswahl Follow/Quellwechsel pausiert, globale Editoraktionen gesperrt.
+
+Quellenaufnahme über dieselbe geprüfte Navigation wie Follow/Enter: eigener Dirty-Editorstand ohne Neuöffnung, fremde Datei nur bei unveränderter aktueller Arbeit. Dateilokale geladene Zustände, Kein Status, Wiederholungen/LOGBOOK und atomare Undo/Redo wiederverwendet. Änderungen bleiben im aktuellen Entwurf, kein automatisches Schreiben in Markdown. Abbruch vor Sessionöffnung verwirft Prüfungen; begonnene nicht abbrechbare Öffnung behält den sichtbaren Commit-Schutz. Keine Storage-/Backup-/Konfliktänderung und keine neue atomare Garantie.
+
+462/462 Tests im seriellen Gesamtlauf, Build, sechs Modul-Syntaxprüfungen und Diffcheck grün. Neun neue Prüfgruppen für lokale Prefixfreigabe/Modifier/IME/Stale, obere Panel-Lifecycle, Dirty-/fremde Quellen, lokale Workflows, Wiederholung/History, Abbruch und Registry-Isolation, einschließlich 30 kurzer Statuspanelzyklen. Bestehende Appcallback-QA-Harnesses an zusätzliche Kontextfelder und die extrahierte gemeinsame Navigation angepasst; keine unabhängige QA-Rollenabnahme oder native Layout-/Langzeitabnahme behauptet.
+
+Handprobe [AGENDA_STATUS.md](AGENDA_STATUS.md), synthetischer Probevault `test-vault/agenda-status`. Nächste Aktion: native PO-Probe nach Strg+F5. Keine Dependencies, Git-Integration, Veröffentlichung oder weiteren Agendafunktionen.
+
 ## Agenda-Deadline-Vorwarnungen — PO-Probe, 2026-11-12
 
 PO gibt gezielt „In x d“-Hinweise aus dem Org-Video frei. Offene Aufgaben zeigen unter Heute die Deadline in 1–14 Kalendertagen, auch bei SCHEDULED und über die Wochengrenze. Reine Vorwarnungen am Tagesende nach verbleibenden Tagen; vorhandene Bündelung pro Aufgabe/Tag, tatsächlicher Fälligkeitstag und Überfälligkeit bleiben erhalten. Abgeschlossene und statuslose Einträge ohne zusätzliche Vorwarnung. Zentrale Ansichts-Policy, keine Format-/Parser-/Storageänderung, keine neue Indexierung. Vorhandene Tag-Fixes aus dem anderen Chat erhalten.

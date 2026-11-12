@@ -7,15 +7,15 @@ export {PREFIX_BINDINGS} from './emacs-policy.mjs';
 
 // Local policy only; documentation and note contents are never executable.
 
-export function createPrefixRouter({registry,getContext=()=>({}),showHelp=()=>{},hideHelp=()=>{},moveHelp=()=>{},activateHelp=()=>{},notify=()=>{}}){
+export function createPrefixRouter({registry,bindings=PREFIX_BINDINGS,getContext=()=>({}),showHelp=()=>{},hideHelp=()=>{},moveHelp=()=>{},activateHelp=()=>{},notify=()=>{}}){
   let target=null,released=false;
   const ready=view=>{const c=getContext();return view.hasFocus&&!c.busy&&((c.hasDocument!==false&&!view.state.readOnly)||(c.hasDocument===false&&c.canFindFile));};
   function cancel(){const active=!!target;target=null;released=false;if(active)hideHelp();}
-  function choices(){return PREFIX_BINDINGS.map(binding=>({...binding,name:registry.get(binding.id).name,...registry.availability(binding.id)}));}
+  function choices(){return bindings.map(binding=>({...binding,name:registry.get(binding.id).name,...registry.availability(binding.id)}));}
   function choose(view,key){
     if(!target)return false;
     const valid=released&&target===view.state&&ready(view);
-    const binding=PREFIX_BINDINGS.find(b=>b.key===key);
+    const binding=bindings.find(b=>b.key===key);
     cancel();
     if(!valid||!binding){notify('Prefix verworfen: Ziel oder Folge ungültig.');return false;}
     // Registry checks current context again, including the folding context.
@@ -55,7 +55,7 @@ export function createPrefixRouter({registry,getContext=()=>({}),showHelp=()=>{}
     if(event.key==='Shift'){cancel();return false;}
     event.preventDefault();
     if(event.repeat)return true;
-    const binding=PREFIX_BINDINGS.find(b=>b.key===key);
+    const binding=bindings.find(b=>b.key===key);
     if(!released||!!event.ctrlKey!==!!binding?.ctrl||event.shiftKey){cancel();notify('Prefix verworfen: Tasten erst loslassen.');return true;}
     if(event.key==='Enter'){
       if(target!==view.state||!ready(view)){cancel();return true;}
