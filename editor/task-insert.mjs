@@ -1,4 +1,4 @@
-import {syntaxTree,syntaxTreeAvailable} from '@codemirror/language';
+import {syntaxTree,ensureSyntaxTree} from '@codemirror/language';
 import {isolateHistory} from '@codemirror/commands';
 import {frontmatterEnd} from './structure.mjs';
 import {todoRules,DEFAULT_TODO} from './todo.mjs';
@@ -12,7 +12,8 @@ import {planningDrawerRanges,inPlanningDrawer} from './planning-drawers.mjs';
 export function planTaskInsert(state){
   if(state.readOnly)return {message:'Editor ist schreibgeschützt.'};
   if(state.selection.ranges.length!==1||!state.selection.main.empty)return {message:'Alt+Shift+Enter benötigt einen Cursor ohne Auswahl.'};
-  if(!syntaxTreeAvailable(state,state.doc.length))return {message:'Dokument noch nicht vollständig analysiert.'};
+  if(!ensureSyntaxTree(state,state.doc.length,100))return {message:'Dokument noch nicht vollständig analysiert.'};
+  if(syntaxTree(state).length<state.doc.length)state=state.update({}).state;
   const line=state.doc.lineAt(state.selection.main.head),model=readChecklists(state);if(model.message)return model;
   const rules=state.field(todoRules,false)?.rules??DEFAULT_TODO,status=rules.find(rule=>!rule.closed)?.name;
   const heading=model.headings.find(h=>h.supported&&h.line.from===line.from);

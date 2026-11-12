@@ -1,6 +1,5 @@
 import {EditorState} from '@codemirror/state';
-import {syntaxTree,syntaxTreeAvailable,ensureSyntaxTree,foldedRanges,foldEffect,unfoldEffect} from '@codemirror/language';
-import {markdown} from '@codemirror/lang-markdown';
+import {language,syntaxTree,syntaxTreeAvailable,ensureSyntaxTree,foldedRanges,foldEffect,unfoldEffect} from '@codemirror/language';
 import {isolateHistory} from '@codemirror/commands';
 import {orgContext} from './org-structure.mjs';
 import {orgVisibilityPlans} from './org-folding.mjs';
@@ -21,6 +20,8 @@ const fail=message=>({message});
 const items=node=>{const result=[];for(let n=node.firstChild;n;n=n.nextSibling)if(n.name==='ListItem')result.push(n);return result;};
 const lists=node=>{const result=[];for(let n=node.firstChild;n;n=n.nextSibling)if(/^(BulletList|OrderedList)$/.test(n.name))result.push(n);return result;};
 export function listContext(state,continuation=false) {
+  if(!ensureSyntaxTree(state,state.doc.length,100))return null;
+  if(syntaxTree(state).length<state.doc.length)state=state.update({}).state;
   if(orgContext(state)!=='list'&&!continuation) return null;
   if(state.readOnly||state.selection.ranges.length!==1||!state.selection.main.empty||state.selection.main.head<frontmatterEnd(state)||!syntaxTreeAvailable(state,state.doc.length))return null;
   const line=state.doc.lineAt(state.selection.main.head),pos=line.from+/^ */.exec(line.text)[0].length;
@@ -39,8 +40,10 @@ export function listContext(state,continuation=false) {
 function shape(state) {let count=0,bad=false;syntaxTree(state).iterate({enter(n){if(n.name==='ListItem')count++;if(['CodeBlock','FencedCode','HTMLBlock','Blockquote','HorizontalRule'].includes(n.name))bad=true;}});return {count,bad};}
 function editPlan(state,changes,anchor,added=0,moving=null) {
   const changeSet=state.changes(changes),doc=changeSet.apply(state.doc);
-  const parsed=EditorState.create({doc,extensions:[markdown()]});
+  // Validate with exactly the editor's language, including its Markdown dialect.
+  let parsed=EditorState.create({doc,extensions:[state.facet(language)]});
   if(!ensureSyntaxTree(parsed,doc.length,50))return fail('Liste noch nicht vollstaendig analysiert.');
+  parsed=parsed.update({}).state;
   // Only list-item count is allowed to change; protected blocks retain their types.
   const blockShape=s=>{const out=[];syntaxTree(s).iterate({enter(n){if(/^(?:ATX|Setext)Heading/.test(n.name)||['CodeBlock','FencedCode','HTMLBlock','Blockquote','HorizontalRule'].includes(n.name))out.push(n.name);}});return out.join(',');};
   if(shape(parsed).count!==shape(state).count+added||blockShape(state)!==blockShape(parsed))return fail('Aktion wuerde Markdown-Bloecke umdeuten; unveraendert verworfen.');
@@ -150,7 +153,8 @@ function insertItem(state,c,checkbox) {
 }
 export function planListInteraction(state,id) {
   if(!LIST_COMMANDS.some(c=>c[0]===id))return fail('Unbekannter Listenbefehl.');
-  if(!syntaxTreeAvailable(state,state.doc.length))return fail('Dokument noch nicht vollstaendig analysiert.');
+  if(!ensureSyntaxTree(state,state.doc.length,100))return fail('Dokument noch nicht vollstaendig analysiert.');
+  if(syntaxTree(state).length<state.doc.length)state=state.update({}).state;
   const c=listContext(state,['newline','insert','insert-checkbox'].includes(id))??(id==='shift-tab'?globalCycles.get(state):null);if(!c)return fail('Einzelnen Cursor auf einer Listenpunktzeile verwenden.');
   if(id==='fold')return visibility(state,c,false,true);
   if(id==='tab'||id==='shift-tab')return c.empty?emptyTab(state,c,id==='shift-tab'):visibility(state,c,id==='shift-tab');

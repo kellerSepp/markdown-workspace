@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EditorState} from '@codemirror/state';
-import {markdown} from '@codemirror/lang-markdown';
+import {markdown,markdownLanguage} from '@codemirror/lang-markdown';
 import {codeFolding,foldedRanges,foldEffect} from '@codemirror/language';
 import {history,undo,redo,undoDepth} from '@codemirror/commands';
 import {ViewPlugin,runScopeHandlers} from '@codemirror/view';
@@ -10,6 +10,16 @@ import {structureKeyboard} from './structure-keymap.mjs';
 const pluginFacet=ViewPlugin.define(()=>({})).extension.at(-1).facet;
 function fixture(doc,pos=doc.length){let state;const view={calls:0,hasFocus:true,get state(){return state;},dispatch(spec){state=state.update(spec).state;},setTabFocusMode(){}};state=EditorState.create({doc,selection:{anchor:pos},extensions:[markdown(),codeFolding(),history(),structureKeyboard(()=>true,()=>{},id=>{view.calls++;return runListInteraction(view,id.slice(5));})]});return view;}
 const ranges=v=>{const result=[];foldedRanges(v.state).between(0,v.state.doc.length,(from,to)=>result.push({from,to}));return result;};
+
+test('List insertion uses the editor dialect with unrelated trailing tables',()=>{
+  const tail='\n\nText danach\n\n| A | B |\n| --- | --- |\n# cell | value\n\n# Heading\n\n```\ncode\n```';
+  for(const id of ['newline','insert','insert-checkbox']){
+    const doc='- '+tail;
+    let state=EditorState.create({doc,selection:{anchor:2},extensions:[markdown({base:markdownLanguage}),history()]});
+    const view={get state(){return state;},dispatch(spec){state=state.update(spec).state;}};
+    roundtrip(view,id,'- \n'+(id==='newline'?'  ':id==='insert'?'- ':'- [ ] ')+tail);
+  }
+});
 function key(v,key,shiftKey=false,extra={}){const e={type:'keydown',key,keyCode:{Tab:9,Enter:13}[key],altKey:key==='Enter',shiftKey,ctrlKey:false,metaKey:false,preventDefault(){this.defaultPrevented=true;},...extra};if(key==='Tab'||key==='Escape')return runScopeHandlers(v,e,'editor');for(const {plugin} of v.state.facet(pluginFacet))if(plugin.domEventHandlers?.keydown?.call({},e,v)){e.preventDefault();break;}return e.defaultPrevented;}
 function roundtrip(v,id,expected){const doc=v.state.doc.toString(),pos=v.state.selection.main.head;assert.equal(runListInteraction(v,id),true);assert.equal(v.state.doc.toString(),expected);const after=v.state.selection.main.head;assert.equal(undoDepth(v.state),1);assert.equal(undo(v),true);assert.equal(v.state.doc.toString(),doc);assert.equal(v.state.selection.main.head,pos);assert.equal(redo(v),true);assert.equal(v.state.doc.toString(),expected);assert.equal(v.state.selection.main.head,after);}
 

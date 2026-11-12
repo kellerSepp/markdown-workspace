@@ -1,10 +1,9 @@
-import {syntaxTree,syntaxTreeAvailable} from '@codemirror/language';
+import {syntaxTree,ensureSyntaxTree} from '@codemirror/language';
 import {frontmatterEnd} from './structure.mjs';
 import {planningDrawerRanges,inPlanningDrawer} from './planning-drawers.mjs';
 import {headingSuffix} from './heading-suffix.mjs';
 
 const cache=new WeakMap();
-const complete=state=>syntaxTree(state).length>=state.doc.length&&syntaxTreeAvailable(state,state.doc.length);
 const overlaps=(a,b)=>a.from===a.to?a.from>=b.from&&a.from<b.to:b.from===b.to?b.from>=a.from&&b.from<a.to:a.from<b.to&&a.to>b.from;
 const excludedInline=/^(InlineCode|Link|Image|Autolink|Escape|HTMLTag)$/;
 function inlineOverlap(state,node,from,to,references){
@@ -36,10 +35,12 @@ function cookie(state,node,line,references){
   return {cookie:cookies[0],cookies};
 }
 // A disposable projection of the existing Markdown tree, never a second parser
-// or a persistent task index. Availability checks do not force parsing.
+// or a persistent task index. Finish the tree within a bounded parsing budget.
 export function readChecklists(state){
-  if(!complete(state))return {message:'Checklisten: Dokument noch nicht vollständig analysiert.'};
-  const tree=syntaxTree(state);let trees=cache.get(state.doc);if(!trees)cache.set(state.doc,trees=new WeakMap());
+  const tree=ensureSyntaxTree(state,state.doc.length,100);
+  if(!tree)return {message:'Checklisten: Dokument noch nicht vollständig analysiert.'};
+  if(syntaxTree(state).length<state.doc.length)state=state.update({}).state;
+  let trees=cache.get(state.doc);if(!trees)cache.set(state.doc,trees=new WeakMap());
   if(trees.has(tree))return trees.get(tree);
   const front=frontmatterEnd(state),drawers=planningDrawerRanges(state),items=[],headings=[],errors=[],roots=new Map(),byFrom=new Map();
   const references=new Set();tree.iterate({enter(ref){if(ref.name==='LinkReference'&&ref.from>=front&&!inPlanningDrawer(drawers,ref.from)){const label=ref.node.getChild('LinkLabel');if(label)references.add(state.doc.sliceString(label.from+1,label.to-1).trim().replace(/\s+/g,' ').toLowerCase());}}});

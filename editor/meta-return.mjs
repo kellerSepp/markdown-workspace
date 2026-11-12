@@ -1,4 +1,4 @@
-import {syntaxTree,syntaxTreeAvailable} from '@codemirror/language';
+import {syntaxTree,ensureSyntaxTree} from '@codemirror/language';
 import {isolateHistory} from '@codemirror/commands';
 import {frontmatterEnd} from './structure.mjs';
 import {sectionAt} from './section-folding.mjs';
@@ -10,7 +10,8 @@ export function planMetaReturn(state){
   const fail=message=>({message});
   if(state.readOnly)return fail('Editor ist schreibgeschützt.');
   if(state.selection.ranges.length!==1||!state.selection.main.empty)return fail('Alt+Enter benötigt einen Cursor ohne Auswahl.');
-  if(!syntaxTreeAvailable(state,state.doc.length))return fail('Dokument noch nicht vollständig analysiert.');
+  if(!ensureSyntaxTree(state,state.doc.length,100))return fail('Dokument noch nicht vollständig analysiert.');
+  if(syntaxTree(state).length<state.doc.length)state=state.update({}).state;
   const pos=state.selection.main.head,line=state.doc.lineAt(pos);
   if(pos>0&&pos<state.doc.length&&/[\uD800-\uDBFF]/.test(state.doc.sliceString(pos-1,pos))&&/[\uDC00-\uDFFF]/.test(state.doc.sliceString(pos,pos+1)))return fail('Unicode-Zeichen nicht in der Mitte teilen.');
   if(pos<frontmatterEnd(state))return fail('Frontmatter bleibt geschützt.');
