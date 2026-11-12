@@ -311,11 +311,15 @@ async function persistDraft() {
 }
 async function run(action) {
   if (busy) return;
+  const restoreEditorFocus=typeof save==='function'&&action===save&&view.hasFocus;
+  const focusVault=session?.vault,focusPath=session?.path;
   clearTimeout(timer); setBusy(true);
   try {return await action();}
   catch (error) {status(`${error.name}: ${error.message}`);}
   finally {
     render(); setBusy(false);
+    if(restoreEditorFocus&&session?.vault===focusVault&&session?.path===focusPath&&document.hasFocus()&&
+      (document.activeElement===document.body||view.dom.contains(document.activeElement)))view.focus();
     if (persistPending) timer = setTimeout(() => {void persistDraft();},300);
   }
 }
