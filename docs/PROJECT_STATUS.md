@@ -1,5 +1,17 @@
 # Projektstatus
 
+## STARTUP über Befehlspalette bedienbar — PO-Probe
+
+Alt+X → „Startansicht“/„STARTUP“ → „Startansicht festlegen …“ öffnet den vorhandenen unteren Auswahlbereich mit acht erklärten Werten und sichtbarer STARTUP-Syntax. Aktuelle Vorgabe markiert; Auswahl fügt eine Zeile ein oder ersetzt sie, nach geschlossenem Frontmatter. Eine ungültige Einzeldefinition ist korrigierbar, mehrfache Definitionen und ungeschlossenes Frontmatter werden geschützt. Textauswahl bleibt erhalten; atomare Undo-/Redo-Änderung, Abbruch ohne Textänderung. Aktuelle Faltung bleibt erhalten, wirksam nach Speichern und erneutem Öffnen. Bestehende Registry-/Agenda-/Panel-/Stale-/Busy-/Readonly-Grenzen wiederverwendet. Kein allgemeines Optionsmenü, keine globale Konfiguration.
+
+500/500 Tests im seriellen Gesamtlauf, Build, drei Syntaxchecks und Diffcheck grün. Fünf neue Auswahl-/Registry-/History-/Schutzgruppen; gezielter STARTUP-/Registry-Lauf 20/20. Paralleler Gesamtlauf zuvor 497/500 mit Ausfällen in vorhandenen Agenda-/Parser-/Prefix-Prüfungen; keine Änderungen an deren Verhalten. Keine native Browserabnahme behauptet. Anleitung `docs/STARTUP.md`; kein Commit/Push.
+
+## STARTUP-Startansicht implementiert — PO-Probe
+
+Auf `feature/STARTUP`: einzelne dateilokale `#+STARTUP:`-Angabe für `overview`, `content`, `showall`, `showeverything` und `show2levels` bis `show5levels`. Vorhandene Markdown-/Org-Faltlogik wiederverwendet; Anwendung beim Datei-/Entwurfsladen, nicht beim Speichern, Tippen oder internen Rollback. Ungültige/mehrfache Angaben bleiben offen mit Hinweis; geschützte Kontexte werden ignoriert. Kein Optionsmenü, globale Konfiguration oder VISIBILITY-Properties. Anleitung und Grenzen: `docs/STARTUP.md`, synthetischer Probevault `test-vault/startup`.
+
+495/495 Tests im abschließenden Gesamtlauf, Build, zwei Syntaxchecks und Diffcheck grün; sieben neue STARTUP-Gruppen. Ein bestehender Syntaxfarben-Test fiel im ersten Gesamtlauf aus, bestand einzeln und im erneuten Gesamtlauf; keine Änderung daran. Keine native Browser- oder unabhängige QA-Abnahme behauptet. Kein Commit/Push.
+
 ## Editorfokus nach Strg+S erhalten — PO-Probe
 
 Speichern setzt den Editor vorübergehend auf nicht editierbar; dabei kann der Browser dessen Fokus verlieren. Für den regulären `file.save`-Aufruf wird vor Busy der Editorfokus aufgenommen und nach Ende der Sperre wiederhergestellt, auch im Fehlerfall. Dokumentidentität und Fensterfokus müssen erhalten sein. Expliziter Fokuswechsel während des Speicherns oder Start außerhalb des Editors erhält das andere Ziel; kein Fokusraub gegenüber Agenda/Panels. Auswahl/History unverändert, Scrollposition nach Fokuswiederherstellung erhalten. Gemeinsamer Speicherkern und Agenda-Autosave unverändert.

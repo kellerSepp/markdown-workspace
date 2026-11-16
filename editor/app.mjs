@@ -24,6 +24,8 @@ import {usesSharedWorkPanel} from './agenda-command-policy.mjs';
 import {createCommandSurfaces} from './command-surfaces.mjs';
 import {ORG_STRUCTURE,runOrgStructure} from './org-structure.mjs';
 import {cycleOrgVisibility} from './org-folding.mjs';
+import {applyStartupVisibility} from './startup-visibility.mjs';
+import {createStartupSettings} from './startup-settings.mjs';
 import {runLineMove} from './line-move.mjs';
 import {createEmacsEditing,emacsMark} from './emacs-editing.mjs';
 import {EMACS_COMMANDS,withoutYankRedo} from './emacs-policy.mjs';
@@ -151,7 +153,7 @@ agendaSource=createAgendaSource({index:agendaIndex,getVault:()=>vault,getSession
   permission,
   onCommit:value=>agenda.setCommitting(value),
   notify:message=>{status(message);agenda.message(message);},
-  open:async target=>{await session.open(target);syncAgendaFileSelection();await useRingVault(session.vault);await syncEditor();persistPending=false;},
+  open:async target=>{await session.open(target);syncAgendaFileSelection();await useRingVault(session.vault);await syncEditor({startup:true});persistPending=false;},
   // Focus belongs to the agenda lifecycle: Follow keeps it below; explicit
   // activation closes the panel before onClose focuses the source editor.
   jump:from=>{view.dispatch({selection:{anchor:from},effects:EditorView.scrollIntoView(from,{y:'center'})});syncAgendaFileSelection();}
@@ -198,7 +200,7 @@ async function executeFilePath(path,{current,onCommit}){
     await session.persist();if(!valid())return null;
     try{
       const result=await executeVaultFile(selectedVault,path,{current:valid,onCommit,
-        open:async target=>{await session.open(target);syncAgendaFileSelection();await useRingVault(session.vault);syncEditor();persistPending=false;}
+        open:async target=>{await session.open(target);syncAgendaFileSelection();await useRingVault(session.vault);syncEditor({startup:true});persistPending=false;}
       });
       if(vault===selectedVault&&result?.path)void agendaIndex.updateFile(result.path,selectedVault);
       if(result?.opened)status(`Datei geöffnet: ${result.path}. Inhalte ausdrücklich mit Strg+S speichern.`);
@@ -214,6 +216,8 @@ async function executeFilePath(path,{current,onCommit}){
 const refile=createRefileController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['structure.refile-h1']=()=>refile.open();
 const todo=createTodoController({view,panel:workPanel,getContext:editingContext,notify:status});
+const startupSettings=createStartupSettings({view,panel:workPanel,getContext:editingContext,notify:status});
+handlers['startup.configure']=()=>startupSettings.open();
 handlers['todo.status']=()=>todo.open();handlers['todo.reload']=()=>todo.reload();
 const tags=createTagsController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['tags.edit']=()=>tags.open();handlers['tags.reload']=()=>tags.reload();
@@ -287,7 +291,7 @@ function setBusy(value) {
   for (const element of document.querySelectorAll('button,select,input')) if(!element.closest('.command-palette,.command-context,.agenda-dialog,.file-dialog')) element.disabled = value;
   view.dispatch({effects:editable.reconfigure([EditorState.readOnly.of(value || !session?.hasDocument),EditorView.editable.of(!value && !!session?.hasDocument)])});
 }
-function syncEditor() {
+function syncEditor({startup=false}={}) {
   prefix.cancel();if(!agenda?.active)workPanel?.close({restore:false});
   emacs.invalidate();
   syncing = true;
@@ -297,6 +301,7 @@ function syncEditor() {
     const error=view.state.field(todoRules).error;if(error)queueMicrotask(()=>status(error));
   } finally {syncing = false;}
   render();
+  if(startup)applyStartupVisibility(view,message=>queueMicrotask(()=>status(message)));
   return syncAgendaEditor();
 }
 function syncAgendaEditor(){
@@ -377,7 +382,7 @@ bind('open', async () => {
   let dir = vault; const parts = path.split('/');
   for (const name of parts.slice(0,-1)) dir = await dir.getDirectoryHandle(name);
   const handle = await dir.getFileHandle(parts.at(-1));
-  await session.open({vault,handle,path}); await useRingVault(session.vault); syncEditor(); persistPending = false;
+  await session.open({vault,handle,path}); await useRingVault(session.vault); syncEditor({startup:true}); persistPending = false;
   if(await sameVault(session.vault,vault))void agendaIndex.updateFile(session.path,vault);
   status('Datei geöffnet. Änderungen werden erst mit Speichern in die Datei geschrieben.'); view.focus();
 });
@@ -404,7 +409,7 @@ bind('recover', async () => {
   vault = session.vault;
   void agendaIndex.selectVault(vault);
   $('files').replaceChildren();
-  syncEditor(); persistPending = false; status('Entwurf geladen. Vor Speichern werden Rechte und externe Änderungen geprüft.');
+  syncEditor({startup:true}); persistPending = false; status('Entwurf geladen. Vor Speichern werden Rechte und externe Änderungen geprüft.');
 });
 bind('restoreDraft', async () => {
   requireSynthetic();

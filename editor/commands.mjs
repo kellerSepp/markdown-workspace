@@ -26,6 +26,7 @@ const idle=c=>c.busy?'Ein Vorgang läuft.':'';
 const synthetic=c=>idle(c)||(!c.synthetic?'Alpha-Nutzungshinweis zuerst bestätigen.':'');
 const vault=c=>idle(c)||(!c.vault?'Bitte zuerst einen Vault wählen.':'');
 const catalog=[];
+add('startup.configure','Startansicht festlegen …','Folding','STARTUP-Dateioption wählen: Trees einklappen, Überschriften oder Ebenen anzeigen; wirkt beim nächsten Öffnen.','editor',c=>documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':''));
 add('tags.edit','Tags bearbeiten','Tags','Eigene Tags wählen oder frei ergänzen; geerbte Tags getrennt anzeigen.','editor',c=>documentReason(c)||tagContext(c.state).message||'');
 add('tags.reload','Tagvorlagen neu laden','Tags','Dateilokale TAGS-Vorgaben laden; bei Fehler letzte gültige Auswahl erhalten.','editor',c=>documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':c.state.selection.ranges.length!==1||!c.state.selection.main.empty?'Nur ein Cursor ohne Auswahl.':!tagDefinitionLine(c.state)?'Cursor muss auf der TAGS-Zeile stehen.':''));
 add('structure.subtree-return','Überschrift nach Unterbaum einfügen','Überschriften','Gleichrangige leere Überschrift nach dem gesamten aktuellen Unterbaum einfügen; Cursor bereit für den Titel.','editor',c=>documentReason(c)||planSubtreeReturn(c.state).message||'','Strg+Enter');

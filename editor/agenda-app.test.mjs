@@ -11,7 +11,7 @@ import {markdown} from '@codemirror/lang-markdown';
 
 test('Actual app keeps docked agenda visible while editor stays editable, with busy and empty session protections',async()=>{
   const app=await readFile(new URL('./app.mjs',import.meta.url),'utf8');
-  const start=app.indexOf('function setBusy(value) {'),end=app.indexOf('\nfunction syncEditor()',start);
+  const start=app.indexOf('function setBusy(value) {'),end=app.indexOf('\nfunction syncEditor(',start);
   assert.ok(start>=0&&end>start);
   const editable=new Compartment(),agenda={active:false},session={hasDocument:true};let closes=0;
   const view={state:EditorState.create({doc:'# TODO Synthetic',extensions:editable.of([])}),dispatch(spec){this.state=this.state.update(spec).state;}};
