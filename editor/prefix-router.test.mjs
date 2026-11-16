@@ -23,7 +23,7 @@ function fixture(){
 }
 
 test('Approved plain and modifier sequences route to existing Registry IDs after keyup; start preserves exact state/history',()=>{
-  for(const binding of PREFIX_BINDINGS){const f=fixture();if(binding.id==='structure.refile-h1'||binding.id==='todo.status'||binding.id==='tags.edit')f.view.state=EditorState.create({doc:'# Source\nBody\n# Target',selection:{anchor:3},extensions:[history(),markdown()]});if(binding.id==='editor.confirm')f.view.state=EditorState.create({doc:'#+SEQ_TODO: TODO(t) | DONE(d)\n# TODO Task',selection:{anchor:3},extensions:[history(),markdown()]});const before=f.view.state;
+  for(const binding of PREFIX_BINDINGS){const f=fixture();if(binding.id==='structure.refile-h1'||binding.id==='todo.status'||binding.id==='tags.edit'||binding.id==='logbook.note')f.view.state=EditorState.create({doc:'# Source\nBody\n# Target',selection:{anchor:3},extensions:[history(),markdown()]});if(binding.id==='editor.confirm')f.view.state=EditorState.create({doc:'#+SEQ_TODO: TODO(t) | DONE(d)\n# TODO Task',selection:{anchor:3},extensions:[history(),markdown()]});const before=f.view.state;
     if(binding.id.startsWith('planning.'))f.view.state=EditorState.create({doc:'# Heading',extensions:[history(),markdown()]});
     const expectedState=f.view.state;
     assert.equal(f.start().defaultPrevented,true);assert.equal(f.view.state,expectedState);assert.equal(undoDepth(f.view.state),0);
@@ -46,7 +46,7 @@ test('Repeat cannot start/complete; key release is mandatory; second C-c is inva
   f.start();f.release();assert.equal(f.start().defaultPrevented,true);assert.equal(f.router.active,false);assert.equal(f.calls.length,1);
 });
 test('Invalid sequence consumed once without text insertion or replay; Escape/C-g and modifiers cancel',()=>{
-  for(const [key,patch] of [['z',{}],['4',{}],['1',{ctrlKey:true}],['1',{shiftKey:true}],['Escape',{}],['g',{ctrlKey:true}],['Shift',{}],['Meta',{metaKey:true}],['a',{getModifierState:()=>true}],['Process',{isComposing:true}],['Process',{keyCode:229}]]){
+  for(const [key,patch] of [['v',{}],['4',{}],['1',{ctrlKey:true}],['1',{shiftKey:true}],['Escape',{}],['g',{ctrlKey:true}],['Shift',{}],['Meta',{metaKey:true}],['a',{getModifierState:()=>true}],['Process',{isComposing:true}],['Process',{keyCode:229}]]){
     const f=fixture(),state=f.view.state;f.start();f.release();f.down(key,patch);
     assert.equal(f.router.active,false,key);assert.deepEqual(f.calls,[],key);assert.equal(f.view.state,state,key);
     if(key==='Escape')assert.equal(f.view.tabFocus,true);

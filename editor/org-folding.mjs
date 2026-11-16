@@ -1,5 +1,6 @@
 import {syntaxTree,syntaxTreeAvailable,foldedRanges,foldEffect,unfoldEffect} from '@codemirror/language';
 import {headingSections,sectionAt} from './section-folding.mjs';
+import {logbookRanges} from './planning-drawers.mjs';
 import {frontmatterEnd} from './structure.mjs';
 
 const same=(a,b)=>a.length===b.length&&a.every((r,i)=>r.from===b[i].from&&r.to===b[i].to);
@@ -38,8 +39,9 @@ export function cycleOrgVisibility(view,global=false,notify=()=>{}) {
   const reason=orgFoldReason(view.state,global);if(reason){notify(reason);return false;}
   const state=view.state,h=global?null:sectionAt(state,state.selection.main.head),current=[];
   foldedRanges(state).between(0,state.doc.length,(from,to)=>{if(global||from>=h.headerEnd&&to<=h.limit)current.push({from,to});});
-  const plans=orgVisibilityPlans(state,global),found=plans.findIndex(p=>same(canonical(current),p.ranges));
-  const next=plans[(found+1)%plans.length];
+  const plans=orgVisibilityPlans(state,global),found=plans.findIndex(p=>same(canonical(current.filter(r=>!logbookRanges(state).some(d=>d.from===r.from&&d.to===r.to))),p.ranges));
+  const chosen=plans[(found+1)%plans.length];
+  const next={...chosen,ranges:[...chosen.ranges,...logbookRanges(state).filter(r=>global||r.from>=h.headerEnd&&r.to<=h.limit)]};
   const effects=[...current.map(r=>unfoldEffect.of(r)),...next.ranges.map(r=>foldEffect.of(r))];
   let selection;
   const hidden=next.ranges.find(r=>state.selection.ranges.some(s=>s.from>r.from&&s.from<r.to||s.to>r.from&&s.to<r.to));

@@ -1,5 +1,25 @@
 # Projektstatus
 
+## LOGBOOK praktisch positiv — Abschluss und Drawer-Vorbereitung
+
+PO meldet „scheint zu funktionieren“ und autorisiert Commit/Push des aktuellen
+LOGBOOK-Standes. Keine vollständige native Matrixabnahme daraus ableiten.
+Pushziel ist der bestehende Featurebranch `feature/logbook-notes`, kein neuer
+Mergeauftrag nach main. Nächster Schritt ausschließlich vorbereitet:
+`docs/PLAN_DRAWERS.md`, Freigabevorlage `docs/FORTSETZUNG_DRAWERS.md`.
+Allgemeine Drawer noch nicht implementiert; auf PO-Freigabe warten.
+
+AGENTS.md lag mit 45.252 Bytes über dem 32.768-Byte-Instruktionsbudget. Vollständige
+bytegleiche Archivkopie unter `docs/archive/AGENTS_HISTORY_2026-11-16.md` verifiziert;
+aktive Regeln und aktuelles Gate kompakt zusammengeführt, Historie nur verlinkt.
+Keine Änderung an globaler Codex-Konfiguration. Nutzerbild bleibt uncommittet.
+
+## Manuelle LOGBOOK-Notizen implementiert — PO-Probe
+
+Auf `feature/logbook-notes`: C-c z / Palette „Logbuchnotiz hinzufügen …“, gemeinsames mehrzeiliges Panel, C-c c übernimmt, C-c k/Escape bricht ab. Lokale Zeitstempel, neueste Notiz oben, eigener H1–H6-Abschnitt, Tags/Planung/Properties/Kinder und Wiederholungslogs erhalten. Atomare Texthistory; LOGBOOK nach Übernahme/Laden geschlossen, Tab auf Markerzeile toggelt. Heading-Faltung erhält geschlossene LOGBOOKs. Keine allgemeinen Drawer, automatischen Statuslogs, Dependencies oder Storageänderungen. Anleitung `docs/LOGBOOK.md`, synthetischer Probevault `test-vault/logbook`. Nutzerbild `images/drawers_preview.png` erhalten und nicht Teil des Pakets.
+
+506/506 Tests im seriellen Gesamtlauf einschließlich sechs neuer Modell-/Panelgruppen grün; keine native Browser-/Langzeit- oder unabhängige QA-Abnahme behauptet. Kein Commit/Push; nach Bericht PO-Probe.
+
 ## STARTUP über Befehlspalette bedienbar — PO-Probe
 
 Alt+X → „Startansicht“/„STARTUP“ → „Startansicht festlegen …“ öffnet den vorhandenen unteren Auswahlbereich mit acht erklärten Werten und sichtbarer STARTUP-Syntax. Aktuelle Vorgabe markiert; Auswahl fügt eine Zeile ein oder ersetzt sie, nach geschlossenem Frontmatter. Eine ungültige Einzeldefinition ist korrigierbar, mehrfache Definitionen und ungeschlossenes Frontmatter werden geschützt. Textauswahl bleibt erhalten; atomare Undo-/Redo-Änderung, Abbruch ohne Textänderung. Aktuelle Faltung bleibt erhalten, wirksam nach Speichern und erneutem Öffnen. Bestehende Registry-/Agenda-/Panel-/Stale-/Busy-/Readonly-Grenzen wiederverwendet. Kein allgemeines Optionsmenü, keine globale Konfiguration.

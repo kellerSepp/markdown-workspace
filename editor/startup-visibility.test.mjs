@@ -52,7 +52,7 @@ test('STARTUP ignores examples in frontmatter, code, HTML, quotes, lists and dra
   ];
   for(const example of protectedText){
     const view=fixture(example+'\n\n'+body);applyStartupVisibility(view);
-    assert.equal(readStartupVisibility(view.state).mode,null,example);assert.deepEqual(ranges(view),[]);
+    assert.equal(readStartupVisibility(view.state).mode,null,example);assert.equal(ranges(view).length,example.startsWith(':LOGBOOK:')?1:0);
   }
 });
 

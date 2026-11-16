@@ -1,3 +1,4 @@
+import {logbookRanges} from './planning-drawers.mjs';
 import {syntaxTree, foldable, foldedRanges, foldEffect, unfoldEffect} from '@codemirror/language';
 
 // Structural information comes exclusively from CodeMirror's Markdown syntax tree.
@@ -74,6 +75,7 @@ export function visibilityPlans(state,context) {
   return plans.filter((p,n)=> p.name==='vollständig offen' || p.ranges.length && !plans.slice(0,n).some(before=>same(before.ranges,p.ranges)));
 }
 function applyPlan(view,context,ranges,notify,name) {
+  if(!context.block)ranges=[...ranges,...logbookRanges(view.state).filter(r=>r.from>=context.headerEnd&&r.to<=context.to)];
   const effects=within(view.state,context).map(r=>unfoldEffect.of(r)).concat(ranges.map(r=>foldEffect.of(r)));
   const head=view.state.selection.main.head;
   // CodeMirror clears folds covering an explicit selection; move hidden cursors first.

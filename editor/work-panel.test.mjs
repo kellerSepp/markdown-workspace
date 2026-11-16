@@ -16,6 +16,15 @@ import {todoRules,createTodoController} from './todo.mjs';
 import {markdown} from '@codemirror/lang-markdown';
 import {createPlanningController} from './planning.mjs';
 const pluginFacet=ViewPlugin.define(()=>({})).extension.at(-1).facet;
+test('Logbook shared panel supports multiline commit, cancel and retains input on focus exit',()=>{
+ const f=fixture({docText:'# H\nBody',selection:{anchor:2},extra:markdown()});let value;
+ assert.equal(f.panel.openNote({choose:text=>{value=text;return true;}}),true);
+ let form=f.root.children.at(-1),input=form.children[1];input.value='One\nTwo';
+ f.root.emit('focusout',{relatedTarget:{}});assert.equal(f.panel.isOpen,true);
+ form.children[2].click();assert.equal(value,'One\nTwo');assert.equal(f.panel.isOpen,false);
+ f.panel.openNote({choose:()=>assert.fail('cancel must not commit')});
+ form=f.root.children.at(-1);form.children[3].click();assert.equal(f.panel.isOpen,false);f.panel.destroy();
+});
 class Element{
   constructor(tag,doc){this.tagName=tag;this.ownerDocument=doc;this.children=[];this.listeners={};this.attributes={};this.value='';this.scrollTop=0;this.scrollLeft=0;this.clientHeight=90;this.offsetHeight=30;this.classList={toggle:()=>{}};}
   get offsetTop(){return Math.max(0,this.parent?.children.indexOf(this)??0)*30;}get scrollHeight(){return this.children.length*30;}

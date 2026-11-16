@@ -1,3 +1,4 @@
+import {createLogbookForm} from './logbook-form.mjs';
 import {EMACS_POLICY} from './emacs-policy.mjs';
 import {createPanelLayout,revealPanelRow} from './panel-layout.mjs';
 import {panelMove} from './panel-navigation.mjs';
@@ -147,6 +148,16 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     search.hidden=true;hint.hidden=true;results.hidden=true;message.hidden=true;root.append(detailForm.root);
     layout.setOpen(true,()=>{shell.show('Tags bearbeiten');detailForm.focus();});return true;
   }
+  function openNote({choose}){
+    if(destroyed||!ready())return false;close({restore:false});
+    choiceMode={note:true};target={state:view.state,head:view.state.selection.main.head};const saved=target;
+    detailForm=createLogbookForm({document:doc,cancel:()=>close(),commit:text=>{
+      if(!valid()){notify('Notizziel geändert; erneut öffnen.');return;}
+      if(choose(text,saved)){close({restore:false});focusAfterClose();}
+    }});
+    search.hidden=true;hint.hidden=true;results.hidden=true;message.hidden=true;root.append(detailForm.root);
+    layout.setOpen(true,()=>{shell.show('Logbuchnotiz hinzufügen');detailForm.focus();});return true;
+  }
   function openPlanning({kind,value,choose}){
     if(destroyed||!ready())return false;close({restore:false});
     choiceMode={};target={state:view.state,head:view.state.selection.main.head};const saved=target;
@@ -160,8 +171,8 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
   listen(search,'input',render);
   listen(root,'compositionstart',()=>{if(choiceMode&&!choiceMode.tags)close();});
   const inside=element=>{for(let n=element;n;n=n.parentNode??n.parent)if(n===root)return true;return false;};
-  listen(root,'focusout',event=>{if(choiceMode&&!(detailForm&&!event.relatedTarget)&&!inside(event.relatedTarget))close({restore:false});});
-  if(doc.defaultView?.addEventListener)listen(doc.defaultView,'blur',()=>{if(choiceMode)close({restore:false});});
+  listen(root,'focusout',event=>{if(choiceMode&&!choiceMode.note&&!(detailForm&&!event.relatedTarget)&&!inside(event.relatedTarget))close({restore:false});});
+  if(doc.defaultView?.addEventListener)listen(doc.defaultView,'blur',()=>{if(choiceMode&&!choiceMode.note)close({restore:false});});
   // Prefix help leaves the editor focused, including pointer activation.
   listen(root,'mousedown',event=>{if(prefixCancel)event.preventDefault();});
   listen(closeButton,'click',()=>close());
@@ -196,7 +207,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     layout.setOpen(true,()=>{
       shell.show('C-c · Folgebefehl');search.hidden=true;
       root.setAttribute('data-prefix-help','');
-      hint.textContent='C und Strg loslassen · 1 / 2 / 3 / w / t / q (Tags) / s (Scheduling) / d (Deadline) / a (Agenda) / f (Datei); Strg+C: Kontext bestätigen · Alt+↑/↓ wählen · Enter · Escape/Strg+G · Alt+W kopiert';
+      hint.textContent='C und Strg loslassen · 1 / 2 / 3 / w / t / q (Tags) / z (Logbuchnotiz) / s (Scheduling) / d (Deadline) / a (Agenda) / f (Datei); Strg+C: Kontext bestätigen · Alt+↑/↓ wählen · Enter · Escape/Strg+G · Alt+W kopiert';
       message.textContent='';
       for(const choice of choices){
         const row=doc.createElement('button');row.type='button';row.className='work-panel-row';
@@ -210,7 +221,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     });return true;
   }
   const unsubscribe=ring.subscribe(()=>{if(!prefixCancel)render();});
-  return {invalidateStale(){if(choiceMode&&!valid())close({restore:false});},openTags,openPlanning,openChoices,openRing,showPrefix,moveSelection,activateSelection,close,get isOpen(){return !root.hidden;},refresh:render,preserveViewport:layout.preserve,
+  return {openNote,invalidateStale(){if(choiceMode&&!choiceMode.note&&!valid())close({restore:false});},openTags,openPlanning,openChoices,openRing,showPrefix,moveSelection,activateSelection,close,get isOpen(){return !root.hidden;},refresh:render,preserveViewport:layout.preserve,
     destroy(){if(destroyed)return;close({restore:false});destroyed=true;unsubscribe();for(const dispose of disposers)dispose();clearRows();shell.destroy();layout.destroy();}
   };
 }

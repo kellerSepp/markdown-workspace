@@ -40,3 +40,7 @@ export function planningDrawerRanges(state){
   return trees.get(tree);
 }
 export const inPlanningDrawer=(ranges,pos)=>ranges.some(range=>pos>=range.from&&pos<=range.to);
+
+export function logbookRanges(state){
+  return readPlanningDrawers(state).drawers.filter(d=>d.kind==='LOGBOOK'&&!d.invalid&&d.end).map(d=>({from:d.start.to,to:d.end.to})).filter(r=>r.to>r.from);
+}

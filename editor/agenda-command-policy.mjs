@@ -1,6 +1,6 @@
 // A dock permits editing the source while agenda-local keys remain isolated.
 // File/vault/draft replacement continues to require explicitly closing agenda.
-const sharedPanels=new Set(['startup.configure','structure.refile-h1','todo.status','tags.edit','planning.scheduled','planning.deadline','edit.emacs-show-ring']);
+const sharedPanels=new Set(['logbook.note','startup.configure','structure.refile-h1','todo.status','tags.edit','planning.scheduled','planning.deadline','edit.emacs-show-ring']);
 export const usesSharedWorkPanel=id=>sharedPanels.has(id);
 export function agendaCommandReason(command,context){
   if(!context.agendaActive||command.id.startsWith('agenda.'))return '';
