@@ -1,8 +1,15 @@
 import {EditorState, Compartment} from '@codemirror/state';
 import {EditorView, keymap, lineNumbers, drawSelection} from '@codemirror/view';
+import {forceParsing} from '@codemirror/language';
 import {history, historyKeymap, defaultKeymap} from '@codemirror/commands';
 import {markdown,markdownLanguage} from '@codemirror/lang-markdown';
 import {createSession, createBrowserStore} from './storage-session.mjs';
+import {createArchiveStorage} from './archive-storage.mjs';
+import {planArchive} from './archive-model.mjs';
+import {archiveDialog} from './archive-dialog.mjs';
+import {inspectVaultPath,normalizeVaultFilePath} from './vault-files.mjs';
+import {read} from '../spike/storage.mjs';
+import {TextCodec} from './text-codec.mjs';
 import {THEMES,readThemeChoice,saveThemeChoice,applyTheme} from './themes.mjs';
 import {editorTheme} from './theme-editor.mjs';
 import {markdownFolding,guardedFold,stagedUnfold} from './folding.mjs';
@@ -61,10 +68,14 @@ let activeTheme = applyTheme(document.documentElement,readThemeChoice(themeStora
 $('theme').replaceChildren(...THEMES.map(theme => new Option(theme.name,theme.id)));
 $('theme').value = activeTheme.id;
 let session, vault, busy = true, syncing = false, timer, persistPending = false;
+const archiveStorage=createArchiveStorage();
+let archiveSettings={paths:[],defaultPath:'',quickConfirm:true};
+const archivePath=path=>archiveSettings.paths.some(item=>item.toLocaleLowerCase()===path.toLocaleLowerCase());
+async function loadArchiveSettings(){archiveSettings=await archiveStorage.loadSettings(vault)??{paths:[],defaultPath:'',quickConfirm:true};}
 const status = message => {$('status').textContent = message;};
 let agenda,agendaSource,agendaStatus,filePicker,agendaEditorTimer;
 const agendaStatusHost=document.createElement('div');agendaStatusHost.id='agendaStatusHost';agendaStatusHost.hidden=true;$('editor').after(agendaStatusHost);
-const agendaIndex=createAgendaIndex({onChange:snapshot=>{
+const agendaIndex=createAgendaIndex({isArchive:archivePath,onChange:snapshot=>{
   $('agendaIndexStatus').textContent=`${snapshot.running?'Index wird gelesen … · ':''}${snapshot.files} Dateien · ${snapshot.records.length} Einträge · ${snapshot.diagnostics.length} Hinweise/Fehler · Revision ${snapshot.revision}`;
   $('agendaIndexErrors').replaceChildren(...snapshot.diagnostics.map(item=>{
     const row=document.createElement('li');row.textContent=`${item.path}${item.line?':'+item.line:''}: ${item.message}`;return row;
@@ -132,6 +143,59 @@ const extensions = () => [
 ];
 const view = new EditorView({parent:$('editor'), state:EditorState.create({extensions:extensions()})});
 const handlers={};
+handlers['archive.subtree']=async()=>{
+  if(busy||!session?.hasDocument||session.vault!==vault)return false;
+  requireSynthetic();
+  if(!forceParsing(view,view.state.doc.length,100)){status('Dokument noch nicht vollständig analysiert; erneut versuchen.');return false;}
+  const origin=view.state,sourcePath=session.path,sourceVault=vault;
+  const plan=planArchive(origin,{sourcePath,now:new Date()});
+  if(plan.message){status(plan.message);return false;}
+  const selected=await archiveDialog({settings:archiveSettings,openTasks:plan.openTasks});
+  if(!selected)return false;
+  if(busy||view.state!==origin||vault!==sourceVault||session.path!==sourcePath){status('Archivierungsquelle geändert; bitte erneut starten.');return false;}
+  return run(async()=>{
+    await permission();
+    const targetPath=normalizeVaultFilePath(selected.path);
+    if(targetPath.toLocaleLowerCase()===sourcePath.toLocaleLowerCase())throw Error('Quelle und Archiv müssen verschieden sein.');
+    // Validate destination before saving the user's draft or changing settings.
+    const target=await inspectVaultPath(vault,targetPath);if(target.kind==='directory')throw Error('Archivziel muss eine Markdown-Datei sein.');
+    const next={paths:[...new Set([...archiveSettings.paths,targetPath])],defaultPath:selected.standard?targetPath:archiveSettings.defaultPath||targetPath,quickConfirm:selected.quickConfirm};
+    await archiveStorage.saveSettings(vault,next);archiveSettings=next;
+    await agendaIndex.rebuild();
+    const unresolved=(await archiveStorage.list(vault)).filter(item=>!['completed','restored'].includes(item.status));
+    if(unresolved.length)throw Error('Offene Archivoperation: zuerst „Archivierung fortsetzen“ ausführen.');
+    await session.save();persistPending=false;
+    const source=await inspectVaultPath(vault,sourcePath);
+    const sourceBefore=await read(source.handle);
+    if(new TextCodec(sourceBefore).text!==origin.doc.toString())throw Error('Quelle wurde nach dem Speichern extern geändert; Archivierung gestoppt.');
+    let result;
+    try{result=await archiveStorage.execute({vault,sourcePath,targetPath,sourceBefore,sourceChanges:[plan.sourceChange],archiveBlock:plan.archiveBlock});}
+    finally{await session.open({vault,path:sourcePath,handle:source.handle});await syncEditor({startup:true});await agendaIndex.rebuild();}
+    await scan();syncAgendaFileSelection();await agendaIndex.rebuild();
+    status(`Archiviert nach ${targetPath}. Wiederherstellung über „Archivierung wiederherstellen“. Vorgang ${result.id}`);view.focus();return true;
+  });
+};
+async function archiveRecovery(restore){
+  return run(async()=>{
+    requireSynthetic();await permission();
+    if(session?.dirty)throw Error('Aktuelle Änderungen vor der Archivwiederaufnahme speichern.');
+    const operations=await archiveStorage.list(vault);
+    const candidates=operations.filter(item=>restore?item.status==='completed':!['completed','restored'].includes(item.status));
+    if(!candidates.length)throw Error(restore?'Keine wiederherstellbare Archivierung.':'Keine offene Archivierung.');
+    const item=candidates.sort((a,b)=>a.created-b.created).at(-1);
+    if(!window.confirm(`${restore?'Archivierung wiederherstellen':'Archivierung fortsetzen'}?\n${item.sourcePath} → ${item.targetPath}\nEs werden nur exakt passende Dateistände verändert.`))return;
+    let failure;
+    try{await archiveStorage[restore?'restore':'resume'](vault,item.id);}catch(error){failure=error;}
+    try{
+      if(session?.hasDocument&&session.vault===vault){const found=await inspectVaultPath(vault,session.path);await session.open({vault,path:session.path,handle:found.handle});await syncEditor({startup:true});}
+      await scan();syncAgendaFileSelection();await agendaIndex.rebuild();
+    }catch(error){if(!failure)failure=error;else failure=new Error(`${failure.message} · Editorabgleich fehlgeschlagen: ${error.message}`);}
+    if(failure)throw failure;
+    status(restore?'Archivierung wiederhergestellt.':'Archivierung fortgesetzt und geprüft.');
+  });
+}
+handlers['archive.resume']=()=>archiveRecovery(false);
+handlers['archive.restore']=()=>archiveRecovery(true);
 handlers['structure.subtree-return']=()=>runSubtreeReturn(view,status);
 handlers['structure.meta-return']=()=>runMetaReturn(view,status);
 handlers['view.line-wrap']=()=>{
@@ -372,9 +436,10 @@ async function scan() {
 bind('choose', async () => {
   requireSynthetic();
   const selected = await showDirectoryPicker({mode:'readwrite'});
+  const selectedArchiveSettings=await archiveStorage.loadSettings(selected);
   await session.persist();
   if(!await sameVault(vault,selected))emacs.invalidate({clearRing:true});
-  $('files').replaceChildren(); vault = selected; void agendaIndex.selectVault(vault); await scan();
+  $('files').replaceChildren(); vault = selected; archiveSettings=selectedArchiveSettings; void agendaIndex.selectVault(vault); await scan();
 });
 bind('grant', async () => {
   if (session.hasDocument) await session.grant();
@@ -413,6 +478,8 @@ bind('recover', async () => {
   await session.persist(); await session.recover(key);
   await useRingVault(session.vault);
   vault = session.vault;
+  await agendaIndex.selectVault(null);
+  await loadArchiveSettings();
   void agendaIndex.selectVault(vault);
   $('files').replaceChildren();
   syncEditor({startup:true}); persistPending = false; status('Entwurf geladen. Vor Speichern werden Rechte und externe Änderungen geprüft.');

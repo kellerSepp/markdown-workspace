@@ -1,5 +1,11 @@
 # Command Gamebook
 
+| ID | Name | Kategorie | Verhalten | Voraussetzung | Bedienung | Kürzel | Status | Grenzen |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| `archive.subtree` | Unterbaum archivieren … | Archiv | Ganzen Unterbaum extern archivieren und beide Dateien speichern. | Bearbeitbare Quelle und Vault | Palette/Kontextmenü | Kein eigenes Kürzel | Implementiert | Dialog, offene Aufgaben optional y/n; neue Historybasis. |
+| `archive.resume` | Archivierung fortsetzen | Archiv | Offenen Vorgang bytegeprüft fortsetzen. | Vault, saubere aktuelle Datei | Palette | Kein eigenes Kürzel | Implementiert | Fremde Änderungen blockieren. |
+| `archive.restore` | Archivierung wiederherstellen | Archiv | Letzte abgeschlossene Archivierung zurücknehmen. | Vault, exakt passende Dateistände | Palette | Kein eigenes Kürzel | Implementiert | Quelle zuerst, Archiv danach; eigene Wiederherstellung. |
+
 
 
 M6b-Freigabe 2026-11-09: Wiederholungen `+N`, `++N`, `.+N` mit d/w/m/y werden über bestehende Planungsbefehle bearbeitet; keine neue globale Belegung. Ein offener wiederkehrender Task wird beim Abschluss über `todo.status`/`todo.next`/`todo.previous` im selben Editorvorgang fortgeschrieben, im LOGBOOK protokolliert und auf gültiges lokales REPEAT_TO_STATE beziehungsweise den ersten offenen Zustand zurückgesetzt. Direktes Tippen eines Status löst das nicht aus. Monate/Jahre begrenzen auf den letzten gültigen Tag; `++` folgt der PO-bestätigten Handbuchregel „strikt zukünftig“, mit Uhrzeit nötigenfalls noch heute. Details, Abnahme und tatsächlicher Implementierungsstand: [M6B_REPETITION.md](M6B_REPETITION.md). Keine vollständige Org-Kompatibilität oder allgemeine Property-/Logging-Konfiguration.

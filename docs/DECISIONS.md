@@ -1,5 +1,25 @@
 # Architekturentscheidungen
 
+## Archivierung — Implementierungsfreigabe 2026-11-16
+
+PO bestätigt Root-H1 am Archivende mit relativen Kindern und Herkunftsproperties
+ARCHIVE_TIME/FILE/OLPATH/TODO; kleiner Zieldialog, neue Markdownziele nur in
+vorhandenen Ordnern. Offene Aufgaben erlauben, Anzahl und explizite Bestätigung;
+einstellbare einfache y/n-Warnstufe. Ungespeicherte Quelle nach Hinweis speichern.
+Verifiziertes Archiv vor Quellentfernung, dauerhaftes Journal, bytegeprüfte
+Wiederaufnahme; keine gemeinsame Atomarität. Neue Editor-Historybasis und eigene
+konfliktgeprüfte Wiederherstellung. Umsetzung auf eigenem Branch ausdrücklich
+beauftragt; keine Git-Integration. Bedienung/Grenzen in ARCHIVING.md.
+
+## Archivziele und Agenda — Planungsentscheidung 2026-11-16
+
+PO bestätigt ein Standardarchiv pro Vault und weitere wählbare Archivdateien
+innerhalb desselben Vaults. Alle ausdrücklich festgelegten Archive werden von
+Wochenagenda und TODO-Liste ausgeschlossen, bleiben normal bearbeitbar. Keine
+Sonderbehandlung allein anhand des Dateinamens. Konfigurationsort, Zielwechsel,
+Archivstruktur und sicherer Zwei-Dateien-Ablauf bleiben offen. Details und
+Abnahme: `PLAN_ARCHIVING.md`. Keine Implementierungsfreigabe.
+
 ## Allgemeine Drawer — PO-Freigabe 2026-11-16
 
 Nach Integration des LOGBOOK-Pakets nach main gibt PO das vorbereitete Paket

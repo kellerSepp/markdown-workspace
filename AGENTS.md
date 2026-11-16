@@ -1,6 +1,21 @@
 # Repository instructions for Codex
 
+## Aktuelle Geräteübergabe — 2026-11-16
+PO autorisiert Commit und Push des Archivierungspakets auf feature/archiving.
+Kein Merge nach main und keine Folgefunktion freigegeben. Handprobe am anderen
+PC steht aus; Übergabe und aktueller Startprompt: docs/PLAN_ARCHIVING.md,
+Bedienung: docs/ARCHIVING.md. Erneut 561/561 Tests seriell, Build und Diffcheck
+grün. Nutzerbilder images/Archive bleiben lokal uncommittet erhalten.
+Diese Freigabe ersetzt ältere Commit-/Push-Sperren ausschließlich für dieses Paket.
+
 ## Zweck und aktuelles Gate
+PO hat Archivierung auf eigenem Branch feature/archiving ausdrücklich zur
+Implementierung freigegeben: Standardarchiv plus weitere Ziele, alle aus Agenda
+ausgeschlossen; vollständiger Unterbaum/H1, Herkunftsproperties, offene Aufgaben
+mit einstellbarer y/n-Bestätigung, Quelle mitspeichern, Journal/Wiederaufnahme und
+eigene Wiederherstellung. Neuere Freigabe ersetzt nachfolgende Planungssperren
+ausschließlich für dieses Paket. Anleitung docs/ARCHIVING.md. Keine Git-Integration
+oder Folgefunktion freigegeben. Nutzerbilder images/Archive erhalten.
 Leichtgewichtiger, lokaler Markdown-Arbeitsbereich. PO entscheidet iterativ über Architektur und Umfang. Kurz auf Deutsch berichten.
 
 Neuester Gesprächsstand vor Gerätewechsel: externe Archivierung wird nur gemeinsam geplant, noch keine Implementierungsfreigabe. Entscheidungen, offene Sicherheits-/Agenda-/Konfigurationspunkte und kopierbarer Neustartprompt in docs/PLAN_ARCHIVING.md. Dort anknüpfen; keine automatische Umsetzung. Drawer ist inzwischen auf main integriert/gepusht (2df1923). Lokale untracked Nutzerbilder erhalten.

@@ -56,13 +56,13 @@ export function parseAgendaState(state,path,ruleError=state.field(todoRules,fals
   return {records,diagnostics,rules};
 }
 
-export function createAgendaIndex({onChange=()=>{},yieldTask=pause}={}){
+export function createAgendaIndex({onChange=()=>{},yieldTask=pause,isArchive=()=>false}={}){
   let vault=null,epoch=0,revision=0,operation=0,files=new Map(),running=false,scanDiagnostics=[];
   let editor=null,editorOperation=0;
   let snapshot=freeze({vaultName:null,epoch,revision,running:false,files:0,records:[],diagnostics:[]});
   function publish(){
     revision++;
-    const visible=new Map(files);if(editor)visible.set(editor.path,editor.parsed??{records:[],diagnostics:[]});
+    const visible=new Map([...files].filter(([path])=>!isArchive(path)));if(editor&&!isArchive(editor.path))visible.set(editor.path,editor.parsed??{records:[],diagnostics:[]});
     const records=[...visible].sort(([a],[b])=>a.localeCompare(b)).flatMap(([path,file])=>file.records.map(record=>{
       const id=JSON.stringify([epoch,revision,path,record.from]);
       return {...record,id,path,editor:editor?.path===path,file:path.split('/').at(-1),source:{epoch,revision,path,from:record.from,line:record.line,level:record.level,title:record.title}};
@@ -93,7 +93,7 @@ export function createAgendaIndex({onChange=()=>{},yieldTask=pause}={}){
           // and hidden folders otherwise remain ordinary Markdown sources.
           if(handle.kind==='directory'){
             if(name!=='.storage-spike-backups')directories.push({dir:handle,path:entryPath+'/'});
-          }else if(/\.md$/i.test(name)){
+          }else if(/\.md$/i.test(name)&&!isArchive(entryPath)){
             const parsed=await readFile(root,entryPath,previous.get(entryPath),current);
             if(!current())return snapshot;if(parsed)next.set(entryPath,parsed);
           }
@@ -107,7 +107,7 @@ export function createAgendaIndex({onChange=()=>{},yieldTask=pause}={}){
   return {
     selectVault(next){vault=next;epoch++;operation++;editorOperation++;editor=null;files=new Map();scanDiagnostics=[];running=false;publish();return next?rebuild():Promise.resolve(snapshot);},
     setEditor(state,path,sourceVault=vault){
-      if(!vault||sourceVault!==vault||!pathValid(path))return Promise.resolve(snapshot);
+      if(!vault||sourceVault!==vault||!pathValid(path)||isArchive(path))return Promise.resolve(snapshot);
       if(editor?.path===path&&editor.doc===state.doc&&editor.rules===state.field(todoRules,false))return editor.parsed?Promise.resolve(snapshot):editor.task??Promise.resolve(snapshot);
       const token=++editorOperation,generation=epoch;
       const current=()=>token===editorOperation&&generation===epoch&&vault===sourceVault;
@@ -125,7 +125,7 @@ export function createAgendaIndex({onChange=()=>{},yieldTask=pause}={}){
     rebuild,
     async updateFile(path,sourceVault=vault){
       // Identity is intentional: selected/recovered handles establish a new epoch.
-      if(!vault||sourceVault!==vault||!pathValid(path))return snapshot;
+      if(!vault||sourceVault!==vault||!pathValid(path)||isArchive(path))return snapshot;
       // A save during a full traversal restarts it to avoid dropping other files.
       if(running)return rebuild();
       const token=++operation,generation=epoch,root=vault,current=()=>token===operation&&generation===epoch;

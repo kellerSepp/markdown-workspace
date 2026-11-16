@@ -323,3 +323,15 @@ Primärquellen geprüft am 2026-11-02; kein Ersatz für Tests auf dem tatsächli
 - [Tauri: Windows-Verteilung und WebView2](https://v2.tauri.app/distribute/windows-installer/)
 
 README ergänzt REQUIREMENTS um das spätere Board; kein Produktwiderspruch. Offene Zielkonflikte: beliebige Ordner gegenüber Browserrestriktionen; serverloser Betrieb gegenüber Erstbereitstellung; absoluter Überschreibungsschutz gegenüber externen Schreibrennen. Frühere Statusformulierung „Projektsetup“ ist keine Installationsfreigabe. Bestehende Entscheidungen werden nicht überschrieben.
+# Archivierungsadapter — 2026-11-16
+
+Reiner archive-model-Planer nutzt vorhandenen Markdownparser und Heading-/TODO-/
+Drawerscanner. Getrennter archive-storage-Adapter koordiniert zwei vorhandene
+replace-Schreibpfade unter demselben Web Lock. Verifiziertes persistentes Journal
+im Backupordner enthält Vor-/Nachbytes beider Dateien; Wiederaufnahme beurteilt
+Dateibytes statt bloßem Phasenflag. Archiv vor Quellentfernung; Wiederherstellung
+Quelle vor Archivbereinigung. Konflikte stoppen ohne automatische Rückrolle.
+Keine gemeinsame Atomarität oder neue OS-Race-Garantie. Settings im Backupordner
+registrieren Archivpfade explizit; Agendaindex überspringt sie beim Lesen und im
+Editoroverlay. Erfolgreiche Verschiebung setzt Editor-History zurück. Bedienung,
+Grenzen und synthetische Probe in ARCHIVING.md.

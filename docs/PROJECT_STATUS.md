@@ -1,5 +1,31 @@
 # Projektstatus
 
+## Archivierung implementiert — PO-Probe, 2026-11-16
+
+Auf feature/archiving: externe Archivierung ganzer Unterbäume, Standard-/weitere
+Archivziele, expliziter Agenda-Ausschluss, H1/relative Kinder und Herkunftsproperties.
+Offene Aufgaben mit einstellbarer y/n-Warnstufe. Quelle mitspeichern, dauerhafte
+bytebasierte Wiederaufnahme, konfliktgeprüfte eigene Wiederherstellung; neue
+Editor-Historybasis. Bestehende Storage-Module unverändert. Zwei QA-P2
+(Editorabgleich nach Recoveryfehler, Vault-/Indexgrenze bei Settingsfehler) korrigiert
+und unabhängig nachgeprüft. 561/561 Tests seriell und Build grün; gezielte Syntax-
+und Diffprüfung. Unabhängige vier QA-Gruppen inklusive null Archivreads und
+Dialogtasten; keine native Browser-/Rechte-/Stundenabnahme. Anleitung
+docs/ARCHIVING.md, synthetische Fixture test-vault/archiving/source.md.
+PO hat anschließend Commit und Push auf feature/archiving zum Gerätewechsel
+freigegeben. Erneut 561/561 Tests seriell, Build und Diffcheck grün. Übergabe
+und Startprompt in docs/PLAN_ARCHIVING.md aktualisiert. Nächster Schritt
+PO-Handprobe am anderen PC; kein Merge oder Folgefunktion freigegeben.
+Nutzerbilder images/Archive bleiben lokal und außerhalb des Commits.
+
+## Archivierungsplanung — Zielmodell bestätigt, 2026-11-16
+
+Ein Standardarchiv mit weiteren wählbaren Archivdateien pro Vault bestätigt.
+Alle festgelegten Archive aus Wochenagenda/TODO-Liste ausschließen; normales
+Bearbeiten erhalten. Dokumentiert in PLAN_ARCHIVING.md und DECISIONS.md.
+Nächste Besprechung: Archivstruktur/Herkunft, danach Konfiguration und sicherer
+Zwei-Dateien-Ablauf einschließlich Wiederaufnahme/Undo. Keine Implementierung.
+
 ## Gerätewechsel — Archivierung nur in Planung
 
 Drawer-Stand mit Korrektur 2df1923 nach main integriert und gepusht. Anschließend

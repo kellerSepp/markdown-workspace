@@ -1,8 +1,56 @@
 # Archivierung — Gesprächsstand und Sessionübergabe
 
-Stand: 2026-11-16. **Nur Planung, keine Implementierungsfreigabe.**
-Dieses Dokument hält die Diskussion vor dem Gerätewechsel fest. In der neuen
-Codex-Session zuerst gemeinsam offene Punkte klären, nicht automatisch anfangen.
+Stand: 2026-11-16. **Implementiert auf `feature/archiving`; PO-Handprobe am anderen PC offen.**
+PO hat Commit und Push auf diesen Branch ausdrücklich freigegeben. Kein Merge nach
+main und keine Folgefunktion beauftragt. Dieser aktuelle Stand ersetzt die
+historischen Planungs- und Git-Sperren weiter unten.
+
+## Aktuelle Geräteübergabe
+
+Archivierung ist implementiert; Bedienung und acht Schritte zur synthetischen
+Handprobe stehen in `docs/ARCHIVING.md`. Erneut geprüft: 561/561 Tests seriell,
+Build und Diffcheck grün. Frühere unabhängige QA laut PROJECT_STATUS; in dieser
+Übergabesession keine neue unabhängige oder native QA. Native Dialog-/Keyboard-/
+Rechte-/Neustartprobe und Langzeitprüfung bleiben offen.
+
+Am anderen PC Repository aktualisieren und `feature/archiving` auschecken.
+Persönliche Vaults durch Agenten nicht öffnen; nur synthetische Daten unter
+`test-vault/archiving` verwenden. Lokale Nutzerbilder `images/Archive/` bleiben
+uncommittet auf diesem PC und werden durch den Push nicht übertragen.
+Nächster Schritt: PO testet, Codex unterstützt bei Befunden. Kein automatischer
+Merge und keine weitere Funktion. Historische Diskussion unten dient als Kontext.
+
+## Bestätigter Nachtrag — 2026-11-16
+
+PO hat anschließend die Implementierung auf eigenem Branch ausdrücklich
+beauftragt (`feature/archiving`). Bestätigt: Root auf H1 am Archivende,
+relative Kinder erhalten; ARCHIVE_TIME/FILE/OLPATH/TODO ergänzen. Kleiner
+Zieldialog, Standardziel vorausgewählt, neue Datei nur in bestehenden Ordnern.
+Offene Aufgaben mit Anzahl und Bestätigung; einfache y/n-Bestätigung einstellbar.
+Ungespeicherte Quelle wird nach Hinweis mitgespeichert. Neue Historybasis nach
+Archivierung, eigene konfliktgeprüfte Wiederherstellung statt normalem Undo.
+Storage-Rolle prüft/implementiert begrenzt Journal, Backup und Wiederaufnahme.
+Diese Freigabe ersetzt die Planungssperren dieses Dokuments für dieses Paket.
+Kein Commit/Push/Merge/Deploy oder weitere Funktionen daraus ableiten.
+
+PO bestätigt ein Standardarchiv pro Vault mit weiteren frei wählbaren
+Archivdateien bei Bedarf, etwa für Privat, Beruflich oder Steuer. Extern bedeutet
+außerhalb der Quelldatei, innerhalb desselben Vaults. Beim Archivieren ist das
+Standardziel vorausgewählt; ein anderes festgelegtes Archivziel ist wählbar.
+Konkrete Namen/Pfade und Speicherung der Zielauswahl bleiben zu planen.
+
+Alle ausdrücklich festgelegten Archivdateien werden von der Agenda ausgeschlossen:
+Wochenagenda und TODO-Liste dürfen diese Dateien nicht durchsuchen oder daraus
+Einträge anzeigen. Normales Öffnen und Bearbeiten bleibt möglich. Keine Erkennung
+allein anhand eines Dateinamens. Der ältere offene Gesprächsstand unten ist in
+diesen Punkten durch diesen Nachtrag ersetzt.
+
+Abnahme für diese Entscheidung: Standardziel und alternatives Ziel sind wählbar;
+Einträge aus sämtlichen festgelegten Archiven erscheinen auch nach Refresh oder
+Neustart nicht in der Agenda. Gleichnamige, nicht als Archiv festgelegte Dateien
+werden nicht pauschal ausgeschlossen. Verhalten bei Zielwechsel/Entfernen eines
+Archivziels und der genaue Konfigurationsort bleiben offen. Nur Planungsentscheidung,
+keine Implementierungsfreigabe.
 
 ## Technischer Ausgangspunkt
 
@@ -112,23 +160,15 @@ Keine Änderung an App, Storage, Registry, Index oder Shortcuts aus diesem
 ## Kopierbarer Startprompt für die nächste Codex-Session
 
 ```text
-Wir setzen die gemeinsame Planung zur externen Archivierung fort.
-Lies zuerst AGENTS.md und docs/PLAN_ARCHIVING.md, danach nur relevante
-Projektdokumente. Prüfe Branch/Git-Status; letzter integrierter Featurestand
-ist 2df1923 (Drawers), spätere Dokumentationscommits können darüber liegen.
-Nutzerdateien und untracked Bilder erhalten. Es gibt noch keine Freigabe
-zur Implementierung der Archivierung und keine pauschale Git-Freigabe.
-
-Bestätigt: externe Archivdatei; gewählten H1–H6-Unterbaum vollständig mit
-allen Kindern/Inhalten verschieben; offene TODO-/ONHOLD-Kinder dürfen mit,
-gerne mit Hinweis. Sammelarchivierung mehrerer unabhängiger Unterbäume ist
-ein anderer Punkt und zunächst nicht vorgesehen.
-
-Noch gemeinsam klären: zentrale Archivdatei pro Vault und Konfiguration,
-Agenda-Ausschluss, Archivstruktur/Metadaten und besonders sicherer
-Zwei-Dateien-Ablauf samt Konflikten, Wiederaufnahme und Duplikatvermeidung.
-Der bisherige Agent schlug vor: Archiv zuerst speichern/verifizieren,
-erst dann aus Quelle entfernen/speichern; keine gemeinsame Atomarität
-behaupten. Bitte knüpfe hier an und besprich den nächsten begrenzten
-Schritt mit mir, ohne schon zu implementieren.
+Wir setzen die PO-Probe der implementierten Archivierung fort.
+Lies AGENTS.md, den aktuellen Übergabestand oben in docs/PLAN_ARCHIVING.md
+und docs/ARCHIVING.md. Prüfe Git-Status und Branch feature/archiving.
+Die Implementierung wurde zum Gerätewechsel committed und auf diesen Branch
+gepusht; kein Merge nach main ist freigegeben. 561/561 Tests seriell, Build
+und Diffcheck waren grün; native Handprobe ist noch offen.
+Unterstütze mich bei der Handprobe und dokumentiere Befunde. Keine Folgefunktion
+ableiten. Agenten verwenden ausschließlich synthetische test-vault-Daten.
+Nutzerdateien und Bilder erhalten; lokale images/Archive-Bilder wurden nicht
+mitgepusht. Historische Planungssperren sind durch die dokumentierten Freigaben
+für dieses Paket ersetzt.
 ```
