@@ -57,6 +57,7 @@ export function createSession({store, locks = globalThis.navigator?.locks, id = 
     get path() { return document?.path ?? ''; },
     get vault() { return document?.vault; },
     get hasDocument() { return !!document; },
+    get recovered() { return !!document?.recovered; },
     async open({vault,handle,path}) {
       assertIdle(); await persist(); await permission(vault);
       if (!path || path.split('/').some(part => !part || part === '.' || part === '..') || !/\.md$/i.test(path)) throw new Error('Ungültiger Markdown-Pfad.');
@@ -82,6 +83,26 @@ export function createSession({store, locks = globalThis.navigator?.locks, id = 
           const draft = d.codec.bytes(); let backupName;
           const result = await replace({handle:d.handle,base:d.base,draft,backup:async bytes => { backupName = await backup(d,bytes); }});
           d.base = draft.slice(); d.codec = new TextCodec(draft);
+          d.recovered = false;
+          await persist();
+          return {...result,backupName};
+        });
+      } finally { saving = false; }
+    },
+    async restoreDraft(confirm) {
+      assertIdle(); const d = requireDocument();
+      if (!d.recovered) throw new Error('Zuerst den gewünschten Browser-Entwurf laden.');
+      saving = true;
+      try {
+        await persist(); await permission(d.vault);
+        if (!locks) throw new Error('Web Locks fehlt; Wiederherstellen blockiert.');
+        return await locks.request('storage-spike-write',async () => {
+          const current = await read(d.handle), draft = d.codec.bytes();
+          if (!await confirm({vaultName:d.vault.name,path:d.path})) return {cancelled:true};
+          let backupName;
+          const result = await replace({handle:d.handle,base:current,draft,backup:async bytes => {backupName = await backup(d,bytes);}});
+          // Adopt the new base only after the existing backup/write/readback path succeeds.
+          d.base = draft.slice(); d.codec = new TextCodec(draft); d.recovered = false;
           await persist();
           return {...result,backupName};
         });
@@ -100,7 +121,7 @@ export function createSession({store, locks = globalThis.navigator?.locks, id = 
       assertIdle(); await persist(); const d = await store.get(key);
       if (!d) throw new Error('Entwurf nicht gefunden.');
       const codec = new TextCodec(d.draft), previous = document;
-      document = {...d,codec,key:'draft:' + id()};
+      document = {...d,codec,recovered:true,key:'draft:' + id()};
       try { await persist(); } catch (error) { document = previous; throw error; }
       return {path:d.path,text:codec.text};
     }

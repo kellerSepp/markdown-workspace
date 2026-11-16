@@ -1,5 +1,25 @@
 # Projektstatus
 
+## Editorfokus nach Strg+S erhalten — PO-Probe
+
+Speichern setzt den Editor vorübergehend auf nicht editierbar; dabei kann der Browser dessen Fokus verlieren. Für den regulären `file.save`-Aufruf wird vor Busy der Editorfokus aufgenommen und nach Ende der Sperre wiederhergestellt, auch im Fehlerfall. Dokumentidentität und Fensterfokus müssen erhalten sein. Expliziter Fokuswechsel während des Speicherns oder Start außerhalb des Editors erhält das andere Ziel; kein Fokusraub gegenüber Agenda/Panels. Auswahl/History unverändert, Scrollposition nach Fokuswiederherstellung erhalten. Gemeinsamer Speicherkern und Agenda-Autosave unverändert.
+
+490/490 Tests im seriellen Gesamtlauf, Build, zwei Syntaxprüfungen und Diffcheck grün. Drei neue Gruppen einschließlich echtem App-Run-/Bindcallback bei Erfolg/Fehler, Außenfokus, Fensterblur und Dokumentwechsel. Keine native Browserprobe behauptet. Nach Strg+F5 im Editor speichern und unmittelbar weiterschreiben, auch bei sichtbarer Agenda. Keine Dependencies/Storageänderung/Git-Integration.
+
+## Listen-Enter: falsche Strukturablehnung bei längerem Folgeinhalt korrigiert — PO-Probe
+
+487/487 Tests im seriellen Gesamtlauf, Build, zwei Modul-Syntaxprüfungen und Diffcheck grün. Drei neue Prüfgruppen. Keine native Browserprobe oder unabhängige QA-Abnahme behauptet.
+
+PO beschreibt sporadisch blockiertes Enter/Alt+Enter/Alt+Shift+Enter auf Listenzeilen, abhängig vom restlichen Dateiinhalt; ausdrücklich auch gefüllte Listenpunkte, nicht pauschal jede nachfolgende Überschrift. Synthetisch reproduziert: Validierung der geplanten Listenänderung vervollständigt Parserkontext, liest anschließend jedoch den älteren Statebaum. Blöcke hinter dem anfänglichen Parserbereich scheinen dadurch verschwunden, ganze Aktion wird als unsichere Umdeutung abgelehnt. Regression vor Fix rot, danach grün. Validierungsstate übernimmt nun vollständigen Baum vor Strukturvergleich. Entsprechende Übernahme bei Checklisten-Zwischenständen/Strukturnormalisierung ergänzt; Sicherheitsprüfungen bleiben bestehen.
+
+Prüfung umfasst leere und gefüllte Listenpunkte, kurze/lange Folgen mit Überschrift, weiterer Liste, Code, Zitat oder Trennlinie, echte Enter-Router sowie Checkboxkonvertierung/-einfügung mit entfernten Zählern und atomarem Cursor-Undo/Redo. Konkrete persönliche Datei nicht geöffnet; Übereinstimmung mit PO-Fall bleibt native Probe nach Strg+F5. Kein Anspruch, jede denkbare Syntaxkombination damit behoben zu haben. Keine Dependencies/Storageänderung/Git-Integration.
+
+## Geladenen Entwurf als Dateistand übernehmen — PO-Probe
+
+484/484 Tests im seriellen Gesamtlauf, Build, drei Modul-Syntaxprüfungen und Diffcheck grün. Acht neue Prüfgruppen einschließlich tatsächlichem Apphandler; keine native Browserprobe oder unabhängige QA-Abnahme behauptet.
+
+PO gibt gezieltes Ersetzen nach Bestätigung mit vorheriger Sicherung ausdrücklich frei. Neuer Button im Entwurfsbereich und Registry/Palette `draft.restore`: nur wiederhergestellter geladener Entwurf, konkrete Vault-/Pfadbestätigung, bestehender Web Lock und bestehender Replace-/Backup-/Readbackpfad mit frisch gelesenem Erwartungsstand. Reguläres Speichern behält seine bisherige Konfliktbasisprüfung. Nach Erfolg neue Ladebasis, Browserentwürfe erhalten. Keine Löschung, kein automatischer Merge, kein allgemeiner Vergleich/Export. Native Probe und Grenzen: [DRAFT_RESTORE.md](DRAFT_RESTORE.md). Keine Dependencies/Git-Integration; bekanntes externes Schreibfenster unverändert.
+
 ## Follow: Einträge der geöffneten längeren Datei erhalten — PO-Probe
 
 PO meldet erfolgreiche Quellenwechsel, aber verschwindende Agendaeinträge der aktuellen Datei. Synthetisch mit Aufgabe hinter dem initialen Parserbereich reproduziert: vollständiger Parserkontext und unveränderlicher Language-State enthielten unterschiedliche Baumstände. Der Editorindex las den alten Baum und ersetzte damit die gespeicherten Einträge durch eine leere Auswertung. Vor der gemeinsamen Agenda-Auswertung übernimmt eine abgeleitete No-op-Transaktion den fertigen Parserbaum. Echter Editor, Dokument, Auswahl und History werden nicht verändert; vorhandene Parser und Indexschichten bleiben erhalten.

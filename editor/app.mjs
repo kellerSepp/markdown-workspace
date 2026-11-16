@@ -138,7 +138,7 @@ handlers['view.line-wrap']=()=>{
 };
 handlers['agenda.refresh']=()=>{void agendaIndex.rebuild();return true;};
 // The historical synthetic field/id now means acknowledged Alpha conditions.
-const registry=createCommandRegistry(commandDefinitions(handlers,id=>!(usesSharedWorkPanel(id)||id==='editor.confirm'&&confirmAction(view.state)==='tags.edit')||prepareWorkPanel()),()=>({busy,agendaActive:!!agenda?.active,agendaDocked:!!agenda?.docked,agendaFocused:!!agenda?.active&&agenda.element.contains(document.activeElement),agendaCanStatus:!!agenda?.canStatus,agendaStatusActive:!!agendaStatus?.active,filePickerActive:!!filePicker?.active,hasDocument:!!session?.hasDocument,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
+const registry=createCommandRegistry(commandDefinitions(handlers,id=>!(usesSharedWorkPanel(id)||id==='editor.confirm'&&confirmAction(view.state)==='tags.edit')||prepareWorkPanel()),()=>({busy,agendaActive:!!agenda?.active,agendaDocked:!!agenda?.docked,agendaFocused:!!agenda?.active&&agenda.element.contains(document.activeElement),agendaCanStatus:!!agenda?.canStatus,agendaStatusActive:!!agendaStatus?.active,filePickerActive:!!filePicker?.active,hasDocument:!!session?.hasDocument,recovered:!!session?.recovered,state:view.state,vault,synthetic:$('synthetic').checked,file:$('files').value,draft:$('drafts').value,structure:{children:$('structureChildren').checked,prefix:$('listPrefix').value}}),status);
 const surfaces=createCommandSurfaces({registry,view,notify:status,blocked:()=>!!filePicker?.active||!!agendaStatus?.active||!!agenda?.active&&(!agenda.docked||agenda.element.contains(document.activeElement))});
 workPanel=createWorkPanel({host:$('workPanel'),workspace:$('editorWorkspace'),view,ring:emacs.ring,getContext:editingContext,insert:(id,target)=>emacs.insertRingEntry(view,id,target),notify:status});
 function syncAgendaFileSelection(){
@@ -323,7 +323,7 @@ async function run(action) {
     if (persistPending) timer = setTimeout(() => {void persistDraft();},300);
   }
 }
-const actionIds={choose:'workspace.choose',grant:'workspace.grant',scan:'workspace.scan',open:'file.open',save:'file.save',check:'file.check',listDrafts:'draft.list',recover:'draft.recover'};
+const actionIds={choose:'workspace.choose',grant:'workspace.grant',scan:'workspace.scan',open:'file.open',save:'file.save',check:'file.check',listDrafts:'draft.list',recover:'draft.recover',restoreDraft:'draft.restore'};
 function bind(id, action) {handlers[actionIds[id]]=()=>run(action);}
 function requireSynthetic() {if (!$('synthetic').checked) throw Error('Alpha-Nutzungshinweis zuerst bestätigen.');}
 async function sameVault(left,right){
@@ -405,6 +405,14 @@ bind('recover', async () => {
   void agendaIndex.selectVault(vault);
   $('files').replaceChildren();
   syncEditor(); persistPending = false; status('Entwurf geladen. Vor Speichern werden Rechte und externe Änderungen geprüft.');
+});
+bind('restoreDraft', async () => {
+  requireSynthetic();
+  const result=await session.restoreDraft(({vaultName,path})=>window.confirm(`Entwurf als Dateistand übernehmen?\n\nDatei: ${vaultName}/${path}\n\nDer aktuell im Editor geladene Entwurf ersetzt den gesamten Dateiinhalt. Der bisherige Dateistand wird vorher gesichert.`));
+  if(result.cancelled){status('Übernahme abgebrochen. Datei und Entwurf bleiben erhalten.');return;}
+  persistPending=false;
+  if(await sameVault(session.vault,vault))void agendaIndex.updateFile(session.path,vault);
+  status(result.unchanged?'Entwurf entspricht bereits der Datei. Ladefassung aktualisiert.':`Entwurf übernommen und geprüft. Sicherung des vorherigen Dateistands: ${result.backupName}`);
 });
 window.addEventListener('keydown', event => {
   if (event.ctrlKey && !event.altKey && !event.metaKey && !event.shiftKey && !event.isComposing && event.key.toLowerCase() === 's') {

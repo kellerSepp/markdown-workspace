@@ -22,10 +22,21 @@ test('Registry prüft IDs, sucht alle Metadaten und prüft Kontext beim Ausführ
   assert.throws(()=>createCommandRegistry([{...command,id:'../external'}],()=>context));
   assert.equal(registry.execute('external.code'),false);
 });
+
+test('Entwurfsübernahme ist nur für geladenen Entwurf und erlaubten Leerlauf verfügbar',()=>{
+ let context=base(state('Entwurf')),calls=0;
+ const registry=createCommandRegistry(commandDefinitions({'draft.restore':()=>++calls}),()=>context);
+ assert.equal(registry.execute('draft.restore'),false);
+ context.recovered=true;assert.equal(registry.execute('draft.restore'),1);
+ for(const change of [{busy:true},{synthetic:false},{hasDocument:false},{recovered:false}]){
+  const saved=context;context={...saved,...change};assert.equal(registry.execute('draft.restore'),false);context=saved;
+ }
+ assert.equal(calls,1);
+});
 test('Registrierte Befehle unterscheiden fehlende Datei, Busy, Auswahl, Code, H1/H6 und Undo',()=>{
   let context=base(state('# Titel\nText'));const handlers=Object.fromEntries(COMMAND_METADATA.map(c=>[c.id,()=>true]));
   const registry=createCommandRegistry(commandDefinitions(handlers),()=>context);
-  assert.equal(registry.list().length,96);
+  assert.equal(registry.list().length,97);
   assert.equal(registry.availability('structure.heading-promote').enabled,false);
   assert.equal(registry.availability('structure.heading-demote').enabled,true);
   assert.equal(registry.availability('format.bold').enabled,false);

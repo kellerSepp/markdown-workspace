@@ -13,6 +13,22 @@ import {commandDefinitions} from './commands.mjs';
 
 function view(doc,anchor=doc.length,extra=[]){const v={hasFocus:true,state:EditorState.create({doc,selection:{anchor},extensions:[markdown({base:markdownLanguage}),todoRules,history(),checklistNormalization(),...extra]})};ensureSyntaxTree(v.state,v.state.doc.length,100);v.dispatch=spec=>{v.state=spec.state??v.state.update(spec).state;ensureSyntaxTree(v.state,v.state.doc.length,100);};return v;}
 const text=v=>v.state.doc.toString();
+
+test('Long document tail preserves checkbox insertion, remote counters and atomic cursor history',()=>{
+ const tail='\n\n'+('Ordinary text. '.repeat(500))+'\n\n# Remote [1/1]\n- [x] Keep\n';
+ for(const item of ['- ','- Existing text','- [ ] ','- [ ] Existing text']){
+  const prefix='# Current [0/1]\n',doc=prefix+item+tail,anchor=prefix.length+item.length,v=view(doc,anchor);
+  v.dispatch({});
+  const messages=[];assert.equal(runTaskInsert(v,m=>messages.push(m)),true,messages.join('; '));
+  const expected=item.startsWith('- [ ]')?'# Current [0/2]\n'+item+'\n- [ ] '+tail:prefix+item.replace('- ','- [ ] ')+tail;
+  assert.equal(text(v),expected);const after=v.state.selection.main.head;
+  if(item.startsWith('- [ ]')||item==='- ')assert.equal(text(v).slice(after-4,after),'[ ] ');
+  else assert.equal(after,anchor+4);
+  assert.equal(undoDepth(v.state),1);
+  assert.equal(undo(v),true);assert.equal(text(v),doc);assert.equal(v.state.selection.main.head,anchor);
+  assert.equal(redo(v),true);assert.equal(text(v),expected);assert.equal(v.state.selection.main.head,after);
+ }
+});
 test('Shift+Alt+Enter converts the current dash item at every column, without new lines',()=>{
   for(const line of ['-','- ','- Hallo ä😀','  - Kind'])for(const anchor of [0,line.length]){
     const v=view(line,anchor);assert.equal(runTaskInsert(v),true,line);assert.equal(text(v),line==='-'?'- [ ] ':line.replace(/(- *)(.*)/,'$1[ ] $2'));assert.equal(v.state.doc.lines,1);assert.equal(undoDepth(v.state),1);undo(v);assert.equal(text(v),line);

@@ -38,8 +38,9 @@ export function planChecklist(state,id='toggle'){
   let changes=state.changes([]);
   if(id==='toggle')changes=state.changes({from:c.item.mark.from+1,to:c.item.mark.from+2,insert:c.item.value==='x'?' ':'x'});
   if(id==='marker')changes=state.changes(c.item.mark?{from:c.item.mark.from,to:c.item.mark.end,insert:''}:{from:c.item.body,insert:(state.doc.sliceString(c.item.body-1,c.item.body)===' '?'':' ')+'[ ] '});
-  const intermediate=changes.empty?state:state.update({changes,filter:false}).state;
+  let intermediate=changes.empty?state:state.update({changes,filter:false}).state;
   if(!ensureSyntaxTree(intermediate,intermediate.doc.length,100))return {message:'Checklisten: Dokument noch nicht vollständig analysiert.'};
+  intermediate=intermediate.update({filter:false}).state;
   const model=readChecklists(intermediate);if(model.message)return model;
   const range=scope(c),ranges=id==='refresh'?undefined:[{from:changes.mapPos(range.from,-1),to:changes.mapPos(range.to,1)}];
   const normalized=checklistEdits(model,ranges);if(normalized.message)return normalized;
@@ -61,8 +62,9 @@ export function runChecklist(view,id,notify=()=>{}){
 export function checklistNormalization(notify=()=>{}){return EditorState.transactionFilter.of(tr=>{
   if(!tr.docChanged||tr.startState.readOnly||!['move.list','move.structure','move.line-move','input.meta-return'].includes(tr.annotation(Transaction.userEvent)))return tr;
   if(!/\[(?:[ xX-]|\d*\/\d*|\d*%)\]/.test(tr.startState.doc.toString())&&!/\[(?:[ xX-]|\d*\/\d*|\d*%)\]/.test(tr.newDoc.toString()))return tr;
-  const before=readChecklists(tr.startState),state=tr.state;
+  const before=readChecklists(tr.startState);let state=tr.state;
   if(!ensureSyntaxTree(state,state.doc.length,100)||before.message){notify('Strukturaktion verworfen: Checklisten noch nicht vollständig analysiert.');return [];}
+  state=state.update({filter:false}).state;
   const model=readChecklists(state);if(model.message){notify(model.message);return [];}
   const ranges=[];
   tr.changes.iterChangedRanges((fromA,toA,from,to)=>{

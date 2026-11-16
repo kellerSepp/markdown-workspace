@@ -45,6 +45,7 @@ add('file.find','Datei öffnen/anlegen','Datei','Vault-relativen Markdown-Pfad v
 add('file.save','Datei speichern','Datei','Explizit mit vorhandener Sicherungs- und Konfliktprüfung speichern.','document',c=>synthetic(c)||documentReason(c),'Strg+S');
 add('file.check','Datei auf externe Änderungen prüfen','Entwicklung','Dateirechte und externe Änderungen prüfen.','document',documentReason);
 add('draft.list','Browser-Entwürfe auflisten','Wiederaufnahme','Entwürfe dieses Browsers und Origins auflisten.','global',idle);
+add('draft.restore','Entwurf als Dateistand übernehmen …','Wiederaufnahme','Geladenen Browser-Entwurf nach Bestätigung und Sicherung des aktuellen Dateistands übernehmen.','document',c=>synthetic(c)||documentReason(c)||(!c.recovered?'Zuerst den gewünschten Browser-Entwurf laden.':''));
 add('draft.recover','Ausgewählten Entwurf laden','Wiederaufnahme','Gewählten Entwurf nach Sicherung des aktuellen Entwurfs laden.','draft',c=>synthetic(c)||(!c.draft?'Bitte zuerst einen Browser-Entwurf auswählen.':''));
 for(const [id,name] of [['collapse','Abschnitt einklappen'],['reveal','Nächste Sichtbarkeitsstufe'],['open','Abschnitt vollständig öffnen']])
   add('fold.'+id,name,'Folding','Ansicht des aktuellen Abschnitts oder lokalen Blocks verändern; Text bleibt erhalten.','editor',c=>documentReason(c)||(!foldingContext(c.state)?'Kein faltbarer Abschnitt oder Block im Cursorkontext.':''),id==='collapse'?'Strg+Umschalt+,':id==='reveal'?'Strg+Umschalt+.':'');
