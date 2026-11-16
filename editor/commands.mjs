@@ -1,3 +1,4 @@
+import {drawerContext} from './drawers.mjs';
 import {logbookContext} from './logbook.mjs';
 import {refileContext} from './refile.mjs';
 import {planSubtreeReturn} from './subtree-return.mjs';
@@ -27,6 +28,7 @@ const idle=c=>c.busy?'Ein Vorgang läuft.':'';
 const synthetic=c=>idle(c)||(!c.synthetic?'Alpha-Nutzungshinweis zuerst bestätigen.':'');
 const vault=c=>idle(c)||(!c.vault?'Bitte zuerst einen Vault wählen.':'');
 const catalog=[];
+add('drawer.create','Drawer anlegen …','Folding','Benannten Drawer anlegen oder vollständige Textzeilen darin verpacken.','editor',c=>documentReason(c)||drawerContext(c.state).message||'');
 add('logbook.note','Logbuchnotiz hinzufügen …','Aufgaben','Zeitgestempelte mehrzeilige Notiz im eigenen LOGBOOK ergänzen.','editor',c=>documentReason(c)||logbookContext(c.state).message||'');
 add('startup.configure','Startansicht festlegen …','Folding','STARTUP-Dateioption wählen: Trees einklappen, Überschriften oder Ebenen anzeigen; wirkt beim nächsten Öffnen.','editor',c=>documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':''));
 add('tags.edit','Tags bearbeiten','Tags','Eigene Tags wählen oder frei ergänzen; geerbte Tags getrennt anzeigen.','editor',c=>documentReason(c)||tagContext(c.state).message||'');

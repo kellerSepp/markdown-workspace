@@ -24,6 +24,7 @@ import {usesSharedWorkPanel} from './agenda-command-policy.mjs';
 import {createCommandSurfaces} from './command-surfaces.mjs';
 import {ORG_STRUCTURE,runOrgStructure} from './org-structure.mjs';
 import {cycleOrgVisibility} from './org-folding.mjs';
+import {createDrawerController} from './drawers.mjs';
 import {createLogbookController} from './logbook.mjs';
 import {applyStartupVisibility} from './startup-visibility.mjs';
 import {createStartupSettings} from './startup-settings.mjs';
@@ -216,6 +217,8 @@ async function executeFilePath(path,{current,onCommit}){
 }
 const refile=createRefileController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['structure.refile-h1']=()=>refile.open();
+const drawer=createDrawerController({view,panel:workPanel,getContext:editingContext,notify:status});
+handlers['drawer.create']=()=>drawer.open();
 const logbook=createLogbookController({view,panel:workPanel,getContext:editingContext,notify:status});
 handlers['logbook.note']=()=>logbook.open();
 const todo=createTodoController({view,panel:workPanel,getContext:editingContext,notify:status});

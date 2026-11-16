@@ -1,7 +1,14 @@
 # Vorschlag: allgemeine benannte Drawer
 
-Status: nur vorbereitet, keine Implementierungsfreigabe. LOGBOOK ist bereits
-umgesetzt; dessen Bedienung und Wiederholungsprotokolle bleiben erhalten.
+Status: PO hat das vorbereitete Paket am 2026-11-16 ausdrücklich zur Umsetzung
+freigegeben, einschließlich Faltung und Palettenbefehl. LOGBOOK ist auf main
+integriert (abeec08); Umsetzung auf feature/drawers. LOGBOOK-Bedienung und
+Wiederholungsprotokolle bleiben erhalten. Nach Bericht für native PO-Probe stoppen;
+kein Commit/Push/Merge dieses Pakets ohne neuen Auftrag.
+
+Umsetzung inzwischen abgeschlossen, unabhängige QA 525/525 Tests grün; Details
+und praktische Abnahme in DRAWERS.md und PROJECT_STATUS.md. Nachfolgend ist der
+freigegebene begrenzte Entwurf zur Nachvollziehbarkeit erhalten.
 
 ## Ziel und begrenzter Umfang
 

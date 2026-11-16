@@ -1,5 +1,8 @@
 # Manuelle Logbuchnotizen
 
+Für allgemeine benannte Drawer wie PEOPLE siehe [DRAWERS.md](DRAWERS.md).
+Diese Anleitung beschreibt weiterhin das gesonderte manuelle LOGBOOK-Paket.
+
 Auf einer normalen H1–H6-Überschrift oder in deren Textkörper: **C-c z**
 (Strg+C, beide Tasten loslassen, unmodifiziertes z). Alternativ Alt+X und
 „Logbuchnotiz hinzufügen …“ suchen oder Editor-Kontextmenü verwenden.

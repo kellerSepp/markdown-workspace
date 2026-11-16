@@ -1,5 +1,55 @@
 # Projektstatus
 
+## Drawer — Integration vom PO autorisiert
+
+PO bestätigt den besprochenen Drawer-Stand und beauftragt ausdrücklich Commit,
+Merge nach main und Push, einschließlich Absicherung ungültiger Heading-Inhalte.
+Letzter unabhängiger Prüfstand: 536/536 Tests seriell, Build, fünf Syntaxchecks
+und Diffcheck grün. Native Vollmatrix/Langzeit bleibt davon getrennt offen.
+Keine Folgefunktion freigegeben; Nutzerbild bleibt außerhalb des Commits.
+
+## Drawer: PO-Headingbeispiel und ungültige Alt-Faltungen korrigiert
+
+PO meldet `:ZUTATEN:` mit Markdown-Heading und Checklisten bis `:END:`: Tab auf
+Headingzeile faltet scheinbar den Drawer. Headinginhalt bleibt laut Vertrag
+ungültig; kein neues Plaintext-/Heading-in-Drawer-Modell eingeführt. Getrennte
+Diagnosespannen stoppen Tab/Shift+Tab und positionsbezogene Faltaktionen mit
+Hinweis, ohne fremde sichere Headings pauschal zu sperren. Ein ViewPlugin entfernt
+nach Rohtextänderungen nur zuvor bekannte, gemappte und inzwischen ungültige
+Drawerfaltungen per einmaligem Microtask. Keine Textreparatur oder Historyeingabe;
+normale Markdownfarbe kann weiter sichtbar sein. Synthetische Handprobe
+`test-vault/drawers/heading-invalid.md`, Anleitung `docs/DRAWERS.md`.
+
+Final **536/536 Tests** seriell, Build, fünf Syntaxchecks und Diffcheck grün.
+Fünf Developer- und sechs neue unabhängige QA-Gruppen zu exaktem PO-Beispiel,
+H1–H6, interaktiver Invalidierung, schneller Reparatur/Positionsmapping, Undo/Redo,
+Destroy/neuem Zustand, Readonly/Escape und sicheren Nachbarn. Kein neuer belegter
+Blocker im geprüften Umfang; native Browser-/IME-/AltGr-/Stundenprobe bleibt offen.
+Kein Commit/Push/Merge; auf feature/drawers für erneute PO-Probe stoppen.
+
+## Allgemeine Drawer — implementiert, native PO-Probe
+
+PO autorisiert LOGBOOK-Merge nach main und anschließend das vorbereitete
+Drawer-Paket. `main` per Fast-forward auf abeec08 übernommen und zu origin
+gepusht. Neuer Arbeitsbranch `feature/drawers`. Gültige allgemeine Drawer,
+Tab-Faltung, Palettenbefehl zum Anlegen oder Verpacken vollständiger Textzeilen;
+kein neues Shortcut, keine allgemeine Properties-Verwaltung/automatischen Logs.
+Developer hat begrenzt implementiert, QA unabhängig geprüft. Handprobe
+`docs/DRAWERS.md`, synthetischer Probevault `test-vault/drawers`. Nutzerbild
+`images/drawers_preview.png` erhalten. Kein Commit/Push/Merge des neuen Pakets
+ohne erneuten Auftrag; nach Abschluss für native PO-Probe stoppen.
+
+Final **525/525 Tests** im seriellen Gesamtlauf, Build, fünf Syntaxchecks und
+Diffcheck grün. Neue Developer-Gruppen für Scanner, H1–H6, Auswahl/EOF/History,
+Metadatenschutz, Controller/Form und echte Panelanbindung; unabhängige QA acht
+Gruppen einschließlich tatsächlichem Agenda-Parser und Wiederholungsabschluss
+sowie 300 kurzen Faltzyklen ohne Text-/Faltzustandsabweichung. P2 offenes Heading
+mit geschlossenem Drawer ließ sich über Gutter nicht einklappen: Zustandsvergleich
+trennt jetzt Drawerfaltungen; Placeholder-/Gutteradapter zielen auf den Drawer.
+Korrigiert und unabhängig geschlossen. Kein weiterer belegter Blocker im geprüften
+Umfang; native Tastenzustellung/Layout/IME/AltGr und Stundenstabilität bleiben offen.
+Bericht `_Communication_Pipeline/qa_drawers.md`.
+
 ## LOGBOOK praktisch positiv — Abschluss und Drawer-Vorbereitung
 
 PO meldet „scheint zu funktionieren“ und autorisiert Commit/Push des aktuellen

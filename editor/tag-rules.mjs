@@ -1,10 +1,11 @@
 import {StateField,StateEffect} from '@codemirror/state';
 import {syntaxTree,syntaxTreeAvailable,ensureSyntaxTree} from '@codemirror/language';
 import {frontmatterEnd} from './structure.mjs';
+import {planningDrawerRanges,inPlanningDrawer} from './planning-drawers.mjs';
 import {validTag} from './heading-suffix.mjs';
 
 function definition(state,line){
-  if(line.from<frontmatterEnd(state)||!/^ {0,3}#\+TAGS\b/i.test(line.text))return false;
+  if(line.from<frontmatterEnd(state)||inPlanningDrawer(planningDrawerRanges(state),line.from)||!/^ {0,3}#\+TAGS\b/i.test(line.text))return false;
   for(let n=syntaxTree(state).resolveInner(line.from,1);n;n=n.parent)if(/^(FencedCode|CodeBlock|HTMLBlock|Blockquote|ListItem)$/.test(n.name))return false;
   return true;
 }

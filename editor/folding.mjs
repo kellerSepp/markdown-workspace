@@ -2,6 +2,17 @@ import {EditorState} from '@codemirror/state';
 import {keymap} from '@codemirror/view';
 import {codeFolding, foldGutter, forceParsing, syntaxTreeAvailable} from '@codemirror/language';
 import {collapseContext,revealContext,cycleContext,foldingContext,unfoldExisting} from './section-folding.mjs';
+import {toggleDrawer,guardInvalidDrawer,drawerFoldCleanup} from './drawers.mjs';
+
+// Positions from placeholders/gutter must resolve the drawer before its heading.
+export function revealFoldAt(view,notify,pos){
+  if(guardInvalidDrawer(view,pos,notify))return true;
+  return toggleDrawer(view,pos)||revealContext(view,notify,pos);
+}
+export function cycleFoldAt(view,notify,pos){
+  if(guardInvalidDrawer(view,pos,notify))return true;
+  return toggleDrawer(view,pos)||cycleContext(view,notify,pos);
+}
 
 // The installed Markdown language supplies heading ranges. Do not duplicate its parser.
 export function prepareFold(view, notify = () => {}) {
@@ -25,6 +36,7 @@ export function foldingBindings(notify,execute) {
 }
 export function markdownFolding(notify,execute) {
   return [
+    drawerFoldCleanup,
     codeFolding({placeholderText:'…',placeholderDOM(view) {
       const button=document.createElement('button');
       button.type='button'; button.className='cm-foldPlaceholder'; button.textContent='…';
@@ -32,7 +44,7 @@ export function markdownFolding(notify,execute) {
       button.onclick=event=>{
         event.preventDefault();
         const pos=view.posAtDOM(button);
-        if (prepareFold(view,notify)) revealContext(view,notify,pos);
+        if (prepareFold(view,notify)) revealFoldAt(view,notify,pos);
         else unfoldExisting(view,notify,pos);
         view.focus();
       };
@@ -49,7 +61,7 @@ export function markdownFolding(notify,execute) {
       },
       domEventHandlers:{click(view, line) {
         if (!prepareFold(view,notify)) {unfoldExisting(view,notify,line.from); return true;}
-        if (foldingContext(view.state,line.from)) {cycleContext(view,notify,line.from); return true;}
+        if (foldingContext(view.state,line.from)) {cycleFoldAt(view,notify,line.from); return true;}
         return false;
       }}
     }),

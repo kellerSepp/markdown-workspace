@@ -5,7 +5,7 @@ import {syntaxTree,syntaxTreeAvailable,forceParsing} from '@codemirror/language'
 import {runStructure,frontmatterEnd} from './structure.mjs';
 import {orgShortcutCommand} from './org-structure.mjs';
 import {listContext,listGlobalContinuation,clearListGlobalContinuation,runListInteraction} from './list-interaction.mjs';
-import {toggleLogbook} from './logbook.mjs';
+import {toggleDrawer,guardInvalidDrawer} from './drawers.mjs';
 import {cycleOrgVisibility} from './org-folding.mjs';
 
 const navigation = new WeakSet();
@@ -91,7 +91,8 @@ export function withoutOrgArrowConflicts(bindings) {
   return bindings.filter(binding=>!['Alt-ArrowUp','Alt-ArrowDown','Shift-Alt-ArrowUp','Shift-Alt-ArrowDown'].includes(binding.key));
 }
 export function orgTab(view,outdent,getOrgTab,execute,notify) {
-  if(!outdent&&!navigation.has(view)&&toggleLogbook(view))return true;
+  if(!navigation.has(view)&&guardInvalidDrawer(view,view.state.selection.main.head,notify))return true;
+  if(!outdent&&!navigation.has(view)&&toggleDrawer(view))return true;
   if(!getOrgTab()||navigation.has(view)||outdent&&listGlobalContinuation(view.state)) return null;
   const context=tabContext(view.state);
   if(context==='code') return null;

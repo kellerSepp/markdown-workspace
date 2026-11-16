@@ -1,3 +1,4 @@
+import {createDrawerForm} from './drawer-form.mjs';
 import {createLogbookForm} from './logbook-form.mjs';
 import {EMACS_POLICY} from './emacs-policy.mjs';
 import {createPanelLayout,revealPanelRow} from './panel-layout.mjs';
@@ -148,6 +149,16 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     search.hidden=true;hint.hidden=true;results.hidden=true;message.hidden=true;root.append(detailForm.root);
     layout.setOpen(true,()=>{shell.show('Tags bearbeiten');detailForm.focus();});return true;
   }
+  function openDrawer({choose}){
+    if(destroyed||!ready())return false;close({restore:false});
+    choiceMode={};target={state:view.state,head:view.state.selection.main.head};const saved=target;
+    detailForm=createDrawerForm({document:doc,cancel:()=>close(),commit:name=>{
+      if(!valid()){notify('Drawerziel geändert; erneut öffnen.');return;}
+      if(choose(name,saved)){close({restore:false});focusAfterClose();}
+    }});
+    search.hidden=true;hint.hidden=true;results.hidden=true;message.hidden=true;root.append(detailForm.root);
+    layout.setOpen(true,()=>{shell.show('Drawer anlegen');detailForm.focus();});return true;
+  }
   function openNote({choose}){
     if(destroyed||!ready())return false;close({restore:false});
     choiceMode={note:true};target={state:view.state,head:view.state.selection.main.head};const saved=target;
@@ -221,7 +232,7 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     });return true;
   }
   const unsubscribe=ring.subscribe(()=>{if(!prefixCancel)render();});
-  return {openNote,invalidateStale(){if(choiceMode&&!choiceMode.note&&!valid())close({restore:false});},openTags,openPlanning,openChoices,openRing,showPrefix,moveSelection,activateSelection,close,get isOpen(){return !root.hidden;},refresh:render,preserveViewport:layout.preserve,
+  return {openDrawer,openNote,invalidateStale(){if(choiceMode&&!choiceMode.note&&!valid())close({restore:false});},openTags,openPlanning,openChoices,openRing,showPrefix,moveSelection,activateSelection,close,get isOpen(){return !root.hidden;},refresh:render,preserveViewport:layout.preserve,
     destroy(){if(destroyed)return;close({restore:false});destroyed=true;unsubscribe();for(const dispose of disposers)dispose();clearRows();shell.destroy();layout.destroy();}
   };
 }

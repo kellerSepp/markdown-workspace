@@ -1,5 +1,17 @@
 # Architekturentscheidungen
 
+## Allgemeine Drawer — PO-Freigabe 2026-11-16
+
+Nach Integration des LOGBOOK-Pakets nach main gibt PO das vorbereitete Paket
+`PLAN_DRAWERS.md` frei: benannte Drawer, Tab-Faltung, standardmäßig geschlossen,
+Palette zum Anlegen oder Verpacken vollständiger Textzeilen. ASCII-Namensregel,
+END/LOGBOOK/PROPERTIES reserviert, keine Verschachtelung oder Headinggrenzen.
+Gemeinsame Erkennung statt zweiter Aufgaben-/Metadatenverwaltung; bestehende
+Tags, LOGBOOK, Wiederholungen, Properties und Parser-/Storagegrenzen erhalten.
+Keine neuen Shortcuts/Dependencies/automatischen Statuslogs/allgemeinen Properties.
+Umsetzung feature/drawers, unabhängige Prüfung, danach PO-Probe; keine weitere
+Git-Integration aus der LOGBOOK-Mergefreigabe ableiten.
+
 ## Alpha / Datei öffnen-anlegen — PO-Freigabe 2026-11-08
 
 PO akzeptiert **C-c f** statt Konflikt mit C-x Ausschneiden und verlangt einen kleinen sichtbaren Hinweis/Tooltip. Privater Alpha-Pilotbetrieb auf separatem Vault für praktische Erfahrung ist freigegeben; keine parallele/doppelte Bearbeitung geplant. Diese Freigabe ersetzt die synthetisch-only Produktgrenze nur für den bewusst gewählten Nutzer-Alpha-Vault. Agenten/QA bleiben bei synthetischen Daten. Das bekannte externe Schreibfenster bleibt bestehen, keine neue atomare Sicherheitsgarantie. Begrenzter Pfad-/Dateianlageumfang und Abnahme: [PLAN_FIND_FILE.md](PLAN_FIND_FILE.md). Keine neue Storage-Sicherheitsstrategie, Dependencies/Commit/Push/Deploy oder Folgefunktionen freigegeben.

@@ -1,4 +1,4 @@
-import {logbookRanges} from './planning-drawers.mjs';
+import {drawerFoldRanges} from './planning-drawers.mjs';
 import {syntaxTree, foldable, foldedRanges, foldEffect, unfoldEffect} from '@codemirror/language';
 
 // Structural information comes exclusively from CodeMirror's Markdown syntax tree.
@@ -60,6 +60,14 @@ function within(state,context) {
   });
   return ranges;
 }
+function visibilityWithin(state,context) {
+  const current=within(state,context);
+  if(context.block)return current;
+  // Drawer folds are independent of the enclosing heading's visibility stage.
+  // Keep them for actual unfold/refold effects, but not for stage detection.
+  const drawers=drawerFoldRanges(state);
+  return current.filter(r=>!drawers.some(d=>d.from===r.from&&d.to===r.to));
+}
 const same = (a,b) => a.length===b.length && a.every((r,n)=>r.from===b[n].from && r.to===b[n].to);
 export function visibilityPlans(state,context) {
   if (context.block) return [{name:'vollständig offen',ranges:[]}];
@@ -75,7 +83,7 @@ export function visibilityPlans(state,context) {
   return plans.filter((p,n)=> p.name==='vollständig offen' || p.ranges.length && !plans.slice(0,n).some(before=>same(before.ranges,p.ranges)));
 }
 function applyPlan(view,context,ranges,notify,name) {
-  if(!context.block)ranges=[...ranges,...logbookRanges(view.state).filter(r=>r.from>=context.headerEnd&&r.to<=context.to)];
+  if(!context.block)ranges=[...ranges,...drawerFoldRanges(view.state).filter(r=>r.from>=context.headerEnd&&r.to<=context.to)];
   const effects=within(view.state,context).map(r=>unfoldEffect.of(r)).concat(ranges.map(r=>foldEffect.of(r)));
   const head=view.state.selection.main.head;
   // CodeMirror clears folds covering an explicit selection; move hidden cursors first.
@@ -96,7 +104,7 @@ export function collapseContext(view,notify,pos) {
 export function revealContext(view,notify,pos,fully=false) {
   const context=foldingContext(view.state,pos);
   if (!context) return false;
-  const current=within(view.state,context);
+  const current=visibilityWithin(view.state,context);
   if (!current.length) return true;
   const closed=context.range && current.some(r=>same([r],[context.range]));
   const plans=visibilityPlans(view.state,context);
@@ -108,7 +116,7 @@ export function revealContext(view,notify,pos,fully=false) {
 export function cycleContext(view,notify,pos) {
   const context=foldingContext(view.state,pos);
   if (!context) return false;
-  return within(view.state,context).length ? revealContext(view,notify,pos) : collapseContext(view,notify,pos);
+  return visibilityWithin(view.state,context).length ? revealContext(view,notify,pos) : collapseContext(view,notify,pos);
 }
 
 // Escape hatch for an existing fold while a changed/large document is not fully parsed.

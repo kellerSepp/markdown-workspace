@@ -1,7 +1,7 @@
 import {syntaxTree,syntaxTreeAvailable,forceParsing,foldEffect} from '@codemirror/language';
 import {orgHeadings,orgVisibilityPlans} from './org-folding.mjs';
 import {frontmatterEnd} from './structure.mjs';
-import {planningDrawerRanges,inPlanningDrawer,logbookRanges} from './planning-drawers.mjs';
+import {planningDrawerRanges,inPlanningDrawer,drawerFoldRanges} from './planning-drawers.mjs';
 
 const modes=new Set(['overview','content','showall','showeverything','show2levels','show3levels','show4levels','show5levels']);
 function protectedAt(tree,pos){
@@ -47,7 +47,7 @@ export function applyStartupVisibility(view,notify=()=>{}){
   }
   const plan=startupVisibilityPlan(view.state);
   if(plan.message){notify(plan.message);return false;}
-  plan.ranges=[...(plan.ranges??[]),...logbookRanges(view.state)];
+  plan.ranges=[...(plan.ranges??[]),...drawerFoldRanges(view.state)];
   if(!plan.ranges.length)return true;
   const hidden=plan.ranges.find(r=>view.state.selection.ranges.some(s=>s.from>r.from&&s.from<r.to||s.to>r.from&&s.to<r.to));
   view.dispatch({effects:plan.ranges.map(r=>foldEffect.of(r)),...(hidden?{selection:{anchor:hidden.from}}:{})});

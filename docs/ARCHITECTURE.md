@@ -1,5 +1,15 @@
 # Architekturvorschlag – zur Freigabe
 
+## Allgemeine Drawer — freigegebener Ansatz 2026-11-16
+
+Lesende gemeinsame Erkennung und positionsbezogene Faltbereiche für eindeutig
+geschlossene Drawer außerhalb geschützter Markdown-Kontexte. Fachliche Filter
+für LOGBOOK/PROPERTIES bleiben in Planung/Wiederholung bestehen. Freie Drawer
+sind Inhaltshüllen, keine Aufgaben oder Properties-Konfiguration. Palettenaktion
+verwendet Registry und gemeinsames unteres Panel; Anlage/Verpacken wird als
+validierter atomarer Textplan mit Auswahlmapping umgesetzt. Busy-/Stale-/Readonly-
+und Sessiongrenzen wiederverwenden. Keine Änderung am Dateispeichermodell.
+
 ## Pfadbasierte Dateiöffnung/-anlage / Alpha — freigegeben 2026-11-08
 
 PO bestätigt C-c f und privaten Alpha-Pilotbetrieb ohne paralleles Editieren. Bestehende Registry, Panelbausteine und Session-/Indexpfade verwenden; Dateianlage als getrennten begrenzten Adapter ohne Inhalts-Schreibstream oder Überschreiben. Erstes Paket nur Vault-relative Markdown-Pfade in vorhandenen Ordnern. Lesende Prüfung/Completion getrennt von expliziter Ausführung, Generationenschutz vor allen Seiteneffekten. Nicht abbrechbare Anlage-/Öffnungsphase in der Oberfläche kenntlich machen; bei anschließendem Öffnungsfehler eine entstandene leere Datei benennen und nicht automatisch löschen. Vorhandener Speicher-/Backup-/Konfliktpfad unverändert. Konkrete Abnahme: [PLAN_FIND_FILE.md](PLAN_FIND_FILE.md), Alpha-Nutzungsgrenzen: [ALPHA.md](ALPHA.md). Agenten/QA bleiben bei synthetischen Daten.

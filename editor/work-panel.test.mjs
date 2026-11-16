@@ -16,6 +16,13 @@ import {todoRules,createTodoController} from './todo.mjs';
 import {markdown} from '@codemirror/lang-markdown';
 import {createPlanningController} from './planning.mjs';
 const pluginFacet=ViewPlugin.define(()=>({})).extension.at(-1).facet;
+test('Drawer name dialog reuses shared panel with mouse commit and cancellation',()=>{
+ const f=fixture({docText:'# H\nBody',selection:{anchor:4},extra:markdown()});let value;
+ assert.equal(f.panel.openDrawer({choose:name=>{value=name;return true;}}),true);
+ let form=f.root.children.at(-1),input=form.children[0].children[0];input.value='People';form.children[2].click();
+ assert.equal(value,'People');assert.equal(f.panel.isOpen,false);
+ f.panel.openDrawer({choose:()=>assert.fail('cancel must not commit')});form=f.root.children.at(-1);form.children[3].click();assert.equal(f.panel.isOpen,false);f.panel.destroy();
+});
 test('Logbook shared panel supports multiline commit, cancel and retains input on focus exit',()=>{
  const f=fixture({docText:'# H\nBody',selection:{anchor:2},extra:markdown()});let value;
  assert.equal(f.panel.openNote({choose:text=>{value=text;return true;}}),true);
