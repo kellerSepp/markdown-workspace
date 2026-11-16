@@ -1,5 +1,13 @@
 # Projektstatus
 
+## Gerätewechsel — Archivierung nur in Planung
+
+Drawer-Stand mit Korrektur 2df1923 nach main integriert und gepusht. Anschließend
+externe Archivierung gemeinsam besprochen, noch nicht zur Umsetzung freigegeben.
+Übergabe einschließlich bestätigter Entscheidungen, Agentenvorschläge, offener
+Punkte und kopierbarem Neustartprompt: `docs/PLAN_ARCHIVING.md`.
+PO möchte auf anderem Gerät in neuer Codex-Session genau hier weiterplanen.
+
 ## Drawer — Integration vom PO autorisiert
 
 PO bestätigt den besprochenen Drawer-Stand und beauftragt ausdrücklich Commit,

@@ -3,6 +3,8 @@
 ## Zweck und aktuelles Gate
 Leichtgewichtiger, lokaler Markdown-Arbeitsbereich. PO entscheidet iterativ über Architektur und Umfang. Kurz auf Deutsch berichten.
 
+Neuester Gesprächsstand vor Gerätewechsel: externe Archivierung wird nur gemeinsam geplant, noch keine Implementierungsfreigabe. Entscheidungen, offene Sicherheits-/Agenda-/Konfigurationspunkte und kopierbarer Neustartprompt in docs/PLAN_ARCHIVING.md. Dort anknüpfen; keine automatische Umsetzung. Drawer ist inzwischen auf main integriert/gepusht (2df1923). Lokale untracked Nutzerbilder erhalten.
+
 Neueste PO-Freigabe: Drawer-Paket einschließlich Korrektur ungültiger Heading-Inhalte committen, nach main mergen und pushen. Diese ausdrückliche Integrationsfreigabe ersetzt die nachstehenden historischen Commit-/Push-/Merge-Sperren ausschließlich für dieses Paket. Keine weitere Funktion daraus ableiten. Nutzerbild images/drawers_preview.png weiterhin uncommittet erhalten.
 
 Stand 2026-11-16: STARTUP ist auf main integriert (28523fd). Manuelle LOGBOOK-Notizen auf feature/logbook-notes praktisch positiv vom PO gemeldet. 506/506 Tests im seriellen Gesamtlauf, Build, fünf Syntaxchecks und Diffcheck grün; keine vollständige native/IME/AltGr-/Langzeitabnahme oder unabhängige QA behaupten.
