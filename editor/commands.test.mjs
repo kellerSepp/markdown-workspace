@@ -36,7 +36,7 @@ test('Entwurfsübernahme ist nur für geladenen Entwurf und erlaubten Leerlauf v
 test('Registrierte Befehle unterscheiden fehlende Datei, Busy, Auswahl, Code, H1/H6 und Undo',()=>{
   let context=base(state('# Titel\nText'));const handlers=Object.fromEntries(COMMAND_METADATA.map(c=>[c.id,()=>true]));
   const registry=createCommandRegistry(commandDefinitions(handlers),()=>context);
-  assert.equal(registry.list().length,103);
+  assert.equal(registry.list().length,104);
   assert.equal(registry.availability('structure.heading-promote').enabled,false);
   assert.equal(registry.availability('structure.heading-demote').enabled,true);
   assert.equal(registry.availability('format.bold').enabled,false);

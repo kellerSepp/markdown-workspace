@@ -212,13 +212,14 @@ export function createWorkPanel({host,workspace,view,ring,insert,getContext=()=>
     }
     if(event.key==='Enter'&&event.target!==closeButton){event.preventDefault();if(!event.repeat&&!event.shiftKey)rows[index]?.click();}
   });
-  function showPrefix(choices,choose,cancel){
+  function showPrefix(choices,choose,cancel,{sequence='C-c',argument=false}={}){
     if(destroyed)return false;
+    prefixCancel=null;
     close({restore:false});prefixCancel=cancel;
     layout.setOpen(true,()=>{
-      shell.show('C-c · Folgebefehl');search.hidden=true;
+      shell.show((argument?'Prefixargument · ':'')+sequence+' · Folgebefehl');search.hidden=true;
       root.setAttribute('data-prefix-help','');
-      hint.textContent='C und Strg loslassen · 1 / 2 / 3 / w / t / q (Tags) / z (Logbuchnotiz) / s (Scheduling) / d (Deadline) / a (Agenda) / f (Datei); Strg+C: Kontext bestätigen · Alt+↑/↓ wählen · Enter · Escape/Strg+G · Alt+W kopiert';
+      hint.textContent=(sequence==='C-c'?'C und Strg loslassen':'Tasten loslassen')+' · '+choices.map(c=>(c.label??c.key)+' ('+c.name+')').join(' / ')+' · ↑/↓ oder Alt+↑/↓ wählen · Enter · Escape/Strg+G · Alt+W kopiert';
       message.textContent='';
       for(const choice of choices){
         const row=doc.createElement('button');row.type='button';row.className='work-panel-row';

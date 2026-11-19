@@ -2,7 +2,8 @@
 
 | ID | Name | Kategorie | Verhalten | Voraussetzung | Bedienung | Kürzel | Status | Grenzen |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `archive.subtree` | Unterbaum archivieren … | Archiv | Ganzen Unterbaum extern archivieren und beide Dateien speichern. | Bearbeitbare Quelle und Vault | Palette/Kontextmenü | Kein eigenes Kürzel | Implementiert | Dialog, offene Aufgaben optional y/n; neue Historybasis. |
+| `archive.subtree` | Unterbaum archivieren … | Archiv | Ganzen Unterbaum extern archivieren und beide Dateien speichern. | Bearbeitbare Quelle und Vault | Palette/Kontextmenü | C-c x s / C-c x a | Implementiert | Vollständiger Unterbaum; offene Aufgaben optional y/n; neue Historybasis. |
+| `archive.review` | Archivkandidaten prüfen … | Archiv | Direkte Kinder auf Header, sonst H1-Bäume der Datei; keine offenen TODOs im gesamten Kandidaten. | Bearbeitbare Quelle und Vault | Palette/Kontextmenü | C-c u x s / C-c u x a | Implementiert | Ziel einmal wählen; je Kandidat y/n/Escape; abgeschlossene Schritte bleiben gespeichert. |
 | `archive.resume` | Archivierung fortsetzen | Archiv | Offenen Vorgang bytegeprüft fortsetzen. | Vault, saubere aktuelle Datei | Palette | Kein eigenes Kürzel | Implementiert | Fremde Änderungen blockieren. |
 | `archive.restore` | Archivierung wiederherstellen | Archiv | Letzte abgeschlossene Archivierung zurücknehmen. | Vault, exakt passende Dateistände | Palette | Kein eigenes Kürzel | Implementiert | Quelle zuerst, Archiv danach; eigene Wiederherstellung. |
 

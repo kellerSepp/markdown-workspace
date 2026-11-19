@@ -1,5 +1,114 @@
 # Projektstatus
 
+## Archivierung — Commit und Merge vom PO freigegeben
+
+PO beauftragt Commit des freigegebenen Pakets einschließlich Fokuskorrektur,
+modularen Prefixfolgen C-c u x s/a, Kandidatenprüfung und Plainarrow-/Prüfbereich-
+Korrekturen sowie Merge nach main. Letzter unabhängiger Prüfstand 596/596 Tests
+seriell, Build, vier Syntaxchecks und Diffcheck grün. Kein neuer Pushauftrag;
+Nutzer-Probe-Dateien und Bilder bleiben unverändert außerhalb des Featurecommits.
+
+## PO-Korrektur: wiederholte Archivprüfung und Prefix-Pfeile
+
+Final abgeschlossen: 596/596 Tests seriell, unabhängige QA 3/3, Build,
+vier Syntaxchecks und Diffcheck grün. Echte Registry-/Router-/Panel-/Appfolge
+zweimal mit Plain-Pfeilen/Enter und n→y inklusive Save/Reload geprüft; dritter
+Start erklärt korrekt verbleibende offene Kinder. Ursprünglicher Prüfbereich
+wird wiederhergestellt, Dateimodus ohne künstlichen Text. Bericht
+`_Communication_Pipeline/qa_archive_repeat.md`. Kein belegter Befund im
+geprüften Umfang; native/IME/AltGr/Stundenprobe offen. Kein Commit/Push.
+
+**PO-Ausschnitt klärt den vermeintlichen H1-Restfehler:** Projekt A hat genau
+ein direktes Kind DONE Angebot verschicken mit zwei offenen TODO-Enkeln. Von
+Projekt A aus daher korrekt kein Kandidat; der geschlossene Enkel DONE dasdasda
+wird erst bei Prüfung auf Angebot verschicken als direktes Kind angeboten.
+Filter nicht gelockert, keine rekursive Einzelentnahme eingeführt. Die getrennt
+nachgewiesene Cursor-Rückkehrschwäche und fehlende Plainarrow-Navigation werden
+weiterhin korrigiert und unabhängig geprüft.
+
+Weitere PO-Beobachtung: Meldung erscheint auch nach manuellem Rücksprung auf
+die ursprüngliche H1. Die gefundene Cursor-Rückkehrschwäche erklärt den konkreten
+Fall daher noch nicht vollständig; Kandidatenermittlung nach Reload/erneuter
+H1-Auswahl und tatsächliche Hierarchie müssen zusätzlich geprüft werden.
+Kleiner anonymisierter Headingausschnitt vom PO angefragt; keine Nutzerdateien
+ohne Freigabe dafür öffnen. Org-Auswahlregel bis zur Klärung nicht verändern.
+
+Die vorgenannte Zwischenunsicherheit wurde durch den nachgereichten Ausschnitt
+und die Bestätigung des PO („gesehen und verstanden“) geklärt; kein offener
+H1-Kandidatenfilterfehler. Die Org-Regel bleibt unverändert.
+
+PO meldet: erster Prüfstart funktioniert, zweiter zeigt keinen Dialog bzw.
+„Keine direkten Kinder ohne offene TODO-Aufgaben zum Archivieren“, obwohl
+weitere Kandidaten erwartet werden. Ursache: Kandidatenvorschau bewegt Cursor
+auf Leafheading, Abschluss gab genau diese Position zurück; Folgeaufruf prüft
+dessen Kinder. Korrektur stellt ursprünglichen Prüfbereich ohne Textänderung
+wieder her, statt die vereinbarte Org-Auswahlregel zu ändern. Zusätzlich
+unmodifizierte Pfeile auf allen Prefixebenen erlauben; Alt-Pfeile und Enter
+erhalten, lokale Navigation ohne Editorselectionänderung. Konkreter Auftrag
+begrenzt auf Workflow/Prefixbedienung, Storage unverändert; kein Commit/Push.
+
+## Native PO-Korrektur: Ctrl+U-Kollision in Edge
+
+Mappingkorrektur abgeschlossen: 590/590 Tests seriell, unabhängige QA 8/8,
+Build, vier Syntaxchecks und Diffcheck grün. Reale Prefix-Paneluntergruppen
+und Mauswahl, einmaliges Argument, alte Folgen und 100 kurze Abbruchzyklen
+geprüft. Ctrl+U ohne laufenden Prefix wird vom Router nicht verhindert.
+Neue Folge C-c u x s/a wartet auf native PO-Probe nach Strg+F5.
+
+PO meldet, dass Ctrl+U Quelltext öffnet, und erlaubt Ersatz C-c u x s. Mapping
+wird auf Modifier-Gruppenknoten u im bestehenden datengetriebenen Sequenzbaum
+umgestellt, Alias C-c u x a gleichwertig. C-c x s/a und bestehende Folgen bleiben.
+Kein eigenständiger Ctrl+U-Start, keine globale Browser-Passthroughpolicy und keine
+Änderung am Archivmodell/Storage. Ältere C-u-Angaben sind historische Planung.
+Noch keine native Erfolgsprobe des Ersatzes behauptet, kein Commit/Push/Merge.
+
+## Archivprüfung und mehrstufige Prefixfolgen — Umsetzung freigegeben
+
+**Abgeschlossen für PO-Probe:** 587/587 Tests im seriellen Gesamtlauf, Build,
+fünf Syntaxchecks und Diffcheck grün; unabhängige QA sechs Gruppen, kombiniert
+25/25 gezielte Prüfungen und 100 kurze Prefix-Abbruchzyklen. P2 geschützte
+Beispielheadings störten H1-Kandidatenprüfung korrigiert und unabhängig geschlossen:
+Scope und Kandidaten nur echte Document-ATX-Überschriften außerhalb Frontmatter.
+Kein weiterer belegter Befund im geprüften Umfang. Native Browserzustellung,
+IME/AltGr und Stundenstabilität bleiben offen. Bericht
+`_Communication_Pipeline/qa_archive_review.md`.
+
+Palette „Archivkandidaten prüfen …“, C-u C-c x s/a, y/n/Escape mit vollständiger
+Kandidatenvorschau und sichtbarer Quellposition umgesetzt. Router/Prefixargument
+und Kandidatenmodell/Ablauf getrennt; bestehende Archivtransaktion und Fokusfix
+wiederverwendet, Storage unverändert. Nicht unterstützte Prefixargumentfolgen
+verweigert; Repeat Enter/Space/y/n blockiert unbeabsichtigte Mehrfachaktivierung.
+Kein Commit/Push/Merge; für PO-Probe stoppen.
+
+PO gibt begrenzte modulare Erweiterung auf feature/archiving frei. C-c x s und
+C-c x a archivieren vollständig; C-u davor startet die geeignete Unterbaumprüfung.
+Auf Header direkte Kinder, sonst H1-Bäume; keine offenen Aufgaben im gesamten
+Kandidaten, statuslose Bäume ausdrücklich erlaubt. Ein Ziel pro Durchlauf,
+lokale y/n/Escape-Auswahl, Fehler stoppen sicher. Router/Argument, Kandidatenmodell,
+Ablaufcontroller und bestehender sicherer Schreibpfad getrennt; Storage/Journaling
+unverändert. Fokuskorrektur erhalten. PLAN_ARCHIVE_REVIEW.md hält Umfang/Abnahme
+fest; eigene Handprobe test-vault/archive-review/review.md. Nutzergeänderte
+test-vault/archiving/source.md und untracked Archive/Bilder nicht als Agententests
+verwenden oder verändern. Keine Git-Integration aus dieser Freigabe ableiten.
+
+## Archivierung: Fokus und Cursor nach Bestätigung — PO-Korrektur
+
+PO meldet nach y-Bestätigung fehlenden Editorfokus und wünscht einen Cursor am
+Ort des entfernten Unterbaums. Archivhandler fokussierte vor Entsperren; der
+Quellreload setzte den Cursor auf 0. Archivspezieller Abschluss läuft nun erst
+nach `setBusy(false)`: bei vollständigem Erfolg und identischer Quelle Cursor
+auf begrenzten Löschanfang setzen, verdeckende Folds öffnen, sichtbar scrollen
+und Editor fokussieren. Fremdfokus/Fenster-/Vault-/Pfad-/Dokumentwechsel werden
+respektiert. Keine Änderung an Storage, Journal oder normalem Save-Fokus.
+Handprobe in `docs/ARCHIVING.md`; Nutzer-Testdateien und Bilder bleiben erhalten.
+Kein Commit/Push/Merge aus dieser Korrekturfreigabe ableiten.
+
+Final 567/567 Tests seriell, Build, drei Syntaxchecks und Diffcheck grün;
+unabhängige QA gezielt 7/7 einschließlich Save-Fokusregression und 100 kurzen
+Erfolg-/Abbruch-Modellzyklen ohne verbleibende Fokuslistener. Kein belegter
+Befund im geprüften Umfang. Bericht `_Communication_Pipeline/qa_archive_focus.md`.
+Native Browser-/y-/Rechteprompt-/IME-/AltGr- und Langzeitprobe weiterhin offen.
+
 ## Archivierung implementiert — PO-Probe, 2026-11-16
 
 Auf feature/archiving: externe Archivierung ganzer Unterbäume, Standard-/weitere

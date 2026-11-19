@@ -15,6 +15,17 @@ export const PREFIX_BINDINGS=Object.freeze([
   Object.freeze({key:'q',id:'tags.edit'}),
   Object.freeze({key:'z',id:'logbook.note'})
 ]);
+// Groups are routing nodes, never executable placeholder commands.
+export const PREFIX_GROUPS=Object.freeze([
+  Object.freeze({key:'x',name:'Archivieren',children:Object.freeze([
+    Object.freeze({key:'s',id:'archive.subtree',argument:true}),
+    Object.freeze({key:'a',id:'archive.subtree',argument:true,name:'Standardarchiv (Alias)'})
+  ])})
+]);
+export const PREFIX_TREE=Object.freeze([...PREFIX_BINDINGS,...PREFIX_GROUPS,
+  Object.freeze({key:'u',name:'Sammelprüfung (Prefixargument)',modifier:true,command:'archive.review',children:PREFIX_GROUPS})
+]);
+export function prefixLeaves(nodes=PREFIX_TREE,path=[],command){return nodes.flatMap(node=>node.children?prefixLeaves(node.children,[...path,node.label??node.key],node.command??command):[{...node,command,path:[...path,node.label??node.key]}]);}
 export const EMACS_BINDINGS=Object.freeze([
   {id:'mark',key:' ',ctrl:true,label:'Strg+Leertaste'},
   {id:'cancel-mark',key:'g',ctrl:true,label:'Strg+G'},

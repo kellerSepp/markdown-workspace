@@ -1,5 +1,67 @@
 # Repository instructions for Codex
 
+## Neueste Integrationsfreigabe — 2026-11-19
+PO autorisiert Commit des gesamten freigegebenen Archivierungspakets samt
+Fokus-/Prefix-/Prüfbereichskorrekturen und Merge nach main. Ersetzt ältere
+Commit-/Merge-Sperren ausschließlich dafür; kein neuer Pushauftrag. Letzter
+Prüfstand 596/596 Tests seriell, Build und unabhängige QA grün. Nutzergeänderte
+Probe-Dateien source.md/archiv.md/steuer.md und Bilder bleiben außerhalb des
+Featurecommits erhalten. Keine Folgefunktion aus der Integration ableiten.
+
+## Aktueller PO-Fixauftrag — wiederholte Archivprüfung / Prefixnavigation
+Abgeschlossen: 596/596 Tests seriell, QA3/3, Build/vier Syntaxchecks/Diffcheck
+grün. PO-H1-Beispiel geklärt: ein direktes DONE-Kind mit offenen TODO-Enkeln
+ist korrekt ungeeignet; Prüfung auf dessen Header bietet erledigten direkten
+Enkel an. Keine rekursive Regeländerung. Plain↑/↓ in allen Prefixstufen und
+Prüfbereich-Rückkehr unabhängig mit wiederholten vollständigen Appabläufen
+geprüft. Bericht _Communication_Pipeline/qa_archive_repeat.md. Native Probe
+weiter offen, kein Commit/Push/Merge ohne Auftrag.
+Zweiter Prüfstart zeigte leeren falschen Scope, weil Abschluss Cursor auf
+Kandidatenleaf ließ. Ursprünglichen Prüfbereich nach Batch wiederherstellen,
+keine Änderung an Org-Kandidatenregel/Storage, keine künstlichen Textzeilen.
+Normale Pfeile hoch/runter zusätzlich zu Alt-Pfeilen in allen C-c-Menüstufen
+aktivieren, Enter/Disabledskip/Viewport/Editorselection erhalten. Tatsächliche
+wiederholte Router-/Panel-/Appabläufe prüfen. Nutzer-Dateien erhalten, keine
+Git-Integration ohne Auftrag; nach unabhängiger QA für native Probe stoppen.
+
+## Native PO-Korrektur — Archivprüfshortcut 2026-11-19
+Korrektur umgesetzt und unabhängig geprüft: 590/590 Tests seriell, QA 8/8,
+Build/vier Syntaxchecks/Diffcheck grün. Native Probe der neuen Folge noch offen.
+Ctrl+U öffnet laut nativer PO-Probe in Edge den Quelltext. PO erlaubt Ersatz;
+aktuelle Prüfsequenz ist C-c u x s (Alias C-c u x a), Einzelarchiv bleibt C-c x s/a.
+Unmodifizierter u-Zweig im datengetriebenen Prefixbaum setzt einmaliges Argument;
+kein eigenständiger Ctrl+U-Start und keine neue Browser-Passthroughpolicy.
+Ältere C-u-Angaben unten sind historisch. Kein Commit/Push/Merge ohne Auftrag.
+
+## Aktuelle Freigabe — Archivprüfung und Prefixfolgen 2026-11-19
+Paket inzwischen implementiert und unabhängig geprüft auf feature/archiving:
+587/587 Tests seriell, Build/fünf Syntaxchecks/Diffcheck grün. P2 geschützte
+Beispielheadings als Scope/Kandidaten korrigiert und unabhängig geschlossen.
+25/25 kombinierte gezielte Prüfungen, sechs QA-Gruppen, 100 kurze Abbruchzyklen;
+native/IME/AltGr/Stundenprobe offen. Bericht _Communication_Pipeline/qa_archive_review.md.
+Für PO-Probe stoppen; weiterhin kein Commit/Push/Merge ohne neuen Auftrag.
+PO gibt docs/PLAN_ARCHIVE_REVIEW.md zur Umsetzung frei: modular datengetriebene
+mehrstufige Prefixfolgen C-c x s (Unterbaum), C-c x a (Defaultalias), C-u C-c x s
+(Prüfung geeigneter direkter Kinder mit y/n/Escape). Org-Regel: keine offene
+Aufgabe im gesamten Kandidaten; statuslose Informationsbäume sind geeignet.
+Kandidatenmodell/Controller vom Router trennen, vorhandenen Archiv-Storagepfad
+ohne Änderung an Journal/Storage wiederverwenden, nach Verschieben revalidieren.
+Fokuskorrektur erhalten. Kein Commit/Push/Merge, danach unabhängige QA/PO-Probe.
+Nutzer hat test-vault/archiving/source.md geändert; diese Datei und untracked
+archiv.md/steuer.md sowie Bilder weder öffnen noch ändern/revertieren/committen.
+Agenten/QA nur eigene synthetische Testdaten.
+
+## Aktuelle PO-Korrektur — 2026-11-19
+Archivierung auf feature/archiving: Fokus/Cursor nach erfolgreicher y-Bestätigung
+erst nach Entsperren zurückgeben, Cursor am begrenzten Anfang des entfernten
+Unterbaums sichtbar machen. Fremdfokus/Quellwechsel respektieren, Storage und
+normalen Save-Fokus erhalten. Implementiert und unabhängig geprüft: 567/567 Tests
+seriell, Build, drei Syntaxchecks und Diffcheck grün; native PO-Probe offen.
+Details docs/ARCHIVING.md und _Communication_Pipeline/qa_archive_focus.md.
+Kein Commit/Push/Merge dieser Korrektur ohne erneuten Auftrag. Untracked Nutzer-
+Testdateien test-vault/archiving/archiv.md und steuer.md sowie Bilder erhalten;
+Agenten verwenden ausschließlich eigene synthetische Daten.
+
 ## Aktuelle Geräteübergabe — 2026-11-16
 PO autorisiert Commit und Push des Archivierungspakets auf feature/archiving.
 Kein Merge nach main und keine Folgefunktion freigegeben. Handprobe am anderen

@@ -15,7 +15,7 @@ import {orgFoldReason} from './org-folding.mjs';
 import {planLineMove} from './line-move.mjs';
 import {EMACS_COMMANDS} from './emacs-policy.mjs';
 import {emacsCommandReason} from './emacs-editing.mjs';
-import {PREFIX_BINDINGS} from './emacs-policy.mjs';
+import {PREFIX_BINDINGS,prefixLeaves} from './emacs-policy.mjs';
 import {agendaCommandReason} from './agenda-command-policy.mjs';
 import {checklistReason,checklistConfirmReason} from './checklists.mjs';
 import {planTaskInsert} from './task-insert.mjs';
@@ -29,6 +29,7 @@ const synthetic=c=>idle(c)||(!c.synthetic?'Alpha-Nutzungshinweis zuerst bestäti
 const vault=c=>idle(c)||(!c.vault?'Bitte zuerst einen Vault wählen.':'');
 const catalog=[];
 add('archive.subtree','Unterbaum archivieren …','Archiv','Vollständigen Unterbaum in eine Archivdatei verschieben und beide Dateien speichern.','editor',c=>synthetic(c)||documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':''));
+add('archive.review','Archivkandidaten prüfen …','Archiv','Direkte Kinder der aktuellen Überschrift, sonst H1-Bäume ohne offene TODOs einzeln mit y/n prüfen.','editor',c=>synthetic(c)||documentReason(c)||(c.state.readOnly?'Editor ist schreibgeschützt.':''));
 add('archive.resume','Archivierung fortsetzen','Archiv','Offenen Archivvorgang anhand geprüfter Dateistände fortsetzen.','vault',c=>synthetic(c)||vault(c));
 add('archive.restore','Archivierung wiederherstellen','Archiv','Letzte abgeschlossene Archivierung konfliktgeprüft wiederherstellen.','vault',c=>synthetic(c)||vault(c));
 add('drawer.create','Drawer anlegen …','Folding','Benannten Drawer anlegen oder vollständige Textzeilen darin verpacken.','editor',c=>documentReason(c)||drawerContext(c.state).message||'');
@@ -96,7 +97,7 @@ for(const [id,name,description] of [
   ['refresh','Checklisten neu berechnen','Elternzustände und vorhandene Fortschrittszähler der aktuellen Datei nach Rohtexteingabe neu berechnen.']
 ])add('checklist.'+id,name,'Checklisten',description,'editor',c=>documentReason(c)||checklistReason(c.state,id));
 for(const [id,name,shortcut] of [['previous','Vorheriger Aufgabenstatus','Umschalt+Links'],['next','Nächster Aufgabenstatus','Umschalt+Rechts']])add('todo.'+id,name,'Aufgaben','Status auf der Aufgabenüberschrift wechseln; wiederholende Aufgaben beim Abschluss fortschreiben. Textauswahl hat Vorrang.','editor',c=>documentReason(c)||todoCycleContext(c.state).message||'',shortcut);
-for(const {id,key,label} of PREFIX_BINDINGS){const command=catalog.find(c=>c.id===id);command.shortcut=[command.shortcut,'C-c '+(label??key)+' (Editor)'].filter(Boolean).join(' / ');}
+for(const {id,path,command:target} of prefixLeaves()){const command=catalog.find(c=>c.id===(target??id));command.shortcut=[command.shortcut,'C-c '+path.join(' ')+' (Editor)'].filter(Boolean).join(' / ');}
 for(const id of ['heading-up','heading-down']) Object.assign(catalog.find(c=>c.id==='structure.'+id),{shortcut:id==='heading-up'?'Alt+Oben':'Alt+Unten',orgShortcut:id==='heading-up'?'M-UP':'M-DOWN',compatibility:'Org-Unterbaumtausch nur mit gleichrangigem Geschwister innerhalb derselben Elterngrenze.'});
 export const COMMAND_METADATA=Object.freeze(catalog.map(c=>Object.freeze(c)));
 export function commandDefinitions(handlers,beforeExecute=()=>true) {

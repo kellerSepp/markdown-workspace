@@ -1,5 +1,23 @@
 # Architekturentscheidungen
 
+## Archivprüfung: browserfreundlicher Ersatz — PO 2026-11-19
+
+Nach nativer Edge-Meldung „Ctrl+U öffnet Quelltext“ erlaubt PO C-c u x s als
+Ersatz. C-c u x a bleibt gleichwertiger Defaultalias; C-c x s/a unverändert.
+Der Router nutzt einen datengetriebenen u-Modifierknoten statt eigenständigem
+Ctrl+U-Start. Keine neue globale Browser-Shortcutpolicy, Archivlogik unverändert.
+Die frühere C-u-Belegung wird dadurch ersetzt; native Probe der neuen Folge offen.
+
+## Archivprüfung und mehrstufige Prefixfolgen — PO-Freigabe 2026-11-19
+
+PO akzeptiert generische datengetriebene Sequenzen statt Archiv-Sonderfällen im
+Router: C-c x s, C-c x a, vorgeschaltetes einmaliges C-u für die Archivprüfung.
+Geschlossene und statuslose direkte Unterbäume ohne offene Aufgaben werden einzeln
+mit y/n/Escape angeboten. Vollständige Inhalte mitnehmen, keine neue Speicherlogik.
+Modell/Controller, Tastenrouting, Oberfläche und bestehende Archivtransaktion
+getrennt halten; Offsets nach jedem Schritt revalidieren. Konkreter Umfang und
+Abnahme: PLAN_ARCHIVE_REVIEW.md. Keine Git-Integration aus Featurefreigabe ableiten.
+
 ## Archivierung — Implementierungsfreigabe 2026-11-16
 
 PO bestätigt Root-H1 am Archivende mit relativen Kindern und Herkunftsproperties

@@ -1,5 +1,15 @@
 # Architekturvorschlag – zur Freigabe
 
+## Mehrstufige Prefixfolgen und Archivprüfung — freigegeben 2026-11-19
+
+Sequenzbaum als Daten, gemeinsamer Router für Zwischenzustände und Prefixhilfe,
+einmaliges Prefixargument getrennt von Fachbefehlen. Archiv-Kandidatenplanung
+und y/n-Ablaufcontroller verwenden Registry-/Dialog-/Fokusbausteine, schreiben
+über den vorhandenen Archivpfad. Vor jedem Schritt Quelle und Kandidat prüfen;
+keine Kopplung von Dateisicherheit an konkrete Tastenfolgen. Begrenztes Prüfargument
+über den Modifierknoten u in C-c u x s/a (ersetzt Ctrl+U nach Edge-PO-Probe),
+kein allgemeines Emacs-Keymapsystem. Details: PLAN_ARCHIVE_REVIEW.md.
+
 ## Allgemeine Drawer — freigegebener Ansatz 2026-11-16
 
 Lesende gemeinsame Erkennung und positionsbezogene Faltbereiche für eindeutig

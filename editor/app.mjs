@@ -6,7 +6,10 @@ import {markdown,markdownLanguage} from '@codemirror/lang-markdown';
 import {createSession, createBrowserStore} from './storage-session.mjs';
 import {createArchiveStorage} from './archive-storage.mjs';
 import {planArchive} from './archive-model.mjs';
+import {planArchiveBatch,runArchiveBatch} from './archive-batch.mjs';
+import {archiveCandidateDialog} from './archive-candidate-dialog.mjs';
 import {archiveDialog} from './archive-dialog.mjs';
+import {prepareArchiveFocus,revealArchivePosition} from './archive-focus.mjs';
 import {inspectVaultPath,normalizeVaultFilePath} from './vault-files.mjs';
 import {read} from '../spike/storage.mjs';
 import {TextCodec} from './text-codec.mjs';
@@ -89,8 +92,8 @@ function prepareWorkPanel(){
   if(!agenda?.active)return true;
   return agenda.docked&&agenda.close({restore:false})!==false;
 }
-const prefix=createPrefixRouter({registry:{get:id=>registry.get(id),availability:id=>registry.availability(id),execute:id=>registry.execute(id)},getContext:editingContext,
-  showHelp:(choices,...args)=>prepareWorkPanel()&&workPanel.showPrefix(choices.map(choice=>({...choice,...registry.availability(choice.id)})),...args),moveHelp:delta=>workPanel.moveSelection(delta),activateHelp:()=>workPanel.activateSelection(),hideHelp:()=>workPanel?.close({restore:false}),notify:status});
+const prefix=createPrefixRouter({registry:{get:id=>registry.get(id),availability:id=>registry.availability(id),execute:(id,args)=>registry.execute(id,args)},getContext:editingContext,
+  showHelp:(choices,...args)=>prepareWorkPanel()&&workPanel.showPrefix(choices.map(choice=>choice.children||!choice.enabled?choice:({...choice,...registry.availability(choice.id)})),...args),moveHelp:delta=>workPanel.moveSelection(delta),activateHelp:()=>workPanel.activateSelection(),hideHelp:()=>workPanel?.close({restore:false}),notify:status});
 const emacs=createEmacsEditing({getContext:editingContext,notify:status,openChooser:()=>prepareWorkPanel()&&(workPanel?.openRing()??false)});
 const extensions = () => [
   tagRules,tagHighlight,
@@ -143,17 +146,40 @@ const extensions = () => [
 ];
 const view = new EditorView({parent:$('editor'), state:EditorState.create({extensions:extensions()})});
 const handlers={};
-handlers['archive.subtree']=async()=>{
+async function archiveBatch(){
   if(busy||!session?.hasDocument||session.vault!==vault)return false;
-  requireSynthetic();
-  if(!forceParsing(view,view.state.doc.length,100)){status('Dokument noch nicht vollständig analysiert; erneut versuchen.');return false;}
-  const origin=view.state,sourcePath=session.path,sourceVault=vault;
-  const plan=planArchive(origin,{sourcePath,now:new Date()});
-  if(plan.message){status(plan.message);return false;}
-  const selected=await archiveDialog({settings:archiveSettings,openTasks:plan.openTasks});
+  requireSynthetic();if(!forceParsing(view,view.state.doc.length,100))return false;
+  const sourcePath=session.path,sourceVault=vault,origin=view.state;
+  const batch=planArchiveBatch(origin,{sourcePath});
+  if(batch.message){status(batch.message);return false;}
+  if(!batch.candidates.length){
+    const scope=batch.reviewScope;
+    status(scope.file?(scope.total?`Dateiprüfung: Keine geeigneten H1-Bäume – alle ${scope.open} enthalten offene TODO-Aufgaben.`:'Dateiprüfung: Keine H1-Überschriften vorhanden.'):(scope.total?`Unter „${scope.title}“: Alle ${scope.open} direkten Kinder enthalten offene TODO-Aufgaben; kein geeigneter Unterbaum.`:`Unter „${scope.title}“: Keine direkten Kindüberschriften vorhanden.`));return false;
+  }
+  const selected=await archiveDialog({settings:archiveSettings,openTasks:0,title:'Sammelarchivierung · Archivziel wählen'});
   if(!selected)return false;
-  if(busy||view.state!==origin||vault!==sourceVault||session.path!==sourcePath){status('Archivierungsquelle geändert; bitte erneut starten.');return false;}
-  return run(async()=>{
+  const current=()=>!busy&&vault===sourceVault&&session?.vault===sourceVault&&session?.path===sourcePath;
+  const batchFocus=prepareArchiveFocus(view,{getContext:()=>({vault,session}),vault:sourceVault,path:sourcePath,allowFocusTarget:element=>!!element?.closest?.('.archive-candidate-dialog')});
+  let reviewReturn=null;
+  try{
+  const result=await runArchiveBatch({plan:batch,getState:()=>view.state,current,returnTo:position=>{reviewReturn=position;},
+    confirm:candidate=>{revealArchivePosition(view,candidate.from);return archiveCandidateDialog(candidate);},notify:status,
+    archive:async candidate=>{
+      if(!current()||!forceParsing(view,view.state.doc.length,100))return false;
+      view.dispatch({selection:{anchor:candidate.from}});
+      const origin=view.state,plan=planArchive(origin,{sourcePath});
+      if(plan.message||plan.openTasks||plan.original!==candidate.original||plan.sourceChange.from!==candidate.from||plan.sourceChange.to!==candidate.to){status(plan.message??'Archivkandidat verändert; Sammelarchivierung gestoppt.');return false;}
+      return archiveOne({plan,selected,origin,sourcePath,sourceVault});
+    }
+  });
+  if(!result.stopped&&current()&&reviewReturn)batchFocus.complete(view.state.doc,reviewReturn.anchor);
+  if(!result.stopped)status(`Sammelarchivierung: ${result.archived} archiviert, ${result.skipped} übersprungen.${result.cancelled?' Rest abgebrochen; abgeschlossene Schritte bleiben gespeichert.':''}${reviewReturn&&!reviewReturn.scopeAvailable?' Für weitere Dateiprüfung Cursor auf eine Text- oder Leerzeile setzen.':''}`);
+  return !result.stopped;
+  }finally{batchFocus.finish();}
+}
+async function archiveOne({plan,selected,origin,sourcePath,sourceVault}){
+  const archiveFocus=prepareArchiveFocus(view,{getContext:()=>({vault,session}),vault:sourceVault,path:sourcePath});
+  const archiveAction=async()=>{
     await permission();
     const targetPath=normalizeVaultFilePath(selected.path);
     if(targetPath.toLocaleLowerCase()===sourcePath.toLocaleLowerCase())throw Error('Quelle und Archiv müssen verschieden sein.');
@@ -172,9 +198,27 @@ handlers['archive.subtree']=async()=>{
     try{result=await archiveStorage.execute({vault,sourcePath,targetPath,sourceBefore,sourceChanges:[plan.sourceChange],archiveBlock:plan.archiveBlock});}
     finally{await session.open({vault,path:sourcePath,handle:source.handle});await syncEditor({startup:true});await agendaIndex.rebuild();}
     await scan();syncAgendaFileSelection();await agendaIndex.rebuild();
-    status(`Archiviert nach ${targetPath}. Wiederherstellung über „Archivierung wiederherstellen“. Vorgang ${result.id}`);view.focus();return true;
-  });
+    status(`Archiviert nach ${targetPath}. Wiederherstellung über „Archivierung wiederherstellen“. Vorgang ${result.id}`);
+    if(view.state.doc.toString()===plan.sourceText)archiveFocus.complete(view.state.doc,plan.sourceChange.from);
+    return true;
+  };
+  archiveAction.afterUnlock=()=>archiveFocus.finish();
+  return run(archiveAction);
+}
+handlers['archive.subtree']=async(options={})=>{
+  if(options.universal)return archiveBatch();
+  if(busy||!session?.hasDocument||session.vault!==vault)return false;
+  requireSynthetic();
+  if(!forceParsing(view,view.state.doc.length,100)){status('Dokument noch nicht vollständig analysiert; erneut versuchen.');return false;}
+  const origin=view.state,sourcePath=session.path,sourceVault=vault;
+  const plan=planArchive(origin,{sourcePath,now:new Date()});
+  if(plan.message){status(plan.message);return false;}
+  const selected=await archiveDialog({settings:archiveSettings,openTasks:plan.openTasks});
+  if(!selected)return false;
+  if(busy||view.state!==origin||vault!==sourceVault||session.path!==sourcePath){status('Archivierungsquelle geändert; bitte erneut starten.');return false;}
+  return archiveOne({plan,selected,origin,sourcePath,sourceVault});
 };
+
 async function archiveRecovery(restore){
   return run(async()=>{
     requireSynthetic();await permission();
@@ -194,6 +238,7 @@ async function archiveRecovery(restore){
     status(restore?'Archivierung wiederhergestellt.':'Archivierung fortgesetzt und geprüft.');
   });
 }
+handlers['archive.review']=()=>archiveBatch();
 handlers['archive.resume']=()=>archiveRecovery(false);
 handlers['archive.restore']=()=>archiveRecovery(true);
 handlers['structure.subtree-return']=()=>runSubtreeReturn(view,status);
@@ -395,6 +440,7 @@ async function run(action) {
     render(); setBusy(false);
     if(restoreEditorFocus&&session?.vault===focusVault&&session?.path===focusPath&&document.hasFocus()&&
       (document.activeElement===document.body||view.dom.contains(document.activeElement)))view.focus();
+    action.afterUnlock?.();
     if (persistPending) timer = setTimeout(() => {void persistDraft();},300);
   }
 }

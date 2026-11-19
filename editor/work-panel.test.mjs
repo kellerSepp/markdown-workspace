@@ -16,6 +16,62 @@ import {todoRules,createTodoController} from './todo.mjs';
 import {markdown} from '@codemirror/lang-markdown';
 import {createPlanningController} from './planning.mjs';
 const pluginFacet=ViewPlugin.define(()=>({})).extension.at(-1).facet;
+test('Plain arrows and Alt arrows navigate every real prefix panel level with disabled skip and Enter activation',()=>{
+ const f=fixture(),before=f.view.state,calls=[];f.results.clientHeight=30;
+ const router=createPrefixRouter({registry:{get:id=>({name:id}),availability:id=>({enabled:['fold.collapse','archive.subtree'].includes(id),reason:'Blocked'}),execute:(id,args)=>{calls.push({id,args});return true;}},showHelp:(...args)=>f.panel.showPrefix(...args),hideHelp:()=>f.panel.close({restore:false}),moveHelp:d=>f.panel.moveSelection(d),activateHelp:()=>f.panel.activateSelection()});
+ const down=(key,patch={})=>router.keyDown({key,preventDefault(){},stopPropagation(){},...patch},f.view),start=()=>{down('c',{ctrlKey:true});router.keyUp({key:'c'});};
+ const selected=()=>f.results.children.find(row=>row.attributes['aria-selected']==='true');
+ start();assert.match(selected().textContent,/1 ·/);down('ArrowDown');assert.match(selected().textContent,/x ·/);assert.ok(f.results.scrollTop>0);down('Enter');assert.equal(router.active,true);assert.match(selected().textContent,/s ·/);down('ArrowDown');assert.match(selected().textContent,/a ·/);down('ArrowUp',{altKey:true});assert.match(selected().textContent,/s ·/);down('Enter');assert.deepEqual(calls.pop(),{id:'archive.subtree',args:undefined});
+ start();down('ArrowUp');assert.match(selected().textContent,/u ·/);down('Enter');assert.equal(f.results.children.length,1);down('ArrowDown');assert.match(selected().textContent,/x ·/);down('Enter');down('ArrowDown',{altKey:true});assert.match(selected().textContent,/a ·/);down('Enter');assert.deepEqual(calls.pop(),{id:'archive.subtree',args:{universal:true}});
+ assert.equal(router.active,false);assert.equal(f.panel.isOpen,false);assert.equal(f.view.state,before);assert.equal(f.view.hasFocus,true);assert.equal(f.view.scrollDOM.scrollTop,2400);f.panel.destroy();
+});
+
+test('Full repeated archive keyboard sequences survive actual save/reload, y/n/Escape and explicit original H1 reset',async()=>{
+ const {Compartment}=await import('@codemirror/state');
+ const {codeFolding,forceParsing}=await import('@codemirror/language');
+ const {planArchive}=await import('./archive-model.mjs');
+ const {planArchiveBatch,runArchiveBatch}=await import('./archive-batch.mjs');
+ const {prepareArchiveFocus,revealArchivePosition}=await import('./archive-focus.mjs');
+ const {applyStartupVisibility}=await import('./startup-visibility.mjs');
+ const app=(await readFile(new URL('./app.mjs',import.meta.url),'utf8')).replaceAll('\r\n','\n');
+ const functions=app.slice(app.indexOf('async function archiveBatch(){'),app.indexOf('\nasync function archiveRecovery('));
+ const runner=app.slice(app.indexOf('async function run(action) {'),app.indexOf('\nconst actionIds='));
+ for(const custom of [false,true]){
+  const done=custom?'FINISHED':'DONE',open=custom?'NEXT':'TODO',prefix=custom?'#+SEQ_TODO: NEXT(n) | FINISHED(f)\n':'';
+  const source=prefix+`# Project\nIntro\n## ${done} A\nFirst\n## ${done} B\nSecond\n## ${done} C\nThird\n## ${open} Open\nWaiting\n`+'Long synthetic body '.repeat(2000);
+  const editable=new Compartment(),f=fixture({docText:source,selection:{anchor:source.indexOf('Project')},extra:[markdown(),todoRules,codeFolding(),editable.of(EditorState.readOnly.of(false))]});
+  f.view.focus();const editor=f.doc.activeElement;f.view.dom={contains:e=>e===editor};f.doc.body=new Element('body',f.doc);f.doc.documentElement={};f.doc.hasFocus=()=>true;f.doc.listeners={};f.doc.addEventListener=Element.prototype.addEventListener;f.doc.removeEventListener=Element.prototype.removeEventListener;Object.assign(f.doc.defaultView,{listeners:{},addEventListener:Element.prototype.addEventListener,removeEventListener:Element.prototype.removeEventListener});
+  const vault={},session={vault,path:'synthetic.md',hasDocument:true,text:source};let saved=source,targets=0,writes=0,answers=[],pending;const notices=[];
+  const make=text=>EditorState.create({doc:text,extensions:[markdown(),todoRules,history(),codeFolding(),editable.of(EditorState.readOnly.of(true))]});
+  session.save=async()=>{saved=f.view.state.doc.toString();};session.open=async()=>{session.text=saved;};
+  const context={handlers:{},view:f.view,session,vault,document:f.doc,save:()=>{},requireSynthetic(){},forceParsing,planArchiveBatch,runArchiveBatch,planArchive,
+   archiveDialog:async()=>{targets++;f.view.hasFocus=false;f.doc.activeElement=f.doc.body;return {path:'archive.md',standard:true,quickConfirm:true};},
+   archiveCandidateDialog:async()=>{f.view.hasFocus=false;f.doc.activeElement=f.doc.body;return answers.shift()??null;},
+   prepareArchiveFocus:(view,opts)=>prepareArchiveFocus(view,{...opts,document:f.doc}),revealArchivePosition,
+   permission:async()=>{},normalizeVaultFilePath:p=>p,inspectVaultPath:async()=>({kind:'file',handle:{}}),read:async()=>new TextEncoder().encode(saved),TextCodec:class{constructor(bytes){this.text=new TextDecoder().decode(bytes);}},
+   archiveStorage:{saveSettings:async()=>{},list:async()=>[],execute:async({sourceChanges})=>{writes++;for(const change of sourceChanges)saved=saved.slice(0,change.from)+saved.slice(change.to);return {id:String(writes)};}},agendaIndex:{rebuild:async()=>{}},
+   syncEditor:async()=>{f.view.setState(make(session.text));applyStartupVisibility(f.view);},scan:async()=>{},syncAgendaFileSelection(){},clearTimeout(){},setTimeout(){throw Error('Unexpected draft timer');},render(){},status:m=>notices.push(m),
+   lock:value=>{f.context.busy=value;f.view.dispatch({effects:editable.reconfigure(EditorState.readOnly.of(value))});if(value){f.view.hasFocus=false;f.doc.activeElement=f.doc.body;}}
+  };
+  const execute=new Function(...Object.keys(context),`let busy=false,timer,persistPending=false,archiveSettings={paths:[]};const setBusy=value=>{busy=value;lock(value);};${runner}\n${functions};return handlers['archive.subtree'];`)(...Object.values(context));
+  const router=createPrefixRouter({registry:{get:id=>({name:id}),availability:()=>({enabled:true}),execute:(_id,args)=>{pending=execute(args);return pending;}},getContext:()=>f.context,showHelp:(...args)=>f.panel.showPrefix(...args),hideHelp:()=>f.panel.close({restore:false})});
+  const down=(key,patch={})=>router.keyDown({key,preventDefault(){},stopPropagation(){},...patch},f.view);
+  for(const [index,choices] of [['y','n',null],['n','n'],['y','n'],['n'],['y']].entries()){
+   answers=[...choices];pending=null;if(index===2)f.view.dispatch({selection:{anchor:f.view.state.doc.toString().indexOf('Project')}});
+   down('c',{ctrlKey:true});router.keyUp({key:'c'});down('u');down('x');down('s');assert.ok(pending,`round ${index+1} must reach actual archive handler`);assert.equal(await pending,true);
+   assert.equal(router.active,false);assert.equal(f.panel.isOpen,false);assert.equal(f.view.hasFocus,true);assert.equal(f.view.state.doc.lineAt(f.view.state.selection.main.head).text,'# Project');
+  }
+  assert.equal(targets,5);assert.equal(writes,3);assert.ok(f.view.state.doc.toString().includes(`## ${open} Open`));
+  pending=null;down('c',{ctrlKey:true});router.keyUp({key:'c'});down('u');down('x');down('s');assert.equal(await pending,false);assert.equal(targets,5);assert.match(notices.at(-1),/Alle 1 direkten Kinder enthalten offene TODO/);f.panel.destroy();
+ }
+});
+test('Real shared prefix panel descends into archive group without cancelling router and preserves one-shot argument',()=>{
+ const f=fixture(),calls=[];const router=createPrefixRouter({registry:{get:id=>({name:id}),availability:()=>({enabled:true}),execute:(id,args)=>{calls.push({id,args});return true;}},showHelp:(...args)=>f.panel.showPrefix(...args),hideHelp:()=>f.panel.close({restore:false})});
+ const down=(key,patch={})=>router.keyDown({key,preventDefault(){},stopPropagation(){},...patch},f.view);
+ down('c',{ctrlKey:true});router.keyUp({key:'c'});down('u');
+ f.results.children.find(row=>row.textContent.startsWith('x ·')).click();assert.equal(router.active,true);assert.equal(f.results.children.length,2);assert.match(f.root.children[0].children[0].textContent,/Prefixargument · C-c u x/);
+ f.results.children[1].click();assert.deepEqual(calls,[{id:'archive.subtree',args:{universal:true}}]);assert.equal(router.active,false);assert.equal(f.panel.isOpen,false);f.panel.destroy();
+});
 test('Drawer name dialog reuses shared panel with mouse commit and cancellation',()=>{
  const f=fixture({docText:'# H\nBody',selection:{anchor:4},extra:markdown()});let value;
  assert.equal(f.panel.openDrawer({choose:name=>{value=name;return true;}}),true);
@@ -46,6 +102,7 @@ function fixture({selection={anchor:1,head:0},extra=[],docText='AB'}={}){
   const doc={createElement(tag){return new Element(tag,this);},defaultView:{scrollX:40,scrollY:500,scrollTo({left,top}){this.scrollX=left;this.scrollY=top;}}},host=new Element('host',doc),editor=new Element('editor',doc),ring=createKillRing(),notices=[],context={busy:false,hasDocument:true};
   let state,panel;const controller=createEmacsEditing({ring,clipboard:createClipboardAdapter({clipboard:()=>null}),getContext:()=>context,notify:s=>notices.push(s),openChooser:()=>panel.openRing()});
   const view={hasFocus:true,scrollDOM:{scrollTop:2400,scrollLeft:130,scrollHeight:10000,clientHeight:600,scrollWidth:3000,clientWidth:700},get state(){return state;},focus(){this.hasFocus=true;doc.activeElement=editor;}};
+  view.setState=next=>{state=next;};
   view.dispatch=spec=>{const tr=spec.startState?spec:state.update(spec);state=tr.state;for(const fn of state.facet(EditorView.updateListener))fn({state,docChanged:tr.docChanged,selectionSet:!!tr.selection,transactions:[tr]});};
   state=EditorState.create({doc:docText,selection,extensions:[history(),controller.extension(id=>controller.run(view,id.replace('edit.emacs-',''))),extra]});
   doc.onFocus=element=>{if(element!==editor&&view.hasFocus){view.hasFocus=false;for(const {plugin} of state.facet(pluginFacet))plugin.domEventHandlers?.blur?.call({}, {},view);}};
@@ -167,7 +224,7 @@ test('Public refresh preserves active prefix rows/listeners/router and viewport,
   const rows=[...f.results.children],text=rows.map(row=>row.textContent),hint=f.root.children[2].textContent;
   for(let i=0;i<3;i++)f.panel.refresh();
   assert.equal(router.active,true);assert.deepEqual(f.results.children,rows);assert.deepEqual(rows.map(row=>row.textContent),text);
-  assert.equal(f.root.children[2].textContent,hint);assert.match(hint,/C und Strg loslassen/);assert.match(hint,/1 \/ 2 \/ 3 \/ w/);assert.doesNotMatch(hint,/C-w/);assert.match(hint,/Alt\+W kopiert/);assert.match(rows[3].textContent,/w/);assert.equal(f.search.hidden,true);assert.equal(f.root.attributes['data-prefix-help'],'');
+  assert.equal(f.root.children[2].textContent,hint);assert.match(hint,/C und Strg loslassen/);assert.match(hint,/1 \(fold.collapse\).*2 \(fold.reveal\).*3 \(fold.open\).*w/);assert.doesNotMatch(hint,/C-w/);assert.match(hint,/Alt\+W kopiert/);assert.match(rows[3].textContent,/w/);assert.equal(f.search.hidden,true);assert.equal(f.root.attributes['data-prefix-help'],'');
   assert.equal(f.message.textContent,'');assert.ok(rows.every(row=>row.listeners.click.length===1));
   assert.equal(f.view.state,state);assert.equal(undoDepth(state),0);assert.equal(f.view.hasFocus,true);
   assert.equal(f.view.scrollDOM.scrollTop,2400);assert.equal(f.view.scrollDOM.scrollLeft,130);
